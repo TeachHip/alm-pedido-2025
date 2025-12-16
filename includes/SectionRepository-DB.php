@@ -121,4 +121,46 @@ class SectionRepository {
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
+    
+    /**
+     * Get all sections with product count for admin
+     */
+    public function getAllWithProductCountAdmin() {
+        $sql = "SELECT s.*, COUNT(p.id) as product_count 
+                FROM sections s 
+                LEFT JOIN products p ON s.id = p.section_id
+                GROUP BY s.id 
+                ORDER BY s.display_order ASC, s.name ASC";
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll();
+    }
+    
+    /**
+     * Update display order for a single section
+     */
+    public function updateDisplayOrder($id, $order) {
+        $sql = "UPDATE sections SET display_order = :order WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute(['id' => $id, 'order' => $order]);
+    }
+    
+    /**
+     * Update display order for multiple sections
+     */
+    public function updateMultipleDisplayOrders($orderData) {
+        try {
+            $this->db->beginTransaction();
+            
+            foreach ($orderData as $item) {
+                $this->updateDisplayOrder($item['id'], $item['order']);
+            }
+            
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log("Error updating section orders: " . $e->getMessage());
+            return false;
+        }
+    }
 }
