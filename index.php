@@ -1,10 +1,14 @@
 <?php
-include 'includes/data-loader.php';
-$appData = loadAppData();
+// Load database repository
+require_once 'includes/SectionRepository-DB.php';
 
-// data loader
-$sections = $appData['sections'];
-$sectionImages = $appData['sectionImages'];
+try {
+    $sectionRepo = new SectionRepository();
+    $sections = $sectionRepo->getAllVisibleActive();
+} catch (Exception $e) {
+    error_log("Error loading sections: " . $e->getMessage());
+    $sections = [];
+}
 
 // Include 00.php for cart functionality - cookie
 include 'assets/00.php';
@@ -27,12 +31,12 @@ $pageTitle = 'AlMercáu - Carro de la compra para mercantes';
 
 <div class="container">
     <div class="menu-grid">
-        <?php foreach ($sections as $key => $name): ?>
-        <a href="section.php?section=<?php echo $key; ?>" class="menu-item">
-            <img src="<?php echo isset($sectionImages[$key]) ? $sectionImages[$key] : 'https://placehold.co/300x200/25D366/ffffff?text=' . urlencode($name); ?>"
-                alt="<?php echo htmlspecialchars($name); ?>"
-                onerror="this.src='https://placehold.co/300x200/25D366/ffffff?text=<?php echo htmlspecialchars($name); ?>'">
-            <h3><?php echo htmlspecialchars($name); ?></h3>
+        <?php foreach ($sections as $section): ?>
+        <a href="section.php?section=<?php echo $section['id']; ?>" class="menu-item">
+            <img src="<?php echo !empty($section['image']) ? htmlspecialchars($section['image']) : 'https://placehold.co/300x200/25D366/ffffff?text=' . urlencode($section['name']); ?>"
+                alt="<?php echo htmlspecialchars($section['name']); ?>"
+                onerror="this.src='https://placehold.co/300x200/25D366/ffffff?text=<?php echo urlencode($section['name']); ?>'">
+            <h3><?php echo htmlspecialchars($section['name']); ?></h3>
         </a>
         <?php endforeach; ?>
     </div>

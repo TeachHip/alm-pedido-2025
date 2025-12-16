@@ -59,6 +59,13 @@ class ProductRepository {
     }
     
     /**
+     * Alias for getBySectionId with visible filter - for frontend
+     */
+    public function getBySectionVisible($sectionId) {
+        return $this->getBySectionId($sectionId, true);
+    }
+    
+    /**
      * Get products by section key
      */
     public function getBySectionKey($sectionKey, $visibleOnly = true) {

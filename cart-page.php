@@ -1,8 +1,5 @@
 <?php
 // cart-page.php - Shopping cart page
-include 'includes/data-loader.php';
-$appData = loadAppData();
-
 $pageTitle = 'Carrito - AlMercáu';
 ?>
 <?php include 'assets/head.php'; ?>

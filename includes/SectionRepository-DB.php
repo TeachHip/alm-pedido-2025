@@ -34,6 +34,13 @@ class SectionRepository {
     }
     
     /**
+     * Alias for getActiveVisible() - for frontend
+     */
+    public function getAllVisibleActive() {
+        return $this->getActiveVisible();
+    }
+    
+    /**
      * Get section by key (string identifier)
      */
     public function getByKey($key) {

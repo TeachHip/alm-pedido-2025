@@ -1,28 +1,36 @@
 <?php
-include 'includes/data-loader.php';
-$appData = loadAppData();
-
-// data loader
-$sections = $appData['sections']; // This now holds the full section data array
-$sectionsFull = $appData['sectionsFull']; // NEW: Get full section data
-$sectionImages = $appData['sectionImages'];
-$products = $appData['products'];
+// Load database repositories
+require_once 'includes/SectionRepository-DB.php';
+require_once 'includes/ProductRepository-DB.php';
 
 // Include 00.php for cart functionality - cookie
 include 'assets/00.php';
 
-// Validate section parameter
-$sectionKey = $_GET['section'] ?? '';
-if (!array_key_exists($sectionKey, $sections)) {
+try {
+    $sectionRepo = new SectionRepository();
+    $productRepo = new ProductRepository();
+    
+    // Validate section parameter
+    $sectionId = isset($_GET['section']) ? (int)$_GET['section'] : 0;
+    $section = $sectionRepo->getById($sectionId);
+    
+    if (!$section || !$section['visible'] || !$section['active']) {
+        header('Location: index.php');
+        exit;
+    }
+    
+    // Get visible products for this section
+    $products = $productRepo->getBySectionVisible($sectionId);
+    
+    $sectionName = $section['name'];
+    $sectionDescription = $section['description'] ?? '';
+    $pageTitle = "$sectionName - AlMercáu";
+    
+} catch (Exception $e) {
+    error_log("Error loading section: " . $e->getMessage());
     header('Location: index.php');
     exit;
 }
-
-$sectionName = $sections[$sectionKey];
-$sectionProducts = $products[$sectionKey] ?? [];
-$pageTitle = "$sectionName - AlMercáu";
-
-$sectionDescription = $sectionsFull[$sectionKey]['description'] ?? '';
 
 //START HTML
 include 'assets/head.php';
@@ -33,49 +41,39 @@ include 'assets/header.php';
     <a href="./" class="back-btn">&larr; Volver a la compra</a>
     <h2><?php echo htmlspecialchars($sectionName); ?></h2>
 
-<?php
-// Filter out hidden products
-$visibleProducts = array_filter($sectionProducts, function($product) {
-    return $product['visible'] ?? true; // Show if visible is true or not set
-});
-
-if (empty($visibleProducts)): ?>
+<?php if (empty($products)): ?>
     <div class="empty-state">
         <p>No hay productos disponibles en esta sección</p>
     </div>
 <?php else: ?>
     <div class="product-grid">
-        <?php foreach ($visibleProducts as $index => $product):
-            // We need to find the original index for the product ID
-            $originalIndex = array_search($product, $sectionProducts);
-            $productId = getProductId($sectionKey, $originalIndex);
-        ?>
+        <?php foreach ($products as $product): ?>
             <div class="product-card">
-                <a href="product.php?section=<?php echo $sectionKey; ?>&id=<?php echo $index; ?>" class="product-link">
-                    <img src="<?php echo htmlspecialchars($product['image']); ?>"
+                <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link">
+                    <img src="<?php echo !empty($product['image']) ? 'primgs/' . htmlspecialchars($product['image']) : 'https://placehold.co/300x200/25D366/ffffff?text=Imagen+no+disponible'; ?>"
                          alt="<?php echo htmlspecialchars($product['name']); ?>"
                          class="product-image"
                          onerror="this.src='https://placehold.co/300x200/25D366/ffffff?text=Imagen+no+disponible'">
                 </a>
                 <div class="product-info">
-                    <a href="product.php?section=<?php echo $sectionKey; ?>&id=<?php echo $index; ?>" class="product-link">
+                    <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link">
                         <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
                     </a>
                     <div class="product-price">
-                        <del class="greyed"><?php echo number_format($product['price2'], 2); ?>€</del> |
-                        <?php echo number_format($product['price'], 2); ?>€
+                        <del class="greyed"><?php echo number_format($product['price_public'], 2); ?>€</del> |
+                        <?php echo number_format($product['price_member'], 2); ?>€
                     </div>
                     <div class="product-quantity">
-                        <button class="quantity-btn" onclick="updateProductQuantity('<?php echo $productId; ?>', -1)">-</button>
-                        <span class="quantity-value" id="quantity-<?php echo $productId; ?>">1</span>
-                        <button class="quantity-btn" onclick="updateProductQuantity('<?php echo $productId; ?>', 1)">+</button>
+                        <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', -1)">-</button>
+                        <span class="quantity-value" id="quantity-product-<?php echo $product['id']; ?>">1</span>
+                        <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', 1)">+</button>
                     </div>
-                    <button class="btn" onclick="addToCartFromSection('<?php echo $productId; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $product['price']; ?>, '<?php echo $product['image']; ?>')">
+                    <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $product['price_member']; ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                         Al carro!
                     </button>
                 </div>
             </div>
-            <?php endforeach; ?>
+        <?php endforeach; ?>
         </div>
     <?php endif; ?>
 </div>
