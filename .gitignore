@@ -1,0 +1,26 @@
+# Database configuration with credentials
+includes/config-DB.php
+
+# Data files (backup)
+data/*.data
+
+# Test files
+test-DB.php
+fix-password-DB.php
+
+# PHP sessions
+sessions/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
