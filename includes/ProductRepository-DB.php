@@ -232,4 +232,40 @@ class ProductRepository {
         $stmt->execute(['query' => '%' . $query . '%']);
         return $stmt->fetchAll();
     }
+    
+    /**
+     * Update display order for a product
+     */
+    public function updateDisplayOrder($id, $order) {
+        $sql = "UPDATE products SET display_order = :display_order WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            'id' => $id,
+            'display_order' => $order
+        ]);
+    }
+    
+    /**
+     * Batch update display orders
+     */
+    public function updateMultipleDisplayOrders($orderData) {
+        $this->db->beginTransaction();
+        try {
+            $sql = "UPDATE products SET display_order = :display_order WHERE id = :id";
+            $stmt = $this->db->prepare($sql);
+            
+            foreach ($orderData as $id => $order) {
+                $stmt->execute([
+                    'id' => $id,
+                    'display_order' => $order
+                ]);
+            }
+            
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
 }
