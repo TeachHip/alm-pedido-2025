@@ -24,20 +24,21 @@ requireAdminAuth();
 
 <div class="admin-stats">
     <?php
-    include dirname(__FILE__) . '/../includes/data-loader.php';
-    $appData = loadAppData();
-    $totalProducts = 0;
-    $visibleProducts = 0;
-
-    if ($appData !== false) {
-        foreach ($appData['products'] as $sectionProducts) {
-            $totalProducts += count($sectionProducts);
-            foreach ($sectionProducts as $product) {
-                if ($product['visible'] ?? true) {
-                    $visibleProducts++;
-                }
-            }
-        }
+    require_once dirname(__FILE__) . '/../includes/ProductRepository-DB.php';
+    require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+    
+    try {
+        $productRepo = new ProductRepository();
+        $sectionRepo = new SectionRepository();
+        
+        $allProducts = $productRepo->getAll();
+        $totalProducts = count($allProducts);
+        $visibleProducts = count(array_filter($allProducts, function($p) { return $p['visible']; }));
+        $totalSections = count($sectionRepo->getAll());
+    } catch (Exception $e) {
+        $totalProducts = 0;
+        $visibleProducts = 0;
+        $totalSections = 0;
     }
     ?>
     <div class="stat-card">
@@ -50,7 +51,7 @@ requireAdminAuth();
     </div>
     <div class="stat-card">
         <h3>Secciones</h3>
-        <p><?php echo count($appData['sections'] ?? []); ?></p>
+        <p><?php echo $totalSections; ?></p>
     </div>
 </div>
 </body>
