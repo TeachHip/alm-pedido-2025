@@ -247,28 +247,92 @@ function updateWhatsAppLink(whatsappLink, total) {
 }
 
 // Also add this separate function for the button click
-function sendWhatsAppMessage() {
-    document.querySelector('.whatsapp-btn').style.display = 'block'; //v11 4tres
+// NEW: Save cart to database and open WhatsApp with ticket number
+async function sendWhatsAppMessage() {
+    // Get cart from localStorage
+    const cartJson = localStorage.getItem('cart');
+    if (!cartJson) {
+        alert('Tu carrito está vacío');
+        return false;
+    }
+
+    let cart;
+    try {
+        cart = JSON.parse(cartJson);
+    } catch (e) {
+        alert('Error al leer el carrito');
+        return false;
+    }
+
     if (!cart || cart.length === 0) {
         alert('Tu carrito está vacío');
         return false;
     }
 
-    // Build message
-    const itemsText = cart.map(item =>
-        `- ${item.quantity}x ${item.name} - ${(item.price * item.quantity).toFixed(2)}€`
-    ).join('%0A');
+    // Show loading on button
+    const btn = document.querySelector('.whatsapp-btn');
+    if (btn) {
+        const originalText = btn.textContent;
+        btn.textContent = 'Guardando pedido...';
+        btn.disabled = true;
 
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const message = `¡Hola! Me interesan los siguientes productos:%0A%0A${itemsText}%0A%0ATotal: ${total.toFixed(2)}€%0A%0A¡Gracias!`;
+        try {
+            // Save cart to database
+            const response = await fetch('save-cart.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ items: cart })
+            });
 
-    const phoneNumber = "34611183123";
+            const result = await response.json();
 
-    // Use the standard WhatsApp URL that works
-    const whatsappURL = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
+            if (!result.success) {
+                throw new Error(result.error || 'Error al guardar el pedido');
+            }
 
-    // Open in new tab
-    window.open(whatsappURL, '_blank');
+            // Store order info in localStorage
+            localStorage.setItem('last_order', JSON.stringify({
+                id: result.cart_id,
+                ticket: result.ticket,
+                timestamp: Date.now()
+            }));
+
+            // Clear cart from localStorage BEFORE opening WhatsApp
+            localStorage.removeItem('cart');
+
+            // Generate WhatsApp message with ticket number
+            let message = `🛒 Pedido ${result.ticket}%0A%0A`;
+            
+            cart.forEach(item => {
+                const itemTotal = (item.price * item.quantity).toFixed(2);
+                message += `- ${item.name} (${item.quantity}x) - ${itemTotal}€%0A`;
+            });
+
+            message += `%0ATotal: ${result.total.toFixed(2)}€`;
+
+            const phoneNumber = "34611183123"; // AlMercáu WhatsApp
+
+            // Create WhatsApp URL
+            const whatsappURL = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
+
+            // Open WhatsApp in new window/tab (doesn't close current page)
+            window.open(whatsappURL, '_blank');
+            
+            // Redirect to homepage to show confirmation
+            setTimeout(() => {
+                window.location.href = 'index.php';
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al procesar el pedido: ' + error.message);
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+    
     return false;
 }
 
