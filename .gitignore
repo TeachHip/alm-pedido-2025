@@ -18,6 +18,9 @@ error_log
 # Claude Code local settings
 .claude/
 
+# AI change documentation (local-only, not part of the app)
+AI/
+
 # OS files
 .DS_Store
 Thumbs.db
