@@ -21,6 +21,7 @@ requireAdminAuth();
         <a href="products.php" class="nav-btn">Gestionar Productos</a>
         <a href="sections.php" class="nav-btn">Gestionar Secciones</a>
         <a href="orders.php" class="nav-btn">📋 Ver Pedidos</a>
+        <a href="settings.php" class="nav-btn">⚙️ Configuración</a>
     </nav>
 
 <div class="admin-stats">

@@ -192,6 +192,7 @@ a.menu-item {
     margin-bottom: 10px;
 }
 
+/* AI: unused since only price_public is displayed now, see AI/CHANGELOG.md */
 .greyed {
     color: #aaa;
     font-weight: normal;
