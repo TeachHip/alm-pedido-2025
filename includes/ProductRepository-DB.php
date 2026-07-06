@@ -106,6 +106,28 @@ class ProductRepository {
     }
 
     /**
+     * AI: Check if any of the given product IDs belong to the given section key
+     * (used for the Pedido Expres cart fee, see AI/CHANGELOG.md)
+     */
+    public function anyInSectionKey($productIds, $sectionKey) {
+        $productIds = array_values(array_unique(array_map('intval', $productIds)));
+        if (empty($productIds)) {
+            return false;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        $sql = "SELECT COUNT(*) as count
+                FROM products p
+                JOIN sections s ON p.section_id = s.id
+                WHERE p.id IN ($placeholders) AND s.key = ?";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(array_merge($productIds, [$sectionKey]));
+        $result = $stmt->fetch();
+        return ($result['count'] ?? 0) > 0;
+    }
+
+    /**
      * Get product by ID
      */
     public function getById($id) {

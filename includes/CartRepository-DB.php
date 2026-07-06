@@ -38,28 +38,39 @@ class CartRepository {
      * Create new cart and cart items
      * Returns array with cart_id and ticket number
      */
-    public function createCart($cartItems, $clientId = null, $sessionId = null) {
+    public function createCart($cartItems, $clientId = null, $sessionId = null, $feeAmount = 0, $feeLabel = null) {
         try {
             $this->db->beginTransaction();
-            
+
             // Calculate total
             $totalPrice = 0;
             foreach ($cartItems as $item) {
                 $totalPrice += ($item['price'] ?? 0) * ($item['quantity'] ?? 0);
             }
-            
+
+            // AI: Pedido Expres cart fee, snapshot amount/label at creation time, see AI/CHANGELOG.md
+            $feeAmount = (float) $feeAmount;
+            if ($feeAmount > 0) {
+                $totalPrice += $feeAmount;
+            } else {
+                $feeAmount = null;
+                $feeLabel = null;
+            }
+
             // Generate ticket number
             $ticketNumber = $this->generateTicketNumber();
-            
+
             // Create cart record
-            $sql = "INSERT INTO carts (client_id, session_id, status, total_price, created_at) 
-                    VALUES (:client_id, :session_id, 'active', :total_price, NOW())";
-            
+            $sql = "INSERT INTO carts (client_id, session_id, status, total_price, fee_amount, fee_label, created_at)
+                    VALUES (:client_id, :session_id, 'active', :total_price, :fee_amount, :fee_label, NOW())";
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 'client_id' => $clientId,
                 'session_id' => $sessionId ?? session_id(),
-                'total_price' => $totalPrice
+                'total_price' => $totalPrice,
+                'fee_amount' => $feeAmount,
+                'fee_label' => $feeLabel
             ]);
             
             $cartId = $this->db->lastInsertId();
@@ -89,7 +100,9 @@ class CartRepository {
                 'success' => true,
                 'cart_id' => $cartId,
                 'ticket' => $ticketNumber,
-                'total' => $totalPrice
+                'total' => $totalPrice,
+                'fee_amount' => $feeAmount,
+                'fee_label' => $feeLabel
             ];
             
         } catch (Exception $e) {

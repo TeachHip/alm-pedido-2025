@@ -7,6 +7,8 @@
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/includes/CartRepository-DB.php';
+require_once __DIR__ . '/includes/ProductRepository-DB.php';
+require_once __DIR__ . '/includes/SettingsRepository-DB.php';
 
 try {
     // Get JSON input
@@ -43,19 +45,35 @@ try {
         ];
     }
     
+    // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
+    $settingsRepo = new SettingsRepository();
+    $feeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
+    $feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
+    if ($feeAmount > 0) {
+        $productRepo = new ProductRepository();
+        $productIds = array_column($cartItems, 'product_id');
+        if (!$productRepo->anyInSectionKey($productIds, 'flash')) {
+            $feeAmount = 0;
+        }
+    }
+
     // Create cart in database
     $result = $cartRepo->createCart(
         $cartItems,
         null, // client_id (guest for now)
-        session_id()
+        session_id(),
+        $feeAmount,
+        $feeLabel
     );
-    
+
     if ($result['success']) {
         echo json_encode([
             'success' => true,
             'cart_id' => $result['cart_id'],
             'ticket' => $result['ticket'],
-            'total' => $result['total']
+            'total' => $result['total'],
+            'fee_amount' => $result['fee_amount'],
+            'fee_label' => $result['fee_label']
         ]);
     } else {
         throw new Exception($result['error'] ?? 'Error desconocido');

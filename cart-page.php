@@ -1,7 +1,24 @@
 <?php
 // cart-page.php - Shopping cart page
+require_once 'includes/ProductRepository-DB.php';
+require_once 'includes/SettingsRepository-DB.php';
 $pageTitle = 'Carrito - AlMercáu';
+
+// AI: Pedido Expres cart fee, see AI/CHANGELOG.md
+$settingsRepo = new SettingsRepository();
+$productRepo = new ProductRepository();
+$feeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
+$feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
+$pedidoExpresProductIds = [];
+if ($feeAmount > 0) {
+    $pedidoExpresProductIds = array_map('intval', array_column($productRepo->getBySectionKey('flash', false), 'id'));
+}
 ?>
+<script>
+    window.pedidoExpresFeeAmount = <?php echo json_encode($feeAmount); ?>;
+    window.pedidoExpresFeeLabel = <?php echo json_encode($feeLabel); ?>;
+    window.pedidoExpresProductIds = <?php echo json_encode($pedidoExpresProductIds); ?>;
+</script>
 <?php include 'assets/head.php'; ?>
 <?php include 'assets/header.php'; ?>
 
@@ -59,7 +76,34 @@ $pageTitle = 'Carrito - AlMercáu';
             <button class="quantity-btn"
                 onclick="updateQuantity('<?php echo $item['id']; ?>', <?php echo $item['quantity'] + 1; ?>)">+</button>
         </div>
-        <?php endforeach; ?>
+        <?php endforeach;
+
+        // AI: Pedido Expres cart fee (PHP fallback for non-JS rendering), see AI/CHANGELOG.md
+        $cartHasPedidoExpres = false;
+        if (!empty($pedidoExpresProductIds)) {
+            foreach ($cart as $item) {
+                $itemId = $item['id'] ?? null;
+                $numericId = (is_string($itemId) && strpos($itemId, 'product-') === 0)
+                    ? (int)str_replace('product-', '', $itemId)
+                    : (int)$itemId;
+                if (in_array($numericId, $pedidoExpresProductIds, true)) {
+                    $cartHasPedidoExpres = true;
+                    break;
+                }
+            }
+        }
+        if ($cartHasPedidoExpres) {
+            $total += $feeAmount;
+        }
+        ?>
+        <?php if ($cartHasPedidoExpres): ?>
+        <div class="cart-item cart-fee-item">
+            <div class="cart-item-name"><?php echo htmlspecialchars($feeLabel); ?></div>
+            <div class="cart-item-info">
+                <div class="cart-item-total">Total: <?php echo number_format($feeAmount, 2); ?>€</div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <script>
             // Just update cart total display

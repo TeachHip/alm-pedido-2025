@@ -8,6 +8,8 @@ require_once dirname(__FILE__) . '/../includes/SettingsRepository-DB.php';
 try {
     $settingsRepo = new SettingsRepository();
     $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
+    $feeAmount = $settingsRepo->get('pedido_expres_fee_amount', '0');
+    $feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
 } catch (Exception $e) {
     error_log("Error loading settings: " . $e->getMessage());
     die("Error: No se pudieron cargar las configuraciones.");
@@ -61,6 +63,18 @@ try {
         </div>
     </div>
 
+    <?php if (isset($_GET['success'])): ?>
+    <div class="success-message">
+        ✅ Configuración guardada correctamente
+    </div>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['error'])): ?>
+    <div class="error-message">
+        ❌ <?php echo htmlspecialchars($_GET['error']); ?>
+    </div>
+    <?php endif; ?>
+
     <div class="edit-form">
         <div class="form-group">
             <label>Precios en la tienda</label>
@@ -78,6 +92,30 @@ try {
                 <?php endif; ?>
             </a>
         </div>
+    </div>
+
+    <!-- AI: Pedido Expres cart fee, see AI/CHANGELOG.md -->
+    <div class="edit-form" style="margin-top: 20px;">
+        <form action="save-fee-settings.php" method="POST">
+            <div class="form-group">
+                <label>Cargo fijo por carrito con producto de "Pedido Exprés"</label>
+                <p style="color:#666; font-size: 14px;">
+                    Se cobra una sola vez por carrito (no por producto/unidad) cuando el carrito contiene
+                    al menos un producto de la sección "Pedido Exprés". Importe 0 = desactivado.
+                </p>
+            </div>
+            <div class="form-group">
+                <label for="fee_amount">Importe (€)</label>
+                <input type="number" id="fee_amount" name="fee_amount" value="<?php echo htmlspecialchars($feeAmount); ?>" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="fee_label">Texto a mostrar</label>
+                <input type="text" id="fee_label" name="fee_label" value="<?php echo htmlspecialchars($feeLabel); ?>" maxlength="255">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-save">💾 Guardar</button>
+            </div>
+        </form>
     </div>
 </body>
 </html>

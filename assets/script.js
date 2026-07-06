@@ -252,6 +252,27 @@ function showCartItems(cartItems, cartTotal, whatsappLink) {
         `;
     });
 
+    // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
+    const feeAmount = window.pedidoExpresFeeAmount || 0;
+    const feeProductIds = window.pedidoExpresProductIds || [];
+    if (feeAmount > 0 && feeProductIds.length > 0) {
+        const cartHasFeeProduct = cart.some(item => {
+            const numericId = parseInt(String(item.id).replace('product-', ''), 10);
+            return feeProductIds.includes(numericId);
+        });
+        if (cartHasFeeProduct) {
+            total += feeAmount;
+            itemsHtml += `
+                    <div class="cart-item-name">${window.pedidoExpresFeeLabel || ''}</div>
+            <div class="cart-item cart-fee-item">
+                <div class="cart-item-info">
+                    <div class="cart-item-total">Total: ${feeAmount.toFixed(2)}€</div>
+                </div>
+            </div>
+        `;
+        }
+    }
+
     cartItems.innerHTML = itemsHtml;
     document.querySelector('.whatsapp-btn').style.display = 'block'; //v11 4tres
 
@@ -399,6 +420,11 @@ async function sendWhatsAppMessage() {
                 const itemTotal = (item.price * item.quantity).toFixed(2);
                 message += "- " + item.quantity + "x " + item.name + " - " + itemTotal + "€\n";
             });
+
+            // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
+            if (result.fee_amount) {
+                message += "+ " + result.fee_label + " - " + result.fee_amount.toFixed(2) + "€\n";
+            }
 
             message += "\nTotal: " + result.total.toFixed(2) + "€";
 

@@ -33,7 +33,12 @@ try {
     $pageTitle = "$sectionName - AlMercáu";
 
     // AI: show_dual_pricing toggle (admin/settings.php), see AI/CHANGELOG.md
-    $showDualPricing = (new SettingsRepository())->getBool('show_dual_pricing', false);
+    $settingsRepo = new SettingsRepository();
+    $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
+
+    // AI: Pedido Expres cart fee footline, see AI/CHANGELOG.md
+    $pedidoExpresFeeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
+    $pedidoExpresFeeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
 
 } catch (Exception $e) {
     error_log("Error loading section: " . $e->getMessage());
@@ -100,6 +105,13 @@ include 'assets/header.php';
 <?php if (!empty($sectionDescription)): ?>
         <div class="container page-desc">
             <p><?php echo nl2br(htmlspecialchars($sectionDescription)); ?></p>
+        </div>
+    <?php endif; ?>
+
+    <!-- AI: Pedido Expres cart fee footline, see AI/CHANGELOG.md -->
+    <?php if ($section['key'] === 'flash' && $pedidoExpresFeeAmount > 0): ?>
+        <div class="container page-desc">
+            <p>⚠️ <?php echo htmlspecialchars($pedidoExpresFeeLabel); ?>: <?php echo number_format($pedidoExpresFeeAmount, 2); ?>€ (se añade una sola vez por pedido, no por producto).</p>
         </div>
     <?php endif; ?>
 
