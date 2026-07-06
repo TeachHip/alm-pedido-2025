@@ -122,7 +122,8 @@ function dismissOrderConfirmation() {
 </div>
 <div class="container page-desc">
 <p><strong>INSTRUCCIONES</strong>. Selecciona qué producto quieres, indica qué cantidad deseas y pulsa '<strong>Al carro!</strong>'. Cuando acabes de pedir cada producto, ve al carro (abajo a la derecha), revisa la lista del pedido y, si está correcto, da a '<strong>Enviar por whatsapp</strong>'.</p>
-<p><em>La presente aplicación sólo gestiona los pedidos de los miembros de AlMercáu. Uso exclusivo de mercantes (socias).</em></p>
+<!-- <p><em>La presente aplicación sólo gestiona los pedidos de los miembros de AlMercáu. Uso exclusivo de mercantes (socias).</em></p>-->
+<p><em>La presente aplicación sólo gestiona los pedidos de usuarios de alta (presencial) en la Lista de Difusión de AlMercáu. Uso exclusivo.</em></p>
 </div>
 
 <?php

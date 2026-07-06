@@ -266,7 +266,7 @@ function showCartItems(cartItems, cartTotal, whatsappLink) {
                     <div class="cart-item-name">${window.pedidoExpresFeeLabel || ''}</div>
             <div class="cart-item cart-fee-item">
                 <div class="cart-item-info">
-                    <div class="cart-item-total">Total: ${feeAmount.toFixed(2)}€</div>
+                    <div class="cart-item-total">${feeAmount.toFixed(2)}€</div>
                 </div>
             </div>
         `;

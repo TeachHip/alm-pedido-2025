@@ -100,7 +100,7 @@ if ($feeAmount > 0) {
         <div class="cart-item cart-fee-item">
             <div class="cart-item-name"><?php echo htmlspecialchars($feeLabel); ?></div>
             <div class="cart-item-info">
-                <div class="cart-item-total">Total: <?php echo number_format($feeAmount, 2); ?>€</div>
+                <div class="cart-item-total"><?php echo number_format($feeAmount, 2); ?>€</div>
             </div>
         </div>
         <?php endif; ?>

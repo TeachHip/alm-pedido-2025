@@ -102,18 +102,18 @@ include 'assets/header.php';
 
 
 
-<?php if (!empty($sectionDescription)): ?>
         <div class="container page-desc">
+<?php if (!empty($sectionDescription)): ?>
             <p><?php echo nl2br(htmlspecialchars($sectionDescription)); ?></p>
-        </div>
+
     <?php endif; ?>
 
     <!-- AI: Pedido Expres cart fee footline, see AI/CHANGELOG.md -->
     <?php if ($section['key'] === 'flash' && $pedidoExpresFeeAmount > 0): ?>
-        <div class="container page-desc">
-            <p>⚠️ <?php echo htmlspecialchars($pedidoExpresFeeLabel); ?>: <?php echo number_format($pedidoExpresFeeAmount, 2); ?>€ (se añade una sola vez por pedido, no por producto).</p>
-        </div>
+
+            <p>⚠️ <strong><?php echo htmlspecialchars($pedidoExpresFeeLabel); ?></strong>: <?php echo number_format($pedidoExpresFeeAmount, 2); ?>€ (cuota por pedido, no por producto).</p>
     <?php endif; ?>
+        </div>
 
 
 
