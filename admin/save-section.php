@@ -35,25 +35,16 @@ if (!empty($_POST['key'])) {
 }
 
 // Handle image upload
-$imageName = null;
-if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    $fileType = $_FILES['image']['type'];
-    
-    if (!in_array($fileType, $allowedTypes)) {
-        $errors[] = "Tipo de imagen no permitido. Use JPG, PNG, GIF o WebP";
-    } else {
-        $extension = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $imageName = uniqid('section_') . '.' . $extension;
-        $uploadPath = dirname(__FILE__) . '/../imgs/' . $imageName;
-        
-        if (!move_uploaded_file($_FILES['image']['tmp_name'], $uploadPath)) {
-            $errors[] = "Error al subir la imagen";
-            $imageName = null;
-        }
-    }
-} elseif ($isEdit) {
-    // Keep existing image if not uploading new one
+// Handle image path (downgraded)
+// Handle image filename, always prepend 'imgs/'
+// Handle image filename, always prepend 'grimgs/'
+$imageName = isset($_POST['image']) ? trim($_POST['image']) : '';
+if ($imageName !== '') {
+    // Remove any accidental path and prepend grimgs/
+    $imageName = 'grimgs/' . basename($imageName);
+}
+if ($isEdit && $imageName === 'grimgs/') {
+    // Keep existing image if not provided
     $existingSection = $sectionRepo->getById($sectionId);
     $imageName = $existingSection['image'];
 }

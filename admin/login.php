@@ -5,7 +5,7 @@ include dirname(__FILE__) . '/../includes/auth.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
-    
+
     if (loginAdmin($username, $password)) {
         header('Location: index.php');
         exit;
@@ -39,7 +39,7 @@ if (isAdminLoggedIn()) {
         <?php if (isset($error)): ?>
             <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
-        <form method="POST">
+        <form method="POST" action="login.php">
             <input type="text" name="username" placeholder="Usuario" required autocomplete="username">
             <input type="password" name="password" placeholder="Contraseña" required autocomplete="current-password">
             <button type="submit">Entrar</button>

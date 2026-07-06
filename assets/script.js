@@ -1,17 +1,86 @@
 // ===== CART MANAGEMENT SYSTEM =====
 
 // Cart state
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let cart = [];
 let productQuantities = {};
 
+// Load cart from localStorage (with timestamp check)
+const loadCartFromStorage = () => {
+    try {
+        const stored = localStorage.getItem('cart');
+        if (!stored) return [];
+
+        const cartData = JSON.parse(stored);
+
+        // Check if new format with timestamp
+        if (cartData.items && cartData.lastUpdated) {
+            // Check if cart is older than 48 hours (172800000 ms)
+            const age = Date.now() - cartData.lastUpdated;
+            if (age > 172800000) {
+                // Cart expired, clear it
+                localStorage.removeItem('cart');
+                return [];
+            }
+            return cartData.items;
+        }
+
+        // Old format (array), migrate it
+        if (Array.isArray(cartData)) {
+            return cartData;
+        }
+
+        return [];
+    } catch (e) {
+        console.error('Error loading cart:', e);
+        return [];
+    }
+};
+
+cart = loadCartFromStorage();
+
 // ===== INITIALIZATION =====
+
+/**
+ * Clean up function - remove invalid cart items
+ */
+function cleanupCart() {
+    // Remove items with invalid data
+    cart = cart.filter(item => item.id && item.name && item.price && item.quantity > 0);
+    saveCart();
+}
+
+/**
+ * Get cart from cookie
+ */
+function getCookieCart() {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'cart') {
+            try {
+                return JSON.parse(decodeURIComponent(value));
+            } catch(e) {
+                return [];
+            }
+        }
+    }
+    return [];
+}
 
 /**
  * Initialize the application
  */
 function initializeApp() {
+    // Check if cookie and localStorage are in sync
+    const cookieCart = getCookieCart();
+    if (JSON.stringify(cart) !== JSON.stringify(cookieCart)) {
+        // Cookie is out of sync, resync it
+        syncCartWithPHP();
+    }
+
+    cleanupCart();
     updateCartCount();
-    document.querySelector('.whatsapp-btn').style.display = 'block'; //v11 4tres
+    document.querySelector('.whatsapp-btn').style.display = 'block';
     refreshCartCookie();
 
     if (document.getElementById('cart-items')) {
@@ -32,9 +101,13 @@ function updateCartCount() {
  * Sync cart with PHP cookie (24-hour expiration)
  */
 function syncCartWithPHP() {
+    const cartData = {
+        items: cart,
+        lastUpdated: Date.now()
+    };
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 1);
-    document.cookie = `cart=${JSON.stringify(cart)}; expires=${expirationDate.toUTCString()}; path=/; samesite=lax`;
+    document.cookie = `cart=${encodeURIComponent(JSON.stringify(cartData))}; expires=${expirationDate.toUTCString()}; path=/; samesite=lax`;
 }
 
 /**
@@ -91,6 +164,12 @@ function clearCart() {
         cart = [];
         saveCart();
         updateCartDisplay();
+
+        // Hide "Vaciar carrito" link without reload
+        const emptyCartLink = document.querySelector('.empty-cart-link');
+        if (emptyCartLink) {
+            emptyCartLink.style.display = 'none';
+        }
         // Removed the second alert here
     }
 }
@@ -99,7 +178,11 @@ function clearCart() {
  * Save cart to localStorage and sync with PHP
  */
 function saveCart() {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    const cartData = {
+        items: cart,
+        lastUpdated: Date.now()
+    };
+    localStorage.setItem('cart', JSON.stringify(cartData));
     syncCartWithPHP();
     updateCartCount();
 }
@@ -256,15 +339,23 @@ async function sendWhatsAppMessage() {
         return false;
     }
 
-    let cart;
+    let cartData;
+    let cartItems;
     try {
-        cart = JSON.parse(cartJson);
+        cartData = JSON.parse(cartJson);
+        // Handle new format with timestamp
+        if (cartData.items) {
+            cartItems = cartData.items;
+        } else {
+            // Old format
+            cartItems = cartData;
+        }
     } catch (e) {
         alert('Error al leer el carrito');
         return false;
     }
 
-    if (!cart || cart.length === 0) {
+    if (!cartItems || cartItems.length === 0) {
         alert('Tu carrito está vacío');
         return false;
     }
@@ -283,7 +374,7 @@ async function sendWhatsAppMessage() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ items: cart })
+                body: JSON.stringify({ items: cartItems })
             });
 
             const result = await response.json();
@@ -299,31 +390,25 @@ async function sendWhatsAppMessage() {
                 timestamp: Date.now()
             }));
 
-            // Clear cart from localStorage BEFORE opening WhatsApp
-            localStorage.removeItem('cart');
+            // DO NOT clear cart here - let user do it via "Cerrar y vaciar carrito" button
 
             // Generate WhatsApp message with ticket number
-            let message = `🛒 Pedido ${result.ticket}%0A%0A`;
-            
-            cart.forEach(item => {
+            let message = "🛒 Pedido " + result.ticket + "\n\n";
+
+            cartItems.forEach(item => {
                 const itemTotal = (item.price * item.quantity).toFixed(2);
-                message += `- ${item.name} (${item.quantity}x) - ${itemTotal}€%0A`;
+                message += "- " + item.quantity + "x " + item.name + " - " + itemTotal + "€\n";
             });
 
-            message += `%0ATotal: ${result.total.toFixed(2)}€`;
+            message += "\nTotal: " + result.total.toFixed(2) + "€";
 
             const phoneNumber = "34611183123"; // AlMercáu WhatsApp
 
             // Create WhatsApp URL
-            const whatsappURL = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
+            const whatsappURL = "https://api.whatsapp.com/send?phone=" + phoneNumber + "&text=" + encodeURIComponent(message);
 
-            // Open WhatsApp in new window/tab (doesn't close current page)
-            window.open(whatsappURL, '_blank');
-            
-            // Redirect to homepage to show confirmation
-            setTimeout(() => {
-                window.location.href = 'index.php';
-            }, 1000);
+            // Navigate directly to WhatsApp (works on iPhone, doesn't get blocked as popup)
+            window.location.href = whatsappURL;
 
         } catch (error) {
             console.error('Error:', error);
@@ -332,7 +417,7 @@ async function sendWhatsAppMessage() {
             btn.disabled = false;
         }
     }
-    
+
     return false;
 }
 

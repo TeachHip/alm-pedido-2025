@@ -38,7 +38,8 @@ try {
                 'price2' => $productData['price_public'],
                 'image' => $productData['image'],
                 'description' => $productData['description'],
-                'visible' => $productData['visible']
+                'visible' => $productData['visible'],
+                'almost_out_of_stock' => $productData['almost_out_of_stock']
             ];
             
             if ($isClone) {
@@ -66,7 +67,8 @@ try {
             'price2' => 0,
             'image' => '',
             'description' => '',
-            'visible' => true
+            'visible' => true,
+            'almost_out_of_stock' => false
         ];
     }
     
@@ -147,6 +149,14 @@ try {
                 <?php if ($isClone): ?>
                 <small class="clone-hint">Recomendado: revisar la copia antes de activar.</small>
                 <?php endif; ?>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="almost_out_of_stock" value="1" <?php echo ($product['almost_out_of_stock'] ?? false) ? 'checked' : ''; ?>>
+                    Fin de stock
+                </label>
+                <small>Si está marcado, aparecerá también en la categoría "Fin de stock"</small>
             </div>
 
             <div class="form-actions">

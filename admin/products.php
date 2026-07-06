@@ -210,6 +210,10 @@ try {
 
     <a href="edit-product.php" class="add-product">+ Añadir Producto</a>
 
+    <button id="toggle-visible-btn" type="button" style="margin-left: 15px; padding: 7px 16px; font-size: 15px; border-radius: 5px; border: 1px solid #bbb; background: #f8f8f8; cursor: pointer;">
+        Mostrar solo visibles
+    </button>
+
     <div class="products-table">
         <?php if (empty($productsBySection)): ?>
         <div class="empty-state">
@@ -232,6 +236,7 @@ try {
                         <thead>
                             <tr>
                                 <th width="5%">ID</th>
+                                <th width="7%">Fin de stock</th>
                                 <th width="20%">Nombre</th>
                                 <th width="10%">Precio Socio</th>
                                 <th width="10%">Precio Público</th>
@@ -241,12 +246,37 @@ try {
                         </thead>
                         <tbody class="section-tbody">
                             <?php foreach ($products as $product): ?>
-                            <tr data-product-id="<?php echo $product['id']; ?>">
+                            <tr data-product-id="<?php echo $product['id']; ?>" data-visible="<?php echo $product['visible'] ? '1' : '0'; ?>">
+                                <script>
+                                // Toggle show/hide products not visible to public
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const btn = document.getElementById('toggle-visible-btn');
+                                    let showOnlyVisible = false;
+                                    btn.addEventListener('click', function() {
+                                        showOnlyVisible = !showOnlyVisible;
+                                        btn.textContent = showOnlyVisible ? 'Mostrar todos' : 'Mostrar solo visibles';
+                                        document.querySelectorAll('tr[data-product-id]').forEach(function(row) {
+                                            if (showOnlyVisible && row.getAttribute('data-visible') !== '1') {
+                                                row.style.display = 'none';
+                                            } else {
+                                                row.style.display = '';
+                                            }
+                                        });
+                                    });
+                                });
+                                </script>
                                 <td>
                                     <span class="drag-handle" title="Arrastra para reordenar">⋮⋮</span>
                                     <?php echo $product['id']; ?>
                                     <br>
                                     <img src="../primgs/<?php echo htmlspecialchars($product['image']); ?>" width="40" style="width:40px; margin-top: 5px;" alt="">
+                                </td>
+                                <td style="text-align: center;">
+                                    <?php if ($product['almost_out_of_stock']): ?>
+                                    <span style="color: #ff6b6b; font-size: 18px;" title="Fin de stock">⚠️</span>
+                                    <?php else: ?>
+                                    <span style="color: #ccc;">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td><?php echo htmlspecialchars($product['name']); ?></td>
                                 <td>€<?php echo number_format($product['price_member'], 2); ?></td>

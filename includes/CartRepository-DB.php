@@ -191,4 +191,58 @@ class CartRepository {
         
         return "#ALM-{$year}-{$month}-{$paddedNumber}";
     }
+    
+    /**
+     * Get all orders (carts) ordered by most recent
+     */
+    public function getAllOrders($limit = null, $offset = 0) {
+        $sql = "SELECT c.*, COUNT(ci.id) as items_count
+                FROM carts c
+                LEFT JOIN cart_items ci ON c.id = ci.cart_id
+                GROUP BY c.id
+                ORDER BY c.created_at DESC";
+        
+        if ($limit) {
+            $sql .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
+        }
+        
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll();
+    }
+    
+    /**
+     * Get total count of orders
+     */
+    public function getOrdersCount() {
+        $sql = "SELECT COUNT(*) as total FROM carts";
+        $stmt = $this->db->query($sql);
+        $result = $stmt->fetch();
+        return $result['total'] ?? 0;
+    }
+    
+    /**
+     * Get order details with items
+     */
+    public function getOrderWithItems($cartId) {
+        // Get cart info
+        $cart = $this->getById($cartId);
+        if (!$cart) return null;
+        
+        // Get cart items with product details
+        $sql = "SELECT ci.*, p.name as product_name, p.image as product_image
+                FROM cart_items ci
+                LEFT JOIN products p ON ci.product_id = p.id
+                WHERE ci.cart_id = :cart_id
+                ORDER BY ci.id ASC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['cart_id' => $cartId]);
+        $items = $stmt->fetchAll();
+        
+        return [
+            'cart' => $cart,
+            'items' => $items,
+            'ticket' => $this->getTicketNumber($cartId)
+        ];
+    }
 }

@@ -20,6 +20,7 @@ $pricePublic = floatval($_POST['price_public'] ?? 0);
 $image = trim($_POST['image'] ?? '');
 $description = trim($_POST['description'] ?? '');
 $visible = isset($_POST['visible']) ? 1 : 0;
+$almostOutOfStock = isset($_POST['almost_out_of_stock']) ? 1 : 0;
 
 // Validate required fields
 if (empty($section_key) || empty($name) || $priceMember <= 0 || $pricePublic <= 0) {
@@ -30,14 +31,25 @@ if (empty($section_key) || empty($name) || $priceMember <= 0 || $pricePublic <= 
 try {
     $productRepo = new ProductRepository();
     $sectionRepo = new SectionRepository();
-    
+
     // Get section ID from key
     $section = $sectionRepo->getByKey($section_key);
     if (!$section) {
         header('Location: products.php?error=Invalid section');
         exit;
     }
-    
+
+// Determine display_order
+if (!empty($original_product_id)) {
+    // For updates, preserve the existing display_order
+    $existingProduct = $productRepo->getById($original_product_id);
+    $displayOrder = $existingProduct['display_order'];
+} else {
+    // For new products, get the max order in the section and add 1
+    $sectionProducts = $productRepo->getBySectionId($section['id'], false);
+    $displayOrder = count($sectionProducts) + 1;
+}
+
     $productData = [
         'section_id' => $section['id'],
         'name' => $name,
@@ -45,12 +57,12 @@ try {
         'price_public' => $pricePublic,
         'image' => $image,
         'description' => $description,
-        'display_order' => 1,
+        'display_order' => $displayOrder,
         'active' => 1,
         'visible' => $visible,
-        'almost_out_of_stock' => 0
+        'almost_out_of_stock' => $almostOutOfStock
     ];
-    
+
     if (!empty($original_product_id)) {
         // Update existing product
         $result = $productRepo->update($original_product_id, $productData);
@@ -60,9 +72,9 @@ try {
         $newId = $productRepo->create($productData);
         error_log("Created new product ID: $newId");
     }
-    
+
     header('Location: products.php?success=1');
-    
+
 } catch (Exception $e) {
     error_log("Error saving product: " . $e->getMessage());
     header('Location: products.php?error=' . urlencode($e->getMessage()));

@@ -40,14 +40,28 @@ include 'assets/header.php';
     <a href="section.php?section=<?php echo $product['section_id']; ?>" class="back-btn">&larr; Volver a <?php echo htmlspecialchars($section['name']); ?></a>
 
     <div class="product-detail">
-        <img src="<?php echo !empty($product['image']) ? 'primgs/' . htmlspecialchars($product['image']) : 'https://placehold.co/400x300/25D366/ffffff?text=Imagen+no+disponible'; ?>"
-             alt="<?php echo htmlspecialchars($product['name']); ?>"
-             class="detail-image"
-             onerror="this.src='https://placehold.co/400x300/25D366/ffffff?text=Imagen+no+disponible'">
+        <div style="position: relative;">
+            <?php if ($product['almost_out_of_stock']): ?>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #FFFF00; color: black; padding: 5px 8px 8px 8px; border-radius: 5px; font-size: 13px; font-weight: bold; z-index: 10; text-align: center; line-height: 1.3; white-space: nowrap;">
+                ⚠️ Fin de stock
+            </div>
+            <?php endif; ?>
+            <img src="<?php echo !empty($product['image']) ? 'primgs/' . htmlspecialchars($product['image']) : 'https://placehold.co/400x300/25D366/ffffff?text=Imagen+no+disponible'; ?>"
+                 alt="<?php echo htmlspecialchars($product['name']); ?>"
+                 class="detail-image"
+                 onerror="this.src='https://placehold.co/400x300/25D366/ffffff?text=Imagen+no+disponible'">
+        </div>
         <div class="detail-info">
             <h2 class="detail-name"><?php echo htmlspecialchars($product['name']); ?></h2>
             <div class="detail-price">
+					<?php
+						if ($product['price_public'] != $product['price_member']) {
+					?>
                  <del class="greyed"><?php echo number_format($product['price_public'], 2); ?>€</del> |
+					<?php 
+						}							
+					?>
+				 
                         <?php echo number_format($product['price_member'], 2); ?>€
             </div>
             <p class="detail-description"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>

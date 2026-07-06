@@ -89,21 +89,9 @@ if (!$isEdit) {
             </div>
 
             <div class="form-group">
-                <label for="image">Imagen de Sección</label>
-                <?php if ($section && !empty($section['image'])): ?>
-                <div style="margin-bottom: 10px;">
-                    <img src="../imgs/<?php echo htmlspecialchars($section['image']); ?>" 
-                         style="max-width: 200px; border-radius: 5px;" 
-                         alt="Imagen actual">
-                    <br>
-                    <small>Imagen actual: <?php echo htmlspecialchars($section['image']); ?></small>
-                </div>
-                <?php endif; ?>
-                <input type="file" 
-                       id="image" 
-                       name="image" 
-                       accept="image/*">
-                <small>Deja vacío para mantener la imagen actual</small>
+                <label for="image">Nombre de imagen de sección:</label>
+                <input type="text" name="image" id="image" value="<?php echo $section ? htmlspecialchars(str_replace('grimgs/', '', $section['image'])) : ''; ?>" placeholder="imagen.jpg">
+                <small>Solo el nombre del archivo (ejemplo: pedido-expres.jpg). La ruta será siempre 'grimgs/'.</small>
             </div>
 
             <div class="form-group">

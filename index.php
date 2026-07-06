@@ -22,11 +22,11 @@ $pageTitle = 'AlMercáu - Carro de la compra para mercantes';
 
 <!-- Order Confirmation Banner -->
 <div id="order-confirmation-banner" style="display: none; background: #4CAF50; color: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 8px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
-    <h3 style="margin: 0 0 10px 0; font-size: 20px;">✅ Pedido realizado</h3>
+    <h3 style="margin: 0 0 10px 0; font-size: 20px;">✅ Pedido realizado<br><span style="font-weight: normal;">(si enviaste el whatsapp)</span></h3>
     <p style="margin: 0 0 5px 0; font-size: 16px;">Ticket: <strong><span id="order-ticket"></span></strong></p>
     <p style="margin: 0 0 15px 0; font-size: 14px;">Recibirás confirmación por WhatsApp</p>
     <button onclick="dismissOrderConfirmation()" style="background: white; color: #4CAF50; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
-        Cerrar
+        Cerrar y vaciar carrito
     </button>
 </div>
 
@@ -34,12 +34,12 @@ $pageTitle = 'AlMercáu - Carro de la compra para mercantes';
 // Check for recent order confirmation on page load
 document.addEventListener('DOMContentLoaded', function() {
     const lastOrder = localStorage.getItem('last_order');
-    
+
     if (lastOrder) {
         try {
             const order = JSON.parse(lastOrder);
             const ageMinutes = (Date.now() - order.timestamp) / 1000 / 60;
-            
+
             // If order was placed in last 5 minutes, show confirmation
             if (ageMinutes < 5) {
                 const banner = document.getElementById('order-confirmation-banner');
@@ -47,9 +47,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (banner && ticketSpan) {
                     ticketSpan.textContent = order.ticket;
                     banner.style.display = 'block';
+
+                    // Hide "Vaciar carrito" link when banner is showing
+                    const emptyCartLink = document.querySelector('.empty-cart-link');
+                    if (emptyCartLink) {
+                        emptyCartLink.style.display = 'none';
+                    }
                 }
             }
-            
+
             // Clean up old order reference
             if (ageMinutes > 60) {
                 localStorage.removeItem('last_order');
@@ -67,6 +73,29 @@ function dismissOrderConfirmation() {
         banner.style.display = 'none';
     }
     localStorage.removeItem('last_order');
+
+    // Clear cart silently (no confirmation needed since order already placed)
+    if (typeof cart !== 'undefined') {
+        cart = [];
+        const cartData = {
+            items: [],
+            lastUpdated: Date.now()
+        };
+        localStorage.setItem('cart', JSON.stringify(cartData));
+
+        // Update cookie
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 1);
+        document.cookie = `cart=${encodeURIComponent(JSON.stringify(cartData))}; expires=${expirationDate.toUTCString()}; path=/; samesite=lax`;
+
+        // Update cart count
+        if (typeof updateCartCount === 'function') {
+            updateCartCount();
+        }
+
+        // Reload page to hide "Vaciar carrito" link
+        window.location.reload();
+    }
 }
 </script>
 
