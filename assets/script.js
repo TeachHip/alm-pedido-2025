@@ -326,6 +326,38 @@ function resetProductQuantity(productId) {
     if (quantityElement) quantityElement.textContent = '1';
 }
 
+// ===== PRODUCT OPTIONS (variants) =====
+// The server resolves every option into a purchasable "cart line" (id, name,
+// price, image, priceHtml) embedded as data-line on each <option> — see
+// includes/PriceHelper.php's resolveCartLines(). These two functions just
+// read that data; no price/name logic is duplicated here.
+
+/**
+ * Update the visible price block to match the currently selected option.
+ */
+function updateOptionPriceDisplay(productId) {
+    const select = document.getElementById('option-select-' + productId);
+    if (!select) return;
+    const line = JSON.parse(select.options[select.selectedIndex].dataset.line);
+    const display = document.getElementById('price-display-' + productId);
+    if (display) display.innerHTML = line.priceHtml;
+}
+
+/**
+ * Add to cart using whichever option is currently selected in the product's
+ * dropdown. Mirrors addToCartFromProduct/addToCartFromSection; resetQuantity
+ * matches addToCartFromSection's behavior (true) vs addToCartFromProduct's (false).
+ */
+function addToCartFromOptions(productId, selectId, resetQuantity) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const line = JSON.parse(select.options[select.selectedIndex].dataset.line);
+    const quantityKey = 'product-' + productId;
+    const quantity = productQuantities[quantityKey] || 1;
+    addToCart(line.id, line.name, line.price, line.image, quantity);
+    if (resetQuantity) resetProductQuantity(quantityKey);
+}
+
 // ===== WHATSAPP FUNCTION =====
 function updateWhatsAppLink(whatsappLink, total) {
     if (!whatsappLink) return;

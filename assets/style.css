@@ -413,6 +413,29 @@ a.menu-item {
     text-align: center;
 }
 
+/* ===== PRODUCT OPTIONS (variants) ===== */
+.product-option-select {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.product-option-select select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.product-option-select select:focus {
+    outline: none;
+    border-color: #25D366;
+}
+
 /* ===== QUANTITY CONTROLS (Consolidated) ===== */
 .product-quantity {
     margin: 10px 0;

@@ -165,7 +165,8 @@ include dirname(__FILE__) . '/partials/head.php';
                                 
                                 data.items.forEach(item => {
                                     html += '<div class="order-item">';
-                                    html += item.quantity + 'x ' + item.product_name + ' - ' + parseFloat(item.subtotal).toFixed(2) + '€';
+                                    const productLabel = item.option_label ? item.product_name + ' (' + item.option_label + ')' : item.product_name;
+                                    html += item.quantity + 'x ' + productLabel + ' - ' + parseFloat(item.subtotal).toFixed(2) + '€';
                                     html += '</div>';
                                 });
                                 

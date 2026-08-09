@@ -35,11 +35,24 @@ function parseCartCookie() {
 
 /**
  * Normalize a cart item's id/product_id (which may be 'product-7' or plain 7)
- * down to its numeric product id.
+ * down to its numeric product id. Also handles the options format
+ * 'product-7-option-12' (PHP's (int) cast stops at the first non-digit, so
+ * this already resolves to 7 without any special-casing).
  */
 function extractProductId($rawId) {
     if (is_string($rawId) && strpos($rawId, 'product-') === 0) {
         return (int) str_replace('product-', '', $rawId);
     }
     return (int) $rawId;
+}
+
+/**
+ * Extract the option id from a cart item id like 'product-7-option-12'.
+ * Returns null when the item has no option (ordinary product).
+ */
+function extractOptionId($rawId) {
+    if (is_string($rawId) && preg_match('/-option-(\d+)$/', $rawId, $matches)) {
+        return (int) $matches[1];
+    }
+    return null;
 }

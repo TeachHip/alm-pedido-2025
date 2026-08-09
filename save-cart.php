@@ -30,11 +30,13 @@ try {
     // Prepare cart items with proper structure
     $cartItems = [];
     foreach ($data['items'] as $item) {
-        // Extract numeric ID from formats like 'product-7' or just '7'
+        // Extract numeric ID from formats like 'product-7', 'product-7-option-12', or just '7'
         $productId = extractProductId($item['id'] ?? $item['product_id'] ?? null);
+        $optionId = extractOptionId($item['id'] ?? null);
 
         $cartItems[] = [
             'product_id' => $productId,
+            'product_option_id' => $optionId,
             'quantity' => $item['quantity'] ?? 1,
             'price' => $item['price'] ?? 0,
             'name' => $item['name'] ?? ''

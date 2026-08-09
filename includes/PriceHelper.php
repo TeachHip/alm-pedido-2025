@@ -26,3 +26,30 @@ function renderPriceHtml($product, $showDualPricing) {
     $html .= number_format(getCartPrice($product, $showDualPricing), 2) . '€';
     return $html;
 }
+
+/**
+ * Resolve a product's options into purchasable cart lines: one entry per
+ * option, each carrying everything the cart needs (id, display name, price,
+ * image) plus the price HTML for display. This is the single place that
+ * translates "product + chosen variant" into a cart-line identity — the
+ * dropdown on product.php/section.php renders from this, and the client JS
+ * only looks entries up here rather than recomputing price/name itself.
+ * Assumes $options is non-empty (callers only invoke this when a product
+ * has options; products without options keep using getCartPrice/renderPriceHtml
+ * directly, unchanged).
+ */
+function resolveCartLines($product, $options, $showDualPricing) {
+    $image = !empty($product['image']) ? 'primgs/' . $product['image'] : '';
+    $lines = [];
+    foreach ($options as $option) {
+        $lines[] = [
+            'id' => 'product-' . $product['id'] . '-option-' . $option['id'],
+            'label' => $option['label'],
+            'name' => $product['name'] . ' (' . $option['label'] . ')',
+            'price' => (float) getCartPrice($option, $showDualPricing),
+            'priceHtml' => renderPriceHtml($option, $showDualPricing),
+            'image' => $image,
+        ];
+    }
+    return $lines;
+}

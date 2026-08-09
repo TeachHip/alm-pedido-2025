@@ -3,6 +3,7 @@
 require_once 'includes/repositories/SectionRepository-DB.php';
 require_once 'includes/repositories/ProductRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
+require_once 'includes/repositories/ProductOptionRepository-DB.php';
 require_once 'includes/PriceHelper.php';
 
 // Include 00.php for cart functionality - cookie
@@ -37,6 +38,10 @@ try {
     $settingsRepo = new SettingsRepository();
     $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
 
+    // AI: product options (variants), batch-fetched to avoid N+1 queries, see
+    // AI/CHANGELOG.md and includes/PriceHelper.php
+    $optionsByProduct = (new ProductOptionRepository())->getByProductIds(array_column($products, 'id'));
+
     // AI: Pedido Expres cart fee footline, see AI/CHANGELOG.md
     $pedidoExpresFeeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
     $pedidoExpresFeeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
@@ -62,7 +67,11 @@ include 'partials/header.php';
     </div>
 <?php else: ?>
     <div class="product-grid">
-        <?php foreach ($products as $product): ?>
+        <?php foreach ($products as $product):
+            $options = $optionsByProduct[$product['id']] ?? [];
+            $hasOptions = !empty($options);
+            $cartLines = $hasOptions ? resolveCartLines($product, $options, $showDualPricing) : [];
+        ?>
             <div class="product-card">
                 <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link" style="position: relative; display: block;">
                     <?php if ($product['almost_out_of_stock']): ?>
@@ -80,17 +89,28 @@ include 'partials/header.php';
                         <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
                     </a>
                     <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md and includes/PriceHelper.php -->
-                    <div class="product-price">
-                        <?php echo renderPriceHtml($product, $showDualPricing); ?>
+                    <div class="product-price" id="price-display-<?php echo $product['id']; ?>">
+                        <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $showDualPricing); ?>
                     </div>
+
+                    <?php if ($hasOptions): ?>
+                        <?php include 'partials/product-option-select.php'; ?>
+                    <?php endif; ?>
+
                     <div class="product-quantity">
                         <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', -1)">-</button>
                         <span class="quantity-value" id="quantity-product-<?php echo $product['id']; ?>">1</span>
                         <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', 1)">+</button>
                     </div>
+                    <?php if ($hasOptions): ?>
+                    <button class="btn" onclick="addToCartFromOptions('<?php echo $product['id']; ?>', 'option-select-<?php echo $product['id']; ?>', true)">
+                        Al carro!
+                    </button>
+                    <?php else: ?>
                     <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo getCartPrice($product, $showDualPricing); ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                         Al carro!
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>

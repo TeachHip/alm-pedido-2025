@@ -25,6 +25,30 @@ class ProductOptionRepository {
     }
 
     /**
+     * Get options for multiple products in one query (avoids N+1 in listing
+     * pages like section.php). Returns [product_id => [options...]], ordered
+     * by display_order within each product. Products with no options are
+     * simply absent from the returned array.
+     */
+    public function getByProductIds($productIds) {
+        $productIds = array_values(array_unique(array_map('intval', $productIds)));
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        $sql = "SELECT * FROM product_options WHERE product_id IN ($placeholders) ORDER BY product_id ASC, display_order ASC, id ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($productIds);
+
+        $grouped = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $grouped[$row['product_id']][] = $row;
+        }
+        return $grouped;
+    }
+
+    /**
      * Get counts of options per product, for all products that have at least one
      * Returns [product_id => count]
      */

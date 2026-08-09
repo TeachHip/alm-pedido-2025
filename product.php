@@ -3,6 +3,7 @@
 require_once 'includes/repositories/ProductRepository-DB.php';
 require_once 'includes/repositories/SectionRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
+require_once 'includes/repositories/ProductOptionRepository-DB.php';
 require_once 'includes/PriceHelper.php';
 
 // Include 00.php for cart functionality - cookie
@@ -28,6 +29,11 @@ try {
     // AI: show_dual_pricing toggle (admin/settings.php), see AI/CHANGELOG.md
     $showDualPricing = (new SettingsRepository())->getBool('show_dual_pricing', false);
     $cartPrice = getCartPrice($product, $showDualPricing);
+
+    // AI: product options (variants), see AI/CHANGELOG.md and includes/PriceHelper.php
+    $options = (new ProductOptionRepository())->getByProductId($productId);
+    $hasOptions = !empty($options);
+    $cartLines = $hasOptions ? resolveCartLines($product, $options, $showDualPricing) : [];
 
     $pageTitle = "{$product['name']} - AlMercáu";
     
@@ -60,18 +66,29 @@ include 'partials/header.php';
         <div class="detail-info">
             <h2 class="detail-name"><?php echo htmlspecialchars($product['name']); ?></h2>
             <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md and includes/PriceHelper.php -->
-            <div class="detail-price">
-                <?php echo renderPriceHtml($product, $showDualPricing); ?>
+            <div class="detail-price" id="price-display-<?php echo $product['id']; ?>">
+                <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $showDualPricing); ?>
             </div>
-            <p class="detail-description"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
+            <p class="detail-description"><?php echo nl2br(htmlspecialchars($product['description'] ?? '')); ?></p>
+
+            <?php if ($hasOptions): ?>
+                <?php include 'partials/product-option-select.php'; ?>
+            <?php endif; ?>
+
             <div class="product-quantity">
                 <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', -1)">-</button>
                 <span class="quantity-value" id="quantity-product-<?php echo $product['id']; ?>">1</span>
                 <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', 1)">+</button>
             </div>
+            <?php if ($hasOptions): ?>
+            <button class="add-to-cart-btn" onclick="addToCartFromOptions('<?php echo $product['id']; ?>', 'option-select-<?php echo $product['id']; ?>', false)">
+                Al carro!
+            </button>
+            <?php else: ?>
             <button class="add-to-cart-btn" onclick="addToCartFromProduct('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $cartPrice; /* AI: price_member or price_public depending on show_dual_pricing */ ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                 Al carro!
             </button>
+            <?php endif; ?>
         </div>
     </div>
 </div>

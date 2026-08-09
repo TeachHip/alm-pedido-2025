@@ -76,18 +76,19 @@ class CartRepository {
             $cartId = $this->db->lastInsertId();
             
             // Create cart items
-            $itemSql = "INSERT INTO cart_items (cart_id, product_id, quantity, price_snapshot, subtotal) 
-                        VALUES (:cart_id, :product_id, :quantity, :price_snapshot, :subtotal)";
+            $itemSql = "INSERT INTO cart_items (cart_id, product_id, product_option_id, quantity, price_snapshot, subtotal)
+                        VALUES (:cart_id, :product_id, :product_option_id, :quantity, :price_snapshot, :subtotal)";
             $itemStmt = $this->db->prepare($itemSql);
-            
+
             foreach ($cartItems as $item) {
                 $quantity = $item['quantity'] ?? 1;
                 $price = $item['price'] ?? 0;
                 $subtotal = $quantity * $price;
-                
+
                 $itemStmt->execute([
                     'cart_id' => $cartId,
                     'product_id' => $item['product_id'] ?? null,
+                    'product_option_id' => $item['product_option_id'] ?? null,
                     'quantity' => $quantity,
                     'price_snapshot' => $price,
                     'subtotal' => $subtotal
@@ -123,20 +124,6 @@ class CartRepository {
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['id' => $cartId]);
         return $stmt->fetch();
-    }
-    
-    /**
-     * Get cart items for a cart
-     */
-    public function getCartItems($cartId) {
-        $sql = "SELECT ci.*, p.name as product_name, p.image 
-                FROM cart_items ci 
-                LEFT JOIN products p ON ci.product_id = p.id 
-                WHERE ci.cart_id = :cart_id 
-                ORDER BY ci.id ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['cart_id' => $cartId]);
-        return $stmt->fetchAll();
     }
     
     /**
@@ -242,9 +229,10 @@ class CartRepository {
         if (!$cart) return null;
         
         // Get cart items with product details
-        $sql = "SELECT ci.*, p.name as product_name, p.image as product_image
+        $sql = "SELECT ci.*, p.name as product_name, p.image as product_image, po.label as option_label
                 FROM cart_items ci
                 LEFT JOIN products p ON ci.product_id = p.id
+                LEFT JOIN product_options po ON ci.product_option_id = po.id
                 WHERE ci.cart_id = :cart_id
                 ORDER BY ci.id ASC";
         
