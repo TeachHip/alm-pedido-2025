@@ -247,24 +247,6 @@ try {
                         <tbody class="section-tbody">
                             <?php foreach ($products as $product): ?>
                             <tr data-product-id="<?php echo $product['id']; ?>" data-visible="<?php echo $product['visible'] ? '1' : '0'; ?>">
-                                <script>
-                                // Toggle show/hide products not visible to public
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    const btn = document.getElementById('toggle-visible-btn');
-                                    let showOnlyVisible = false;
-                                    btn.addEventListener('click', function() {
-                                        showOnlyVisible = !showOnlyVisible;
-                                        btn.textContent = showOnlyVisible ? 'Mostrar todos' : 'Mostrar solo visibles';
-                                        document.querySelectorAll('tr[data-product-id]').forEach(function(row) {
-                                            if (showOnlyVisible && row.getAttribute('data-visible') !== '1') {
-                                                row.style.display = 'none';
-                                            } else {
-                                                row.style.display = '';
-                                            }
-                                        });
-                                    });
-                                });
-                                </script>
                                 <td>
                                     <span class="drag-handle" title="Arrastra para reordenar">⋮⋮</span>
                                     <?php echo $product['id']; ?>
@@ -310,5 +292,42 @@ try {
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
+
+    <script>
+    // Toggle show/hide products not visible to public, persisted across navigation via cookie
+    (function() {
+        const COOKIE_NAME = 'admin_show_only_visible';
+
+        function getCookie(name) {
+            const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+            return match ? match.pop() : null;
+        }
+
+        function setCookie(name, value) {
+            const expires = new Date();
+            expires.setFullYear(expires.getFullYear() + 1);
+            document.cookie = name + '=' + value + '; expires=' + expires.toUTCString() + '; path=/; samesite=lax';
+        }
+
+        function applyFilter(showOnlyVisible) {
+            document.querySelectorAll('tr[data-product-id]').forEach(function(row) {
+                row.style.display = (showOnlyVisible && row.getAttribute('data-visible') !== '1') ? 'none' : '';
+            });
+        }
+
+        const btn = document.getElementById('toggle-visible-btn');
+        let showOnlyVisible = getCookie(COOKIE_NAME) === '1';
+
+        btn.textContent = showOnlyVisible ? 'Mostrar todos' : 'Mostrar solo visibles';
+        applyFilter(showOnlyVisible);
+
+        btn.addEventListener('click', function() {
+            showOnlyVisible = !showOnlyVisible;
+            btn.textContent = showOnlyVisible ? 'Mostrar todos' : 'Mostrar solo visibles';
+            applyFilter(showOnlyVisible);
+            setCookie(COOKIE_NAME, showOnlyVisible ? '1' : '0');
+        });
+    })();
+    </script>
 </body>
 </html>
