@@ -4,7 +4,7 @@
  * Handles admin user authentication and management
  */
 
-require_once __DIR__ . '/database-DB.php';
+require_once __DIR__ . '/../db/database-DB.php';
 
 class UserRepository {
     private $db;

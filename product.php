@@ -1,11 +1,12 @@
 <?php
 // Load database repository
-require_once 'includes/ProductRepository-DB.php';
-require_once 'includes/SectionRepository-DB.php';
-require_once 'includes/SettingsRepository-DB.php';
+require_once 'includes/repositories/ProductRepository-DB.php';
+require_once 'includes/repositories/SectionRepository-DB.php';
+require_once 'includes/repositories/SettingsRepository-DB.php';
+require_once 'includes/PriceHelper.php';
 
 // Include 00.php for cart functionality - cookie
-include 'assets/00.php';
+include 'partials/00.php';
 
 try {
     $productRepo = new ProductRepository();
@@ -26,7 +27,7 @@ try {
 
     // AI: show_dual_pricing toggle (admin/settings.php), see AI/CHANGELOG.md
     $showDualPricing = (new SettingsRepository())->getBool('show_dual_pricing', false);
-    $cartPrice = $showDualPricing ? $product['price_member'] : $product['price_public'];
+    $cartPrice = getCartPrice($product, $showDualPricing);
 
     $pageTitle = "{$product['name']} - AlMercáu";
     
@@ -37,8 +38,8 @@ try {
 }
 
 //START HTML
-include 'assets/head.php';
-include 'assets/header.php';
+include 'partials/head.php';
+include 'partials/header.php';
 ?>
 
 <div class="container">
@@ -58,12 +59,9 @@ include 'assets/header.php';
         </div>
         <div class="detail-info">
             <h2 class="detail-name"><?php echo htmlspecialchars($product['name']); ?></h2>
-            <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md -->
+            <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md and includes/PriceHelper.php -->
             <div class="detail-price">
-                <?php if ($showDualPricing && $product['price_public'] != $product['price_member']): ?>
-                <del class="greyed"><?php echo number_format($product['price_public'], 2); ?>€</del> |
-                <?php endif; ?>
-                <?php echo number_format($showDualPricing ? $product['price_member'] : $product['price_public'], 2); ?>€
+                <?php echo renderPriceHtml($product, $showDualPricing); ?>
             </div>
             <p class="detail-description"><?php echo nl2br(htmlspecialchars($product['description'])); ?></p>
             <div class="product-quantity">
@@ -79,8 +77,8 @@ include 'assets/header.php';
 </div>
 
 <?php
-    include 'assets/cart-component.php';
-    include 'assets/footer.php';
+    include 'partials/cart-component.php';
+    include 'partials/footer.php';
 ?>
 <script src="assets/script.js"></script>
 </body>

@@ -1,9 +1,9 @@
 <?php
 // admin/save-section.php - Save section data
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/SectionRepository-DB.php';
 
 $sectionRepo = new SectionRepository();
 $errors = [];
@@ -52,7 +52,7 @@ if ($isEdit && $imageName === 'grimgs/') {
 // If there are errors, redirect back
 if (!empty($errors)) {
     $errorMsg = implode(', ', $errors);
-    header("Location: edit-section.php" . ($isEdit ? "?section_id=$sectionId" : "") . "&error=" . urlencode($errorMsg));
+    header("Location: ../edit-section.php" . ($isEdit ? "?section_id=$sectionId" : "") . "&error=" . urlencode($errorMsg));
     exit;
 }
 
@@ -75,7 +75,7 @@ try {
     }
     
     if ($success) {
-        header("Location: sections.php?success=1");
+        header("Location: ../sections.php?success=1");
         exit;
     } else {
         throw new Exception("Error al guardar la sección");
@@ -83,6 +83,6 @@ try {
 } catch (Exception $e) {
     error_log("Error saving section: " . $e->getMessage());
     $errorMsg = "Error al guardar: " . $e->getMessage();
-    header("Location: edit-section.php" . ($isEdit ? "?section_id=$sectionId" : "") . "&error=" . urlencode($errorMsg));
+    header("Location: ../edit-section.php" . ($isEdit ? "?section_id=$sectionId" : "") . "&error=" . urlencode($errorMsg));
     exit;
 }

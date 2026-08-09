@@ -1,5 +1,5 @@
 # Database configuration with credentials
-includes/config-DB.php
+includes/db/config-DB.php
 
 # Data files (backup)
 data/*.data
@@ -20,6 +20,9 @@ error_log
 
 # AI change documentation (local-only, not part of the app)
 AI/
+
+# Local reference materials (local-only, not part of the app)
+_mats/
 
 # OS files
 .DS_Store

@@ -1,6 +1,6 @@
 <?php
 // Load database repository
-require_once 'includes/SectionRepository-DB.php';
+require_once 'includes/repositories/SectionRepository-DB.php';
 
 try {
     $sectionRepo = new SectionRepository();
@@ -11,14 +11,14 @@ try {
 }
 
 // Include 00.php for cart functionality - cookie
-include 'assets/00.php';
+include 'partials/00.php';
 
 $pageTitle = 'AlMercáu - Carro de la compra para mercantes';
 
 //START HTML
 ?>
-<?php include 'assets/head.php'; ?>
-<?php include 'assets/header.php'; ?>
+<?php include 'partials/head.php'; ?>
+<?php include 'partials/header.php'; ?>
 
 <!-- Order Confirmation Banner -->
 <div id="order-confirmation-banner" style="display: none; background: #4CAF50; color: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 8px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
@@ -127,8 +127,8 @@ function dismissOrderConfirmation() {
 </div>
 
 <?php
-    include 'assets/cart-component.php';
-    include 'assets/footer.php';
+    include 'partials/cart-component.php';
+    include 'partials/footer.php';
 ?>
 <script src="assets/script.js"></script>
 </body>

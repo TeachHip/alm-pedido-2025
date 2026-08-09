@@ -2,32 +2,18 @@
 // admin/index.php - Stable path inclusion
 include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
-?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - AlMercáu</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="admin-header">
-        <h1>Panel de Administración</h1>
-        <a href="logout.php" class="logout-btn">Cerrar Sesión</a>
-    </div>
 
-    <nav class="admin-nav">
-        <a href="products.php" class="nav-btn">Gestionar Productos</a>
-        <a href="sections.php" class="nav-btn">Gestionar Secciones</a>
-        <a href="orders.php" class="nav-btn">📋 Ver Pedidos</a>
-        <a href="settings.php" class="nav-btn">⚙️ Configuración</a>
-    </nav>
+$pageTitle = 'Admin Panel - AlMercáu';
+$pageH1 = 'Panel de Administración';
+$showBackLink = false;
+include dirname(__FILE__) . '/partials/head.php';
+include dirname(__FILE__) . '/partials/header.php';
+?>
 
 <div class="admin-stats">
     <?php
-    require_once dirname(__FILE__) . '/../includes/ProductRepository-DB.php';
-    require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+    require_once dirname(__FILE__) . '/../includes/repositories/ProductRepository-DB.php';
+    require_once dirname(__FILE__) . '/../includes/repositories/SectionRepository-DB.php';
     
     try {
         $productRepo = new ProductRepository();

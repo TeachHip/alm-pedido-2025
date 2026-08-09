@@ -1,12 +1,12 @@
 <?php
 // admin/delete-section.php - Delete a section
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/SectionRepository-DB.php';
 
 if (!isset($_GET['section_id'])) {
-    header("Location: sections.php?error=" . urlencode("ID de sección no especificado"));
+    header("Location: ../sections.php?error=" . urlencode("ID de sección no especificado"));
     exit;
 }
 
@@ -18,7 +18,7 @@ try {
     $section = $sectionRepo->getById($sectionId);
     
     if (!$section) {
-        header("Location: sections.php?error=" . urlencode("Sección no encontrada"));
+        header("Location: ../sections.php?error=" . urlencode("Sección no encontrada"));
         exit;
     }
     
@@ -26,12 +26,12 @@ try {
     $success = $sectionRepo->delete($sectionId);
     
     if ($success) {
-        header("Location: sections.php?deleted=1");
+        header("Location: ../sections.php?deleted=1");
     } else {
-        header("Location: sections.php?error=" . urlencode("Error al eliminar la sección"));
+        header("Location: ../sections.php?error=" . urlencode("Error al eliminar la sección"));
     }
 } catch (Exception $e) {
     error_log("Error deleting section: " . $e->getMessage());
-    header("Location: sections.php?error=" . urlencode("Error: " . $e->getMessage()));
+    header("Location: ../sections.php?error=" . urlencode("Error: " . $e->getMessage()));
 }
 exit;

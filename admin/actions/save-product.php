@@ -1,13 +1,14 @@
 <?php
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
 // Load database repositories
-require_once dirname(__FILE__) . '/../includes/ProductRepository-DB.php';
-require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/ProductRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/ProductOptionRepository-DB.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: products.php');
+    header('Location: ../products.php');
     exit;
 }
 
@@ -22,20 +23,42 @@ $description = trim($_POST['description'] ?? '');
 $visible = isset($_POST['visible']) ? 1 : 0;
 $almostOutOfStock = isset($_POST['almost_out_of_stock']) ? 1 : 0;
 
+// Product options (variants), see AI/CHANGELOG.md
+$optionIds = $_POST['option_id'] ?? [];
+$optionLabels = $_POST['option_label'] ?? [];
+$optionPricesMember = $_POST['option_price_member'] ?? [];
+$optionPricesPublic = $_POST['option_price_public'] ?? [];
+$options = [];
+foreach ($optionLabels as $i => $label) {
+    $options[] = [
+        'id' => $optionIds[$i] ?? null,
+        'label' => $label,
+        'price_member' => $optionPricesMember[$i] ?? 0,
+        'price_public' => $optionPricesPublic[$i] ?? 0
+    ];
+}
+
 // Validate required fields
-if (empty($section_key) || empty($name) || $priceMember <= 0 || $pricePublic <= 0) {
-    header('Location: products.php?error=Missing required fields');
+$missingFields = [];
+if (empty($section_key)) $missingFields[] = 'Sección';
+if (empty($name)) $missingFields[] = 'Nombre';
+if ($priceMember <= 0) $missingFields[] = 'Precio Socio';
+if ($pricePublic <= 0) $missingFields[] = 'Precio Público';
+
+if (!empty($missingFields)) {
+    header('Location: ../products.php?error=' . urlencode('Faltan campos obligatorios: ' . implode(', ', $missingFields)));
     exit;
 }
 
 try {
     $productRepo = new ProductRepository();
     $sectionRepo = new SectionRepository();
+    $optionRepo = new ProductOptionRepository();
 
     // Get section ID from key
     $section = $sectionRepo->getByKey($section_key);
     if (!$section) {
-        header('Location: products.php?error=Invalid section');
+        header('Location: ../products.php?error=Invalid section');
         exit;
     }
 
@@ -66,18 +89,21 @@ if (!empty($original_product_id)) {
     if (!empty($original_product_id)) {
         // Update existing product
         $result = $productRepo->update($original_product_id, $productData);
+        $productId = $original_product_id;
         error_log("Updated product ID: $original_product_id");
     } else {
         // Create new product
-        $newId = $productRepo->create($productData);
-        error_log("Created new product ID: $newId");
+        $productId = $productRepo->create($productData);
+        error_log("Created new product ID: $productId");
     }
 
-    header('Location: products.php?success=1');
+    $optionRepo->syncForProduct($productId, $options);
+
+    header('Location: ../products.php?success=1');
 
 } catch (Exception $e) {
     error_log("Error saving product: " . $e->getMessage());
-    header('Location: products.php?error=' . urlencode($e->getMessage()));
+    header('Location: ../products.php?error=' . urlencode($e->getMessage()));
 }
 exit;
 ?>

@@ -1,8 +1,8 @@
 <?php
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/ProductRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/ProductRepository-DB.php';
 
 header('Content-Type: application/json');
 

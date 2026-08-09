@@ -1,9 +1,9 @@
 <?php
 // admin/update-section-order.php - Update section display order via AJAX
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/SectionRepository-DB.php';
 
 header('Content-Type: application/json');
 

@@ -1,0 +1,97 @@
+/* assets/admin/forms.css - Create/edit form styling + client-side validation
+   (pairs with assets/admin/form-validate.js). Loaded only by pages with a
+   real edit form: edit-product.php, edit-section.php, settings.php. */
+
+.edit-form {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+textarea {
+    height: 100px;
+}
+
+.form-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.btn-save {
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-cancel {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-left: 10px;
+}
+
+.clone-notice {
+    background: #e7f3ff;
+    color: #004085;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border-left: 4px solid #007bff;
+}
+
+.clone-hint {
+    color: #666;
+    font-style: italic;
+}
+
+/* Client-side validation (assets/admin/form-validate.js) */
+.field-error {
+    display: none;
+    color: #842029;
+    background: #fdeced;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 6px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border-left: 3px solid #dc3545;
+}
+
+.field-error:not(:empty) {
+    display: block;
+}
+
+.field-error:not(:empty)::before {
+    content: "⚠ ";
+}
+
+.field-invalid {
+    border-color: #dc3545 !important;
+    background: #fff5f5;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}

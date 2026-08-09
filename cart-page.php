@@ -1,7 +1,8 @@
 <?php
 // cart-page.php - Shopping cart page
-require_once 'includes/ProductRepository-DB.php';
-require_once 'includes/SettingsRepository-DB.php';
+require_once 'includes/repositories/ProductRepository-DB.php';
+require_once 'includes/repositories/SettingsRepository-DB.php';
+require_once 'includes/CartHelper.php';
 $pageTitle = 'Carrito - AlMercáu';
 
 // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
@@ -19,8 +20,8 @@ if ($feeAmount > 0) {
     window.pedidoExpresFeeLabel = <?php echo json_encode($feeLabel); ?>;
     window.pedidoExpresProductIds = <?php echo json_encode($pedidoExpresProductIds); ?>;
 </script>
-<?php include 'assets/head.php'; ?>
-<?php include 'assets/header.php'; ?>
+<?php include 'partials/head.php'; ?>
+<?php include 'partials/header.php'; ?>
 
 <div class="container cart-page">
     <a href="./" class="back-btn">&larr; Volver a la compra</a>
@@ -28,22 +29,7 @@ if ($feeAmount > 0) {
 
     <div id="cart-items">
         <?php
-        $cartData = isset($_COOKIE['cart']) ? json_decode(urldecode($_COOKIE['cart']), true) : null;
-        $cart = [];
-
-        if ($cartData) {
-            // Check if new format with timestamp
-            if (isset($cartData['items']) && isset($cartData['lastUpdated'])) {
-                // Check if cart is older than 48 hours (172800000 ms)
-                $age = (time() * 1000) - $cartData['lastUpdated'];
-                if ($age <= 172800000) {
-                    $cart = $cartData['items'];
-                }
-            } elseif (is_array($cartData)) {
-                // Old format (plain array), still support it
-                $cart = $cartData;
-            }
-        }
+        $cart = parseCartCookie();
 
         if (empty($cart)):
         ?>
@@ -82,10 +68,7 @@ if ($feeAmount > 0) {
         $cartHasPedidoExpres = false;
         if (!empty($pedidoExpresProductIds)) {
             foreach ($cart as $item) {
-                $itemId = $item['id'] ?? null;
-                $numericId = (is_string($itemId) && strpos($itemId, 'product-') === 0)
-                    ? (int)str_replace('product-', '', $itemId)
-                    : (int)$itemId;
+                $numericId = extractProductId($item['id'] ?? null);
                 if (in_array($numericId, $pedidoExpresProductIds, true)) {
                     $cartHasPedidoExpres = true;
                     break;
@@ -130,7 +113,7 @@ if ($feeAmount > 0) {
     <?php endif; ?>
 </div>
 
-<?php include 'assets/footer.php'; ?>
+<?php include 'partials/footer.php'; ?>
 </body>
 
 </html>

@@ -1,9 +1,9 @@
 <?php
 // admin/save-fee-settings.php - Save the Pedido Expres cart fee (amount + label)
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/SettingsRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/SettingsRepository-DB.php';
 
 $errors = [];
 
@@ -19,7 +19,7 @@ if ((float)$amountRaw > 0 && $label === '') {
 }
 
 if (!empty($errors)) {
-    header("Location: settings.php?error=" . urlencode(implode(', ', $errors)));
+    header("Location: ../settings.php?error=" . urlencode(implode(', ', $errors)));
     exit;
 }
 
@@ -28,10 +28,10 @@ try {
     $settingsRepo->set('pedido_expres_fee_amount', number_format((float)$amountRaw, 2, '.', ''));
     $settingsRepo->set('pedido_expres_fee_label', $label);
 
-    header("Location: settings.php?success=1");
+    header("Location: ../settings.php?success=1");
     exit;
 } catch (Exception $e) {
     error_log("Error saving fee settings: " . $e->getMessage());
-    header("Location: settings.php?error=" . urlencode("Error al guardar la configuración"));
+    header("Location: ../settings.php?error=" . urlencode("Error al guardar la configuración"));
     exit;
 }

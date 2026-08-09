@@ -4,7 +4,7 @@
  * Handles all database operations for products table
  */
 
-require_once __DIR__ . '/database-DB.php';
+require_once __DIR__ . '/../db/database-DB.php';
 
 class ProductRepository {
     private $db;

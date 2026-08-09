@@ -4,7 +4,7 @@ include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
 
 // Load database repository
-require_once dirname(__FILE__) . '/../includes/CartRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/CartRepository-DB.php';
 
 try {
     $cartRepo = new CartRepository();
@@ -25,14 +25,11 @@ try {
     error_log("Error loading orders: " . $e->getMessage());
     die("Error: No se pudieron cargar los pedidos.");
 }
+$pageTitle = 'Pedidos - AlMercáu';
+$pageH1 = '📋 Pedidos';
+$activeNav = 'orders';
+include dirname(__FILE__) . '/partials/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pedidos - AlMercáu</title>
-    <link rel="stylesheet" href="styles.css">
     <style>
         .order-details {
             display: none;
@@ -64,16 +61,16 @@ try {
         .order-item:last-child {
             border-bottom: none;
         }
+        .pagination-link {
+            padding: 8px 15px;
+            margin: 0 5px;
+            background: #25D366;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
     </style>
-</head>
-<body>
-    <div class="admin-header">
-        <h1>📋 Pedidos</h1>
-        <div>
-            <a href="index.php" class="logout-btn">← Volver</a>
-            <a href="logout.php" class="logout-btn">Cerrar Sesión</a>
-        </div>
-    </div>
+<?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <div class="products-table">
         <?php if (empty($orders)): ?>
@@ -81,7 +78,7 @@ try {
             <p>No hay pedidos registrados en el sistema.</p>
         </div>
         <?php else: ?>
-        <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+        <p class="admin-tip">
             💡 <strong>Tip:</strong> Haz clic en una fila para ver los detalles del pedido.
         </p>
         
@@ -129,13 +126,13 @@ try {
         <?php if ($totalPages > 1): ?>
         <div style="margin-top: 20px; text-align: center;">
             <?php if ($page > 1): ?>
-                <a href="?page=<?php echo $page - 1; ?>" style="padding: 8px 15px; margin: 0 5px; background: #25D366; color: white; text-decoration: none; border-radius: 5px;">← Anterior</a>
+                <a href="?page=<?php echo $page - 1; ?>" class="pagination-link">← Anterior</a>
             <?php endif; ?>
-            
+
             <span style="margin: 0 10px;">Página <?php echo $page; ?> de <?php echo $totalPages; ?></span>
-            
+
             <?php if ($page < $totalPages): ?>
-                <a href="?page=<?php echo $page + 1; ?>" style="padding: 8px 15px; margin: 0 5px; background: #25D366; color: white; text-decoration: none; border-radius: 5px;">Siguiente →</a>
+                <a href="?page=<?php echo $page + 1; ?>" class="pagination-link">Siguiente →</a>
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -158,7 +155,7 @@ try {
                 
                 // Load details if not already loaded
                 if (!loadedOrders[orderId]) {
-                    fetch('get-order-details.php?id=' + orderId)
+                    fetch('actions/get-order-details.php?id=' + orderId)
                         .then(response => response.json())
                         .then(data => {
                             console.log('Order data:', data); // Debug

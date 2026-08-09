@@ -4,7 +4,7 @@
  * Handles all database operations for the settings table (key-value global config)
  */
 
-require_once __DIR__ . '/database-DB.php';
+require_once __DIR__ . '/../db/database-DB.php';
 
 class SettingsRepository {
     private $db;

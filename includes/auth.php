@@ -2,7 +2,7 @@
 // includes/auth.php - Database session-based authentication
 session_start();
 
-require_once __DIR__ . '/UserRepository-DB.php';
+require_once __DIR__ . '/repositories/UserRepository-DB.php';
 
 function isAdminLoggedIn() {
     return isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;

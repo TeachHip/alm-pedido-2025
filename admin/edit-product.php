@@ -4,12 +4,14 @@ include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
 
 // Load database repositories
-require_once dirname(__FILE__) . '/../includes/ProductRepository-DB.php';
-require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/ProductRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/ProductOptionRepository-DB.php';
 
 try {
     $productRepo = new ProductRepository();
     $sectionRepo = new SectionRepository();
+    $optionRepo = new ProductOptionRepository();
     
     // Get sections as associative array
     $sectionsArray = $sectionRepo->getAll();
@@ -23,14 +25,16 @@ try {
     $isClone = isset($_GET['clone']);
     
     $product = null;
+    $options = [];
     $isEdit = false;
     $pageTitle = 'Añadir Producto';
     $buttonText = 'Crear Producto';
-    
+
     if (!empty($product_id)) {
         $productData = $productRepo->getById($product_id);
-        
+
         if ($productData) {
+            $options = $optionRepo->getByProductId($product_id);
             $product = [
                 'name' => $productData['name'],
                 'section' => $productData['section_key'],
@@ -49,6 +53,11 @@ try {
                 $pageTitle = 'Clonar Producto';
                 $buttonText = 'Crear Copia';
                 $isEdit = false;
+                // Carry over options as new rows (no id) so they're inserted under the clone
+                $options = array_map(function ($opt) {
+                    $opt['id'] = null;
+                    return $opt;
+                }, $options);
             } else {
                 // Edit mode
                 $pageTitle = 'Editar Producto';
@@ -79,20 +88,15 @@ try {
     error_log("Error loading product: " . $e->getMessage());
     die("Error: No se pudo cargar el producto.");
 }
+$pageH1 = $pageTitle;
+$pageTitle = $pageTitle . ' - AlMercáu';
+$activeNav = 'products';
+$backUrl = 'products.php';
+include dirname(__FILE__) . '/partials/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle; ?> - AlMercáu</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="admin-header">
-        <h1><?php echo $pageTitle; ?></h1>
-        <a href="products.php" class="logout-btn">← Volver</a>
-    </div>
+    <link rel="stylesheet" href="../assets/admin/forms.css">
+    <script src="../assets/admin/form-validate.js"></script>
+<?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <?php if ($isClone): ?>
     <div class="clone-notice">
@@ -101,7 +105,8 @@ try {
     <?php endif; ?>
 
     <div class="edit-form">
-        <form method="POST" action="save-product.php">
+        <div id="form-error-summary" class="error-message" style="display:none;"></div>
+        <form method="POST" action="actions/save-product.php" novalidate>
             <input type="hidden" name="original_product_id" value="<?php echo $isEdit ? $product_id : ''; ?>"> <!-- CHANGED: original_product_id -->
 
             <div class="form-group">
@@ -114,21 +119,43 @@ try {
                         </option>
                     <?php endforeach; ?>
                 </select>
+                <span class="field-error" data-error-for="section"></span>
             </div>
 
             <div class="form-group">
                 <label>Nombre del Producto:</label>
                 <input type="text" name="name" value="<?php echo htmlspecialchars($product['name']); ?>" required>
+                <span class="field-error" data-error-for="name"></span>
             </div>
 
             <div class="form-group">
                 <label>Precio para Socios (€):</label>
                 <input type="number" step="0.05" name="price_member" value="<?php echo number_format($product['price'], 2); ?>" required> <!-- CHANGED: price_member -->
+                <span class="field-error" data-error-for="price_member"></span>
             </div>
 
             <div class="form-group">
                 <label>Precio Público (€):</label>
                 <input type="number" step="0.05" name="price_public" value="<?php echo number_format($product['price2'], 2); ?>" required>
+                <span class="field-error" data-error-for="price_public"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Opciones (variaciones con precio propio, ej. peso/color):</label>
+                <small>De momento esto solo se guarda — la tienda todavía muestra el precio base de arriba (que sigue siendo obligatorio). Cuando conectemos las opciones a la tienda, su precio sustituirá al precio base.</small>
+                <div id="options-list">
+                    <?php foreach ($options as $opt): ?>
+                    <div class="option-row" style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                        <input type="hidden" name="option_id[]" value="<?php echo htmlspecialchars($opt['id'] ?? ''); ?>">
+                        <input type="text" name="option_label[]" placeholder="Ej: 3kg" value="<?php echo htmlspecialchars($opt['label']); ?>" style="flex:2;">
+                        <input type="number" step="0.05" name="option_price_member[]" placeholder="Precio socio" value="<?php echo number_format($opt['price_member'], 2); ?>" style="flex:1;">
+                        <input type="number" step="0.05" name="option_price_public[]" placeholder="Precio público" value="<?php echo number_format($opt['price_public'], 2); ?>" style="flex:1;">
+                        <button type="button" class="btn-cancel" onclick="this.closest('.option-row').remove()">✕</button>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <button type="button" id="add-option-btn" style="margin-top:8px;">+ Añadir opción</button>
+                <span class="field-error" data-error-for="options"></span>
             </div>
 
             <div class="form-group">
@@ -165,5 +192,47 @@ try {
             </div>
         </form>
     </div>
+
+    <script>
+    document.getElementById('add-option-btn').addEventListener('click', function() {
+        const row = document.createElement('div');
+        row.className = 'option-row';
+        row.style.cssText = 'display:flex; gap:8px; align-items:center; margin-top:8px;';
+        row.innerHTML = `
+            <input type="hidden" name="option_id[]" value="">
+            <input type="text" name="option_label[]" placeholder="Ej: 3kg" style="flex:2;">
+            <input type="number" step="0.05" name="option_price_member[]" placeholder="Precio socio" style="flex:1;">
+            <input type="number" step="0.05" name="option_price_public[]" placeholder="Precio público" style="flex:1;">
+            <button type="button" class="btn-cancel" onclick="this.closest('.option-row').remove()">✕</button>
+        `;
+        document.getElementById('options-list').appendChild(row);
+    });
+
+    // Client-side validation: block submit until every error is resolved.
+    // Mirrors actions/save-product.php's server-side checks (which stay in place as the real safety net).
+    adminValidateForm(document.querySelector('.edit-form form'), [
+        { name: 'section', message: 'Falta elegir una sección para el producto.' },
+        { name: 'name', message: 'Falta el nombre del producto.' },
+        { name: 'price_member', type: 'number', message: 'El precio para socios debe ser mayor que 0€.' },
+        { name: 'price_public', type: 'number', message: 'El precio público debe ser mayor que 0€.' }
+    ], function(form) {
+        // Each option row: either fully blank (ignored) or a complete label + both prices
+        const errors = {};
+        form.querySelectorAll('#options-list .option-row').forEach(function(row) {
+            const label = row.querySelector('[name="option_label[]"]').value.trim();
+            const pm = row.querySelector('[name="option_price_member[]"]').value;
+            const pp = row.querySelector('[name="option_price_public[]"]').value;
+            const anyFilled = label !== '' || pm !== '' || pp !== '';
+            if (!anyFilled || errors.options) return;
+
+            if (!label) {
+                errors.options = 'Cada opción con precio necesita una etiqueta (ej: "3kg").';
+            } else if (!(parseFloat(pm) > 0) || !(parseFloat(pp) > 0)) {
+                errors.options = `La opción "${label}" necesita ambos precios (socio y público), mayores que 0.`;
+            }
+        });
+        return errors;
+    });
+    </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* admin/styles.css - Basic admin styles */
+/* assets/admin/styles.css - Basic admin styles */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -40,6 +40,12 @@ body {
     text-align: center;
 }
 
+.nav-btn.active {
+    background: #1a9e4f;
+    font-weight: bold;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+}
+
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -60,73 +66,6 @@ body {
     text-decoration: none;
     border-radius: 3px;
     font-size: 12px;
-}
-
-/* Edit Form Styles */
-.edit-form {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-input, textarea, select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-textarea {
-    height: 100px;
-}
-
-.form-actions {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.btn-save {
-    background: #28a745;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-.btn-cancel {
-    background: #6c757d;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-left: 10px;
-}
-
-.clone-notice {
-    background: #e7f3ff;
-    color: #004085;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    border-left: 4px solid #007bff;
-}
-
-.clone-hint {
-    color: #666;
-    font-style: italic;
 }
 
 /* Button Colors */
@@ -215,6 +154,30 @@ textarea {
     color: #666;
 }
 
+.admin-tip {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.badge-success {
+    background: #e8f5e9;
+    color: #4caf50;
+}
+
+.badge-danger {
+    background: #ffebee;
+    color: #f44336;
+}
+
 .success-message {
     background: #d4edda;
     color: #155724;
@@ -223,3 +186,16 @@ textarea {
     margin-bottom: 15px;
     border-left: 4px solid #28a745;
 }
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 14px 16px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border-left: 5px solid #dc3545;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.15);
+}
+

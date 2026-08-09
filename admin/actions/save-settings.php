@@ -1,9 +1,9 @@
 <?php
 // admin/save-settings.php - Toggle a boolean global setting via AJAX
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/SettingsRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/SettingsRepository-DB.php';
 
 header('Content-Type: application/json');
 

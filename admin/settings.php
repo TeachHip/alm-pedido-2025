@@ -3,7 +3,7 @@
 include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/SettingsRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/SettingsRepository-DB.php';
 
 try {
     $settingsRepo = new SettingsRepository();
@@ -14,66 +14,15 @@ try {
     error_log("Error loading settings: " . $e->getMessage());
     die("Error: No se pudieron cargar las configuraciones.");
 }
+$pageTitle = 'Configuración Global - AlMercáu';
+$pageH1 = 'Configuración Global';
+$activeNav = 'settings';
+$successMessage = 'Configuración guardada correctamente';
+include dirname(__FILE__) . '/partials/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configuración Global - AlMercáu</title>
-    <link rel="stylesheet" href="styles.css">
-    <script>
-    function toggleSetting(key, element) {
-        fetch('save-settings.php?key=' + key)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const indicator = element.querySelector('.visible-indicator, .hidden-indicator');
-                    const text = element.querySelector('small');
-
-                    if (data.value) {
-                        indicator.classList.remove('hidden-indicator');
-                        indicator.classList.add('visible-indicator');
-                        indicator.textContent = '✓';
-                        text.textContent = 'Sí, mostrar 2 precios';
-                    } else {
-                        indicator.classList.remove('visible-indicator');
-                        indicator.classList.add('hidden-indicator');
-                        indicator.textContent = '✗';
-                        text.textContent = 'No, solo precio público';
-                    }
-                } else {
-                    alert('Error al cambiar la configuración');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al cambiar la configuración');
-            });
-        return false;
-    }
-    </script>
-</head>
-<body>
-    <div class="admin-header">
-        <h1>Configuración Global</h1>
-        <div>
-            <a href="index.php" class="logout-btn">← Volver</a>
-            <a href="logout.php" class="logout-btn">Cerrar Sesión</a>
-        </div>
-    </div>
-
-    <?php if (isset($_GET['success'])): ?>
-    <div class="success-message">
-        ✅ Configuración guardada correctamente
-    </div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['error'])): ?>
-    <div class="error-message">
-        ❌ <?php echo htmlspecialchars($_GET['error']); ?>
-    </div>
-    <?php endif; ?>
+    <link rel="stylesheet" href="../assets/admin/forms.css">
+    <script src="../assets/admin/toggle-indicator.js"></script>
+<?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <div class="edit-form">
         <div class="form-group">
@@ -82,7 +31,7 @@ try {
                 Si está desactivado, se muestra solo el precio público (un único precio por producto).
                 Si está activado, se muestra el precio público tachado junto al precio de socia.
             </p>
-            <a href="#" class="setting-toggle" onclick="return toggleSetting('show_dual_pricing', this);" style="text-decoration:none;">
+            <a href="#" class="setting-toggle" onclick="return adminToggle('actions/save-settings.php?key=show_dual_pricing', this, {valueKey: 'value', trueLabel: 'Sí, mostrar 2 precios', falseLabel: 'No, solo precio público', errorMessage: 'Error al cambiar la configuración'});" style="text-decoration:none;">
                 <?php if ($showDualPricing): ?>
                 <span class="visible-indicator">✓</span>
                 <br><small>Sí, mostrar 2 precios</small>
@@ -96,7 +45,7 @@ try {
 
     <!-- AI: Pedido Expres cart fee, see AI/CHANGELOG.md -->
     <div class="edit-form" style="margin-top: 20px;">
-        <form action="save-fee-settings.php" method="POST">
+        <form action="actions/save-fee-settings.php" method="POST">
             <div class="form-group">
                 <label>Cargo fijo por carrito con producto de "Pedido Exprés"</label>
                 <p style="color:#666; font-size: 14px;">

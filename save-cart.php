@@ -6,9 +6,10 @@
 
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/includes/CartRepository-DB.php';
-require_once __DIR__ . '/includes/ProductRepository-DB.php';
-require_once __DIR__ . '/includes/SettingsRepository-DB.php';
+require_once __DIR__ . '/includes/repositories/CartRepository-DB.php';
+require_once __DIR__ . '/includes/repositories/ProductRepository-DB.php';
+require_once __DIR__ . '/includes/repositories/SettingsRepository-DB.php';
+require_once __DIR__ . '/includes/CartHelper.php';
 
 try {
     // Get JSON input
@@ -30,13 +31,8 @@ try {
     $cartItems = [];
     foreach ($data['items'] as $item) {
         // Extract numeric ID from formats like 'product-7' or just '7'
-        $productId = $item['id'] ?? $item['product_id'] ?? null;
-        if (is_string($productId) && strpos($productId, 'product-') === 0) {
-            $productId = (int)str_replace('product-', '', $productId);
-        } else {
-            $productId = (int)$productId;
-        }
-        
+        $productId = extractProductId($item['id'] ?? $item['product_id'] ?? null);
+
         $cartItems[] = [
             'product_id' => $productId,
             'quantity' => $item['quantity'] ?? 1,

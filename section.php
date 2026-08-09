@@ -1,11 +1,12 @@
 <?php
 // Load database repositories
-require_once 'includes/SectionRepository-DB.php';
-require_once 'includes/ProductRepository-DB.php';
-require_once 'includes/SettingsRepository-DB.php';
+require_once 'includes/repositories/SectionRepository-DB.php';
+require_once 'includes/repositories/ProductRepository-DB.php';
+require_once 'includes/repositories/SettingsRepository-DB.php';
+require_once 'includes/PriceHelper.php';
 
 // Include 00.php for cart functionality - cookie
-include 'assets/00.php';
+include 'partials/00.php';
 
 try {
     $sectionRepo = new SectionRepository();
@@ -47,8 +48,8 @@ try {
 }
 
 //START HTML
-include 'assets/head.php';
-include 'assets/header.php';
+include 'partials/head.php';
+include 'partials/header.php';
 ?>
 
 <div class="container">
@@ -78,19 +79,16 @@ include 'assets/header.php';
                     <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link">
                         <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
                     </a>
-                    <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md -->
+                    <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md and includes/PriceHelper.php -->
                     <div class="product-price">
-                        <?php if ($showDualPricing && $product['price_public'] != $product['price_member']): ?>
-                        <del class="greyed"><?php echo number_format($product['price_public'], 2); ?>€</del> |
-                        <?php endif; ?>
-                        <?php echo number_format($showDualPricing ? $product['price_member'] : $product['price_public'], 2); ?>€
+                        <?php echo renderPriceHtml($product, $showDualPricing); ?>
                     </div>
                     <div class="product-quantity">
                         <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', -1)">-</button>
                         <span class="quantity-value" id="quantity-product-<?php echo $product['id']; ?>">1</span>
                         <button class="quantity-btn" onclick="updateProductQuantity('product-<?php echo $product['id']; ?>', 1)">+</button>
                     </div>
-                    <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $showDualPricing ? $product['price_member'] : $product['price_public']; /* AI: depends on show_dual_pricing */ ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
+                    <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo getCartPrice($product, $showDualPricing); ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                         Al carro!
                     </button>
                 </div>
@@ -118,8 +116,8 @@ include 'assets/header.php';
 
 
 <?php
-    include 'assets/cart-component.php';
-    include 'assets/footer.php';
+    include 'partials/cart-component.php';
+    include 'partials/footer.php';
 ?>
 <script src="assets/script.js"></script>
 </body>

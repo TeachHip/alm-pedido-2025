@@ -4,7 +4,7 @@
  * Handles all database operations for carts and cart_items tables
  */
 
-require_once __DIR__ . '/database-DB.php';
+require_once __DIR__ . '/../db/database-DB.php';
 
 class CartRepository {
     private $db;

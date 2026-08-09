@@ -1,5 +1,5 @@
 <?php
-// assets/head.php - Reusable head section
+// partials/head.php - Reusable head section
 $pageTitle = $pageTitle ?? 'AlMercáu - Carro de la compra para mercantes';
 $pageDescription = $pageDescription ?? 'Catálogo online de alimentos para la comunidad local';
 ?>

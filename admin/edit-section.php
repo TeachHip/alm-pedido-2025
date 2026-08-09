@@ -3,7 +3,7 @@
 include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
 
-require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/SectionRepository-DB.php';
 
 $sectionRepo = new SectionRepository();
 $errors = [];
@@ -33,26 +33,18 @@ if (!$isEdit) {
     }
     $defaultOrder = $maxOrder + 1;
 }
+$pageH1 = ($isEdit ? 'Editar' : 'Nueva') . ' Sección';
+$pageTitle = $pageH1 . ' - AlMercáu';
+$activeNav = 'sections';
+$backUrl = 'sections.php';
+$backLabel = '← Volver a Secciones';
+include dirname(__FILE__) . '/partials/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $isEdit ? 'Editar' : 'Nueva'; ?> Sección - AlMercáu</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="admin-header">
-        <h1><?php echo $isEdit ? 'Editar' : 'Nueva'; ?> Sección</h1>
-        <div>
-            <a href="sections.php" class="logout-btn">← Volver a Secciones</a>
-            <a href="logout.php" class="logout-btn">Cerrar Sesión</a>
-        </div>
-    </div>
+    <link rel="stylesheet" href="../assets/admin/forms.css">
+<?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <div class="form-container">
-        <form action="save-section.php" method="POST" enctype="multipart/form-data">
+        <form action="actions/save-section.php" method="POST" enctype="multipart/form-data">
             <?php if ($isEdit): ?>
             <input type="hidden" name="section_id" value="<?php echo $section['id']; ?>">
             <?php endif; ?>

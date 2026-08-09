@@ -4,15 +4,20 @@ include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
 
 // Load database repositories
-require_once dirname(__FILE__) . '/../includes/ProductRepository-DB.php';
-require_once dirname(__FILE__) . '/../includes/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/ProductRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/ProductOptionRepository-DB.php';
 
 try {
     $productRepo = new ProductRepository();
     $sectionRepo = new SectionRepository();
-    
+    $optionRepo = new ProductOptionRepository();
+
     // Get all products with section info, ordered by section and display_order
     $productsArray = $productRepo->getAll();
+
+    // Option counts per product, for the "N opciones" badge
+    $optionCounts = $optionRepo->getCountsGroupedByProduct();
     
     // Get sections as associative array
     $sectionsArray = $sectionRepo->getAll();
@@ -42,167 +47,25 @@ try {
     error_log("Error loading products: " . $e->getMessage());
     die("Error: No se pudieron cargar los datos del producto.");
 }
+$pageTitle = 'Gestionar Productos - AlMercáu';
+$pageH1 = 'Gestionar Productos';
+$activeNav = 'products';
+$successMessage = 'Producto guardado correctamente';
+$deletedMessage = 'Producto eliminado correctamente';
+include dirname(__FILE__) . '/partials/head.php';
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionar Productos - AlMercáu</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../assets/admin/sortable-table.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <style>
-        .section-group {
-            margin-bottom: 30px;
-        }
-        .section-header {
-            background: #f0f0f0;
-            padding: 10px 15px;
-            font-weight: bold;
-            font-size: 16px;
-            border-left: 4px solid #25D366;
-            margin-bottom: 10px;
-        }
-        .sortable-ghost {
-            opacity: 0.4;
-            background: #f0f0f0;
-        }
-        .sortable-drag {
-            opacity: 1;
-            cursor: move !important;
-        }
-        tbody tr {
-            cursor: move;
-        }
-        tbody tr:hover {
-            background: #f9f9f9;
-        }
-        .drag-handle {
-            cursor: grab;
-            padding: 5px;
-            color: #999;
-        }
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-        .save-order-notice {
-            background: #e8f5e9;
-            border: 1px solid #4caf50;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            display: none;
-        }
-    </style>
+    <script src="../assets/admin/toggle-indicator.js"></script>
+    <script src="../assets/admin/sortable-list.js"></script>
     <script>
-    function toggleVisibility(productId, element) {
-        fetch('toggle-visibility.php?product_id=' + productId)
-            .then(response => {
-                if (response.ok) {
-                    const cell = element.closest('.visibility-cell');
-                    const indicator = cell.querySelector('.visible-indicator, .hidden-indicator');
-                    const text = cell.querySelector('small');
-                    
-                    if (indicator.classList.contains('visible-indicator')) {
-                        indicator.classList.remove('visible-indicator');
-                        indicator.classList.add('hidden-indicator');
-                        indicator.textContent = '✗';
-                        text.textContent = 'Oculto';
-                    } else {
-                        indicator.classList.remove('hidden-indicator');
-                        indicator.classList.add('visible-indicator');
-                        indicator.textContent = '✓';
-                        text.textContent = 'Visible';
-                    }
-                } else {
-                    alert('Error al cambiar la visibilidad');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al cambiar la visibilidad');
-            });
-        return false;
-    }
-    
     document.addEventListener('DOMContentLoaded', function() {
-        const sectionTables = document.querySelectorAll('.section-tbody');
-        
-        sectionTables.forEach(function(tbody) {
-            new Sortable(tbody, {
-                animation: 150,
-                handle: 'tr',
-                ghostClass: 'sortable-ghost',
-                dragClass: 'sortable-drag',
-                onEnd: function(evt) {
-                    saveOrder(tbody);
-                }
-            });
+        document.querySelectorAll('.section-tbody').forEach(function(tbody) {
+            initSortableList(tbody, { dataKey: 'productId', saveUrl: 'actions/update-order.php' });
         });
     });
-    
-    function saveOrder(tbody) {
-        const rows = tbody.querySelectorAll('tr');
-        const orders = [];
-        
-        rows.forEach(function(row, index) {
-            const productId = row.dataset.productId;
-            orders.push({
-                id: productId,
-                order: index + 1
-            });
-        });
-        
-        fetch('update-order.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ orders: orders })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showSaveNotice();
-            } else {
-                alert('Error al guardar el orden');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error al guardar el orden');
-        });
-    }
-    
-    function showSaveNotice() {
-        const notice = document.querySelector('.save-order-notice');
-        notice.style.display = 'block';
-        setTimeout(() => {
-            notice.style.display = 'none';
-        }, 2000);
-    }
     </script>
-</head>
-<body>
-    <div class="admin-header">
-        <h1>Gestionar Productos</h1>
-        <div>
-            <a href="index.php" class="logout-btn">← Volver</a>
-            <a href="logout.php" class="logout-btn">Cerrar Sesión</a>
-        </div>
-    </div>
-
-    <?php if (isset($_GET['success'])): ?>
-    <div class="success-message">
-        ✅ Producto guardado correctamente
-    </div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['deleted'])): ?>
-    <div class="success-message">
-        ✅ Producto eliminado correctamente
-    </div>
-    <?php endif; ?>
+<?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <div class="save-order-notice">
         ✅ Orden guardado correctamente
@@ -220,7 +83,7 @@ try {
             <p>No hay productos cargados en el sistema.</p>
         </div>
         <?php else: ?>
-            <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+            <p class="admin-tip">
                 💡 <strong>Tip:</strong> Arrastra las filas para reordenar los productos dentro de cada sección.
             </p>
             
@@ -260,11 +123,16 @@ try {
                                     <span style="color: #ccc;">—</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo htmlspecialchars($product['name']); ?></td>
+                                <td>
+                                    <?php echo htmlspecialchars($product['name']); ?>
+                                    <?php if (!empty($optionCounts[$product['id']])): ?>
+                                    <br><small class="badge badge-success"><?php echo $optionCounts[$product['id']]; ?> opciones</small>
+                                    <?php endif; ?>
+                                </td>
                                 <td>€<?php echo number_format($product['price_member'], 2); ?></td>
                                 <td>€<?php echo number_format($product['price_public'], 2); ?></td>
                                 <td class="visibility-cell">
-                                    <a href="#" onclick="return toggleVisibility(<?php echo $product['id']; ?>, this);">
+                                    <a href="#" onclick="return adminToggle('actions/toggle-visibility.php?product_id=<?php echo $product['id']; ?>', this, {errorMessage: 'Error al cambiar la visibilidad'});">
                                     <?php if ($product['visible']): ?>
                                     <span class="visible-indicator">✓</span>
                                     <br><small>Visible</small>
@@ -277,7 +145,7 @@ try {
                                 <td class="action-buttons">
                                     <a href="edit-product.php?product_id=<?php echo $product['id']; ?>" class="btn-edit">Editar</a>
                                     <a href="edit-product.php?product_id=<?php echo $product['id']; ?>&clone=1" class="btn-clone">Clonar</a>
-                                    <a href="delete-product.php?product_id=<?php echo $product['id']; ?>"
+                                    <a href="actions/delete-product.php?product_id=<?php echo $product['id']; ?>"
                                        class="btn-delete"
                                        onclick="return confirm('¿Eliminar este producto permanentemente? Esta acción no se puede deshacer.')">
                                         Eliminar

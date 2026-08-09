@@ -1,11 +1,11 @@
 <?php
 // admin/get-order-details.php - API to fetch order details
-include dirname(__FILE__) . '/../includes/auth.php';
+include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
 header('Content-Type: application/json');
 
-require_once dirname(__FILE__) . '/../includes/CartRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/CartRepository-DB.php';
 
 try {
     $orderId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
