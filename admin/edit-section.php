@@ -40,7 +40,7 @@ $backUrl = 'sections.php';
 $backLabel = '← Volver a Secciones';
 include dirname(__FILE__) . '/partials/head.php';
 ?>
-    <link rel="stylesheet" href="../assets/admin/forms.css">
+    <link rel="stylesheet" href="../assets/admin/forms.css?v=<?php echo APP_VERSION_SAFE; ?>">
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <div class="form-container">

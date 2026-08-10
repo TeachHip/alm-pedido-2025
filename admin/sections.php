@@ -23,10 +23,10 @@ $successMessage = 'Sección guardada correctamente';
 $deletedMessage = 'Sección eliminada correctamente';
 include dirname(__FILE__) . '/partials/head.php';
 ?>
-    <link rel="stylesheet" href="../assets/admin/sortable-table.css">
+    <link rel="stylesheet" href="../assets/admin/sortable-table.css?v=<?php echo APP_VERSION_SAFE; ?>">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="../assets/admin/toggle-indicator.js"></script>
-    <script src="../assets/admin/sortable-list.js"></script>
+    <script src="../assets/admin/toggle-indicator.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
+    <script src="../assets/admin/sortable-list.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         initSortableList(document.querySelector('.sections-tbody'), { dataKey: 'sectionId', saveUrl: 'actions/update-section-order.php' });

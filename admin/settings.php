@@ -20,8 +20,8 @@ $activeNav = 'settings';
 $successMessage = 'Configuración guardada correctamente';
 include dirname(__FILE__) . '/partials/head.php';
 ?>
-    <link rel="stylesheet" href="../assets/admin/forms.css">
-    <script src="../assets/admin/toggle-indicator.js"></script>
+    <link rel="stylesheet" href="../assets/admin/forms.css?v=<?php echo APP_VERSION_SAFE; ?>">
+    <script src="../assets/admin/toggle-indicator.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <div class="edit-form">

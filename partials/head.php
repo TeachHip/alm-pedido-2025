@@ -1,5 +1,6 @@
 <?php
 // partials/head.php - Reusable head section
+require_once __DIR__ . '/../includes/version.php';
 $pageTitle = $pageTitle ?? 'AlMercáu - Carro de la compra para mercantes';
 $pageDescription = $pageDescription ?? 'Catálogo online de alimentos para la comunidad local';
 ?>
@@ -18,12 +19,12 @@ $pageDescription = $pageDescription ?? 'Catálogo online de alimentos para la co
     <meta property="og:url" content="https://almercau.org/pedido/">
     <meta property="og:image" content="https://almercau.org/pedido/imgs/og.png">
 
-    <link rel="stylesheet" href="assets/style.css?v=<?php echo filemtime('assets/style.css'); ?>">
+    <link rel="stylesheet" href="assets/style.css?v=<?php echo APP_VERSION_SAFE; ?>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Preload critical resources -->
-    <link rel="preload" href="assets/script.js" as="script">
-    <script src="assets/script.js" defer onerror="console.error('Script failed to load')"></script>
+    <link rel="preload" href="assets/script.js?v=<?php echo APP_VERSION_SAFE; ?>" as="script">
+    <script src="assets/script.js?v=<?php echo APP_VERSION_SAFE; ?>" defer onerror="console.error('Script failed to load')"></script>
 </head>
 
 <body>

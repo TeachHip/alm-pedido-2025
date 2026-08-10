@@ -139,7 +139,7 @@ include 'partials/header.php';
     include 'partials/cart-component.php';
     include 'partials/footer.php';
 ?>
-<script src="assets/script.js"></script>
+<script src="assets/script.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
 </body>
 </html>
 </html>

@@ -94,8 +94,8 @@ $activeNav = 'products';
 $backUrl = 'products.php';
 include dirname(__FILE__) . '/partials/head.php';
 ?>
-    <link rel="stylesheet" href="../assets/admin/forms.css">
-    <script src="../assets/admin/form-validate.js"></script>
+    <link rel="stylesheet" href="../assets/admin/forms.css?v=<?php echo APP_VERSION_SAFE; ?>">
+    <script src="../assets/admin/form-validate.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <?php if ($isClone): ?>
