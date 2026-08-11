@@ -19,7 +19,7 @@ error_log
 .claude/
 
 # AI change documentation (local-only, not part of the app)
-AI/
+_AI/
 
 # Local reference materials (local-only, not part of the app)
 _mats/
