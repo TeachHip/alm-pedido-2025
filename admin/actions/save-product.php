@@ -16,8 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $original_product_id = $_POST['original_product_id'] ?? '';
 $section_key = $_POST['section'] ?? '';
 $name = trim($_POST['name'] ?? '');
+$ticketName = trim($_POST['ticket_name'] ?? '');
 $priceMember = floatval($_POST['price_member'] ?? 0);
 $pricePublic = floatval($_POST['price_public'] ?? 0);
+$ivaRate = $_POST['iva_rate'] ?? '';
 $image = trim($_POST['image'] ?? '');
 $description = trim($_POST['description'] ?? '');
 $visible = isset($_POST['visible']) ? 1 : 0;
@@ -42,8 +44,10 @@ foreach ($optionLabels as $i => $label) {
 $missingFields = [];
 if (empty($section_key)) $missingFields[] = 'Sección';
 if (empty($name)) $missingFields[] = 'Nombre';
+if (empty($ticketName)) $missingFields[] = 'Título en el ticket de compra';
 if ($priceMember <= 0) $missingFields[] = 'Precio Socio';
 if ($pricePublic <= 0) $missingFields[] = 'Precio Público';
+if (!in_array($ivaRate, ['4', '10', '21'], true)) $missingFields[] = 'IVA';
 
 if (!empty($missingFields)) {
     header('Location: ../products.php?error=' . urlencode('Faltan campos obligatorios: ' . implode(', ', $missingFields)));
@@ -76,8 +80,10 @@ if (!empty($original_product_id)) {
     $productData = [
         'section_id' => $section['id'],
         'name' => $name,
+        'ticket_name' => $ticketName,
         'price_member' => $priceMember,
         'price_public' => $pricePublic,
+        'iva_rate' => $ivaRate,
         'image' => $image,
         'description' => $description,
         'display_order' => $displayOrder,

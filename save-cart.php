@@ -6,6 +6,7 @@
 
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/includes/member-auth.php';
 require_once __DIR__ . '/includes/repositories/CartRepository-DB.php';
 require_once __DIR__ . '/includes/repositories/ProductRepository-DB.php';
 require_once __DIR__ . '/includes/repositories/SettingsRepository-DB.php';
@@ -15,16 +16,24 @@ try {
     // Get JSON input
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
-    
+
     if (!$data || !isset($data['items']) || empty($data['items'])) {
         throw new Exception('Carrito vacío');
     }
-    
-    // Start session if not started
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+
+    // Checkout requires a logged-in member (browsing does not) -- the ticket
+    // de compra/SMS flow needs a real, verified member on the cart.
+    $member = getValidatedMember();
+    if (!$member) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'requires_login' => true,
+            'error' => 'Debes iniciar sesión para completar el pedido'
+        ]);
+        exit;
     }
-    
+
     $cartRepo = new CartRepository();
     
     // Prepare cart items with proper structure
@@ -58,7 +67,7 @@ try {
     // Create cart in database
     $result = $cartRepo->createCart(
         $cartItems,
-        null, // client_id (guest for now)
+        $member['id'],
         session_id(),
         $feeAmount,
         $feeLabel

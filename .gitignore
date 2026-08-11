@@ -1,6 +1,9 @@
 # Database configuration with credentials
 includes/db/config-DB.php
 
+# External API credentials (LabsMobile, PayGold/Redsys)
+includes/config/api-keys-DB.php
+
 # Data files (backup)
 data/*.data
 

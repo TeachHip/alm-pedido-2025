@@ -198,6 +198,54 @@ a.menu-item {
     font-weight: normal;
 }
 
+/* ===== LOGIN FORM ===== */
+.login-form {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 25px 20px;
+    max-width: 360px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+.login-form h2 {
+    color: #006a8e;
+    margin-bottom: 15px;
+}
+
+.login-form input[type="tel"],
+.login-form input[type="password"],
+.login-form input[type="text"] {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.login-form .btn {
+    width: 100%;
+    margin-top: 5px;
+}
+
+.login-form .error {
+    background: #ffe6e6;
+    color: #c0392b;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.login-hint {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
 /* Product detail page */
 .product-detail {
     overflow: hidden;
@@ -534,6 +582,128 @@ a.menu-item {
 .empty-cart p {
     margin-bottom: 20px;
     color: #666;
+}
+
+/* ===== INVOICE / TICKET DE COMPRA ===== */
+.invoice-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.invoice-card.invoice-superseded,
+.invoice-card.invoice-cancelled {
+    opacity: 0.6;
+    filter: grayscale(60%);
+}
+
+.invoice-header {
+    text-align: center;
+    border-bottom: 2px solid #25D366;
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+}
+
+.invoice-header h2 {
+    color: #006a8e;
+    margin: 0 0 5px 0;
+}
+
+.invoice-ticket {
+    font-family: monospace;
+    color: #666;
+    margin: 0;
+}
+
+.invoice-meta p {
+    margin: 4px 0;
+    font-size: 0.95rem;
+}
+
+.invoice-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.9rem;
+}
+
+.invoice-items th {
+    text-align: left;
+    border-bottom: 2px solid #eee;
+    padding: 6px 4px;
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.invoice-items td {
+    padding: 6px 4px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.invoice-items small {
+    color: #666;
+    display: block;
+}
+
+.invoice-items-list {
+    list-style: none;
+    margin: 15px 0;
+    padding: 0;
+    font-size: 0.95rem;
+}
+
+.invoice-items-list li {
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.invoice-items-list small {
+    color: #666;
+}
+
+.invoice-pay-line {
+    text-align: center;
+    font-size: 0.95rem;
+    word-break: break-all;
+}
+
+.invoice-total {
+    text-align: right;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #25D366;
+    margin: 15px 0;
+}
+
+.invoice-banner {
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+}
+
+.invoice-banner-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.invoice-banner-warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.invoice-banner a {
+    color: inherit;
+    text-decoration: underline;
+}
+
+.invoice-pending-note {
+    text-align: center;
+    color: #666;
+    font-size: 0.9rem;
 }
 
 /* ===== ENHANCED CART TOTAL STYLES ===== */

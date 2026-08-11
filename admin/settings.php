@@ -10,6 +10,12 @@ try {
     $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
     $feeAmount = $settingsRepo->get('pedido_expres_fee_amount', '0');
     $feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
+    $businessName = $settingsRepo->get('business_name', '');
+    $businessNif = $settingsRepo->get('business_nif', '');
+    $associationName = $settingsRepo->get('association_name', '');
+    $businessAddress = $settingsRepo->get('business_address', '');
+    $invoiceDueDays = $settingsRepo->get('invoice_due_days', '7');
+    $smsSenderAlias = $settingsRepo->get('sms_sender_alias', '');
 } catch (Exception $e) {
     error_log("Error loading settings: " . $e->getMessage());
     die("Error: No se pudieron cargar las configuraciones.");
@@ -60,6 +66,46 @@ include dirname(__FILE__) . '/partials/head.php';
             <div class="form-group">
                 <label for="fee_label">Texto a mostrar</label>
                 <input type="text" id="fee_label" name="fee_label" value="<?php echo htmlspecialchars($feeLabel); ?>" maxlength="255">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-save">💾 Guardar</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- AI: v10 -- ticket de compra + SMS, see AI/plans -->
+    <div class="edit-form" style="margin-top: 20px;">
+        <form action="actions/save-invoice-settings.php" method="POST">
+            <div class="form-group">
+                <label>Ticket de compra y SMS</label>
+                <p style="color:#666; font-size: 14px;">
+                    Datos mostrados en el ticket de compra y remitente de los SMS con el enlace al ticket.
+                </p>
+            </div>
+            <div class="form-group">
+                <label for="business_name">Nombre del negocio</label>
+                <input type="text" id="business_name" name="business_name" value="<?php echo htmlspecialchars($businessName); ?>" maxlength="255">
+            </div>
+            <div class="form-group">
+                <label for="association_name">Nombre de la asociación</label>
+                <input type="text" id="association_name" name="association_name" value="<?php echo htmlspecialchars($associationName); ?>" maxlength="255">
+            </div>
+            <div class="form-group">
+                <label for="business_address">Dirección</label>
+                <input type="text" id="business_address" name="business_address" value="<?php echo htmlspecialchars($businessAddress); ?>" maxlength="255">
+            </div>
+            <div class="form-group">
+                <label for="business_nif">NIF <small>(no se muestra en el ticket de compra actualmente)</small></label>
+                <input type="text" id="business_nif" name="business_nif" value="<?php echo htmlspecialchars($businessNif); ?>" maxlength="50">
+            </div>
+            <div class="form-group">
+                <label for="invoice_due_days">Días para el pago (por defecto)</label>
+                <input type="number" id="invoice_due_days" name="invoice_due_days" value="<?php echo htmlspecialchars($invoiceDueDays); ?>" min="1" step="1">
+            </div>
+            <div class="form-group">
+                <label for="sms_sender_alias">Remitente SMS</label>
+                <input type="text" id="sms_sender_alias" name="sms_sender_alias" value="<?php echo htmlspecialchars($smsSenderAlias); ?>" maxlength="16">
+                <small>Numérico mientras LabsMobile no apruebe el alias "ALMERCAU"</small>
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn-save">💾 Guardar</button>

@@ -91,6 +91,7 @@ include dirname(__FILE__) . '/partials/head.php';
                     <th width="10%">Total</th>
                     <th width="10%">Estado</th>
                     <th width="10%">Productos</th>
+                    <th width="15%">Ticket de compra</th>
                 </tr>
             </thead>
             <tbody>
@@ -111,9 +112,12 @@ include dirname(__FILE__) . '/partials/head.php';
                     <td><?php echo number_format($order['total_price'] ?? 0, 2); ?>€</td>
                     <td><?php echo $statusLabel[$order['status']] ?? $order['status']; ?></td>
                     <td><?php echo $order['items_count']; ?> items</td>
+                    <td onclick="event.stopPropagation();">
+                        <a href="create-invoice.php?cart_id=<?php echo $order['id']; ?>" class="btn-edit">Crear ticket</a>
+                    </td>
                 </tr>
                 <tr id="details-<?php echo $order['id']; ?>" style="display: none;">
-                    <td colspan="6">
+                    <td colspan="7">
                         <div class="order-details" id="content-<?php echo $order['id']; ?>">
                             <p>Cargando detalles...</p>
                         </div>

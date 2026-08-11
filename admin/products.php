@@ -58,10 +58,19 @@ include dirname(__FILE__) . '/partials/head.php';
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script src="../assets/admin/toggle-indicator.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
     <script src="../assets/admin/sortable-list.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
+    <script src="../assets/admin/filter-toggle.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.section-tbody').forEach(function(tbody) {
             initSortableList(tbody, { dataKey: 'productId', saveUrl: 'actions/update-order.php' });
+        });
+        initFilterToggle({
+            buttonId: 'toggle-visible-btn',
+            cookieName: 'admin_show_only_visible',
+            rowSelector: 'tr[data-product-id]',
+            dataAttr: 'data-visible',
+            filterLabel: 'Mostrar solo visibles',
+            showAllLabel: 'Mostrar todos'
         });
     });
     </script>
@@ -160,42 +169,5 @@ include dirname(__FILE__) . '/partials/head.php';
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
-
-    <script>
-    // Toggle show/hide products not visible to public, persisted across navigation via cookie
-    (function() {
-        const COOKIE_NAME = 'admin_show_only_visible';
-
-        function getCookie(name) {
-            const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-            return match ? match.pop() : null;
-        }
-
-        function setCookie(name, value) {
-            const expires = new Date();
-            expires.setFullYear(expires.getFullYear() + 1);
-            document.cookie = name + '=' + value + '; expires=' + expires.toUTCString() + '; path=/; samesite=lax';
-        }
-
-        function applyFilter(showOnlyVisible) {
-            document.querySelectorAll('tr[data-product-id]').forEach(function(row) {
-                row.style.display = (showOnlyVisible && row.getAttribute('data-visible') !== '1') ? 'none' : '';
-            });
-        }
-
-        const btn = document.getElementById('toggle-visible-btn');
-        let showOnlyVisible = getCookie(COOKIE_NAME) === '1';
-
-        btn.textContent = showOnlyVisible ? 'Mostrar todos' : 'Mostrar solo visibles';
-        applyFilter(showOnlyVisible);
-
-        btn.addEventListener('click', function() {
-            showOnlyVisible = !showOnlyVisible;
-            btn.textContent = showOnlyVisible ? 'Mostrar todos' : 'Mostrar solo visibles';
-            applyFilter(showOnlyVisible);
-            setCookie(COOKIE_NAME, showOnlyVisible ? '1' : '0');
-        });
-    })();
-    </script>
 </body>
 </html>

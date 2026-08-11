@@ -38,7 +38,7 @@ class CartRepository {
      * Create new cart and cart items
      * Returns array with cart_id and ticket number
      */
-    public function createCart($cartItems, $clientId = null, $sessionId = null, $feeAmount = 0, $feeLabel = null) {
+    public function createCart($cartItems, $memberId = null, $sessionId = null, $feeAmount = 0, $feeLabel = null) {
         try {
             $this->db->beginTransaction();
 
@@ -61,12 +61,12 @@ class CartRepository {
             $ticketNumber = $this->generateTicketNumber();
 
             // Create cart record
-            $sql = "INSERT INTO carts (client_id, session_id, status, total_price, fee_amount, fee_label, created_at)
-                    VALUES (:client_id, :session_id, 'active', :total_price, :fee_amount, :fee_label, NOW())";
+            $sql = "INSERT INTO carts (member_id, session_id, status, total_price, fee_amount, fee_label, created_at)
+                    VALUES (:member_id, :session_id, 'active', :total_price, :fee_amount, :fee_label, NOW())";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                'client_id' => $clientId,
+                'member_id' => $memberId,
                 'session_id' => $sessionId ?? session_id(),
                 'total_price' => $totalPrice,
                 'fee_amount' => $feeAmount,
@@ -130,14 +130,14 @@ class CartRepository {
      * Get all carts (for admin)
      */
     public function getAll($limit = 100) {
-        $sql = "SELECT c.*, 
+        $sql = "SELECT c.*,
                 COUNT(ci.id) as item_count,
-                cl.email as client_email
-                FROM carts c 
+                m.alias as member_alias
+                FROM carts c
                 LEFT JOIN cart_items ci ON c.id = ci.cart_id
-                LEFT JOIN clients cl ON c.client_id = cl.id
+                LEFT JOIN members m ON c.member_id = m.id
                 GROUP BY c.id
-                ORDER BY c.created_at DESC 
+                ORDER BY c.created_at DESC
                 LIMIT :limit";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
@@ -229,7 +229,7 @@ class CartRepository {
         if (!$cart) return null;
         
         // Get cart items with product details
-        $sql = "SELECT ci.*, p.name as product_name, p.image as product_image, po.label as option_label
+        $sql = "SELECT ci.*, p.name as product_name, p.ticket_name as product_ticket_name, p.image as product_image, p.iva_rate as product_iva_rate, po.label as option_label
                 FROM cart_items ci
                 LEFT JOIN products p ON ci.product_id = p.id
                 LEFT JOIN product_options po ON ci.product_option_id = po.id

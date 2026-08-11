@@ -158,18 +158,20 @@ class ProductRepository {
      */
     public function create($data) {
         $sql = "INSERT INTO products
-                (section_id, name, price_member, price_public, image, description,
+                (section_id, name, ticket_name, price_member, price_public, iva_rate, image, description,
                  display_order, active, visible, almost_out_of_stock)
                 VALUES
-                (:section_id, :name, :price_member, :price_public, :image, :description,
+                (:section_id, :name, :ticket_name, :price_member, :price_public, :iva_rate, :image, :description,
                  :display_order, :active, :visible, :almost_out_of_stock)";
 
         $stmt = $this->db->prepare($sql);
         $result = $stmt->execute([
             'section_id' => $data['section_id'],
             'name' => $data['name'],
+            'ticket_name' => $data['ticket_name'] ?? $data['name'],
             'price_member' => $data['price_member'],
             'price_public' => $data['price_public'],
+            'iva_rate' => $data['iva_rate'] ?? '4',
             'image' => $data['image'] ?? null,
             'description' => $data['description'] ?? null,
             'display_order' => $data['display_order'] ?? 0,
@@ -188,8 +190,10 @@ class ProductRepository {
         $sql = "UPDATE products
                 SET section_id = :section_id,
                     name = :name,
+                    ticket_name = :ticket_name,
                     price_member = :price_member,
                     price_public = :price_public,
+                    iva_rate = :iva_rate,
                     image = :image,
                     description = :description,
                     display_order = :display_order,
@@ -203,8 +207,10 @@ class ProductRepository {
             'id' => $id,
             'section_id' => $data['section_id'],
             'name' => $data['name'],
+            'ticket_name' => $data['ticket_name'] ?? $data['name'],
             'price_member' => $data['price_member'],
             'price_public' => $data['price_public'],
+            'iva_rate' => $data['iva_rate'] ?? '4',
             'image' => $data['image'] ?? null,
             'description' => $data['description'] ?? null,
             'display_order' => $data['display_order'] ?? 0,

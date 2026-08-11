@@ -37,9 +37,11 @@ try {
             $options = $optionRepo->getByProductId($product_id);
             $product = [
                 'name' => $productData['name'],
+                'ticket_name' => $productData['ticket_name'],
                 'section' => $productData['section_key'],
                 'price' => $productData['price_member'],
                 'price2' => $productData['price_public'],
+                'iva_rate' => $productData['iva_rate'],
                 'image' => $productData['image'],
                 'description' => $productData['description'],
                 'visible' => $productData['visible'],
@@ -49,6 +51,7 @@ try {
             if ($isClone) {
                 // Clone mode - create copy with modified name
                 $product['name'] .= ' (Copia)';
+                $product['ticket_name'] .= ' (Copia)';
                 $product['visible'] = false;
                 $pageTitle = 'Clonar Producto';
                 $buttonText = 'Crear Copia';
@@ -71,9 +74,11 @@ try {
     if (!$product) {
         $product = [
             'name' => '',
+            'ticket_name' => '',
             'section' => '',
             'price' => 0,
             'price2' => 0,
+            'iva_rate' => '4',
             'image' => '',
             'description' => '',
             'visible' => true,
@@ -123,9 +128,15 @@ include dirname(__FILE__) . '/partials/head.php';
             </div>
 
             <div class="form-group">
-                <label>Nombre del Producto:</label>
+                <label>Nombre del Producto (tienda):</label>
                 <input type="text" name="name" value="<?php echo htmlspecialchars($product['name']); ?>" required>
                 <span class="field-error" data-error-for="name"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Título en el ticket de compra (más corto):</label>
+                <input type="text" name="ticket_name" value="<?php echo htmlspecialchars($product['ticket_name']); ?>" required>
+                <span class="field-error" data-error-for="ticket_name"></span>
             </div>
 
             <div class="form-group">
@@ -138,6 +149,16 @@ include dirname(__FILE__) . '/partials/head.php';
                 <label>Precio Público (€):</label>
                 <input type="number" step="0.05" name="price_public" value="<?php echo number_format($product['price2'], 2); ?>" required>
                 <span class="field-error" data-error-for="price_public"></span>
+            </div>
+
+            <div class="form-group">
+                <label>IVA:</label>
+                <select name="iva_rate" required>
+                    <?php foreach (['4', '10', '21'] as $rate): ?>
+                    <option value="<?php echo $rate; ?>" <?php echo ($product['iva_rate'] === $rate) ? 'selected' : ''; ?>><?php echo $rate; ?>%</option>
+                    <?php endforeach; ?>
+                </select>
+                <span class="field-error" data-error-for="iva_rate"></span>
             </div>
 
             <div class="form-group">
@@ -213,6 +234,7 @@ include dirname(__FILE__) . '/partials/head.php';
     adminValidateForm(document.querySelector('.edit-form form'), [
         { name: 'section', message: 'Falta elegir una sección para el producto.' },
         { name: 'name', message: 'Falta el nombre del producto.' },
+        { name: 'ticket_name', message: 'Falta el título para el ticket de compra.' },
         { name: 'price_member', type: 'number', message: 'El precio para socios debe ser mayor que 0€.' },
         { name: 'price_public', type: 'number', message: 'El precio público debe ser mayor que 0€.' }
     ], function(form) {

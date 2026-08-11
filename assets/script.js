@@ -433,6 +433,11 @@ async function sendWhatsAppMessage() {
             const result = await response.json();
 
             if (!result.success) {
+                if (result.requires_login) {
+                    const returnTo = window.location.pathname + window.location.search;
+                    window.location.href = 'member-login.php?return_to=' + encodeURIComponent(returnTo);
+                    return false;
+                }
                 throw new Error(result.error || 'Error al guardar el pedido');
             }
 
