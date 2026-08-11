@@ -6,9 +6,17 @@ requireAdminAuth();
 require_once dirname(__FILE__) . '/../../includes/repositories/ProductRepository-DB.php';
 require_once dirname(__FILE__) . '/../../includes/repositories/SectionRepository-DB.php';
 require_once dirname(__FILE__) . '/../../includes/repositories/ProductOptionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/ImageUploadHelper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../products.php');
+    exit;
+}
+
+// Confirm the uploaded file actually arrived via this HTTP request (not
+// some other path PHP happens to be able to read) before ever touching it.
+if (!empty($_FILES['image']['tmp_name']) && !is_uploaded_file($_FILES['image']['tmp_name'])) {
+    header('Location: ../products.php?error=' . urlencode('Error al subir la imagen'));
     exit;
 }
 
@@ -20,7 +28,6 @@ $ticketName = trim($_POST['ticket_name'] ?? '');
 $priceMember = floatval($_POST['price_member'] ?? 0);
 $pricePublic = floatval($_POST['price_public'] ?? 0);
 $ivaRate = $_POST['iva_rate'] ?? '';
-$image = trim($_POST['image'] ?? '');
 $description = trim($_POST['description'] ?? '');
 $visible = isset($_POST['visible']) ? 1 : 0;
 $almostOutOfStock = isset($_POST['almost_out_of_stock']) ? 1 : 0;
@@ -66,16 +73,25 @@ try {
         exit;
     }
 
-// Determine display_order
+// Determine display_order, and (for updates) fetch the previously-stored
+// image so we know what to replace/delete below.
+$previousImage = null;
 if (!empty($original_product_id)) {
     // For updates, preserve the existing display_order
     $existingProduct = $productRepo->getById($original_product_id);
     $displayOrder = $existingProduct['display_order'];
+    $previousImage = $existingProduct['image'];
 } else {
     // For new products, get the max order in the section and add 1
     $sectionProducts = $productRepo->getBySectionId($section['id'], false);
     $displayOrder = count($sectionProducts) + 1;
 }
+
+    // Returns null if no new file was uploaded (keep whatever the product
+    // already had -- a clone starts with no image since no products share
+    // one, per how images are named/deleted below).
+    $newImage = processProductImageUpload($_FILES['image'] ?? null);
+    $image = $newImage ?: $previousImage;
 
     $productData = [
         'section_id' => $section['id'],
@@ -101,6 +117,12 @@ if (!empty($original_product_id)) {
         // Create new product
         $productId = $productRepo->create($productData);
         error_log("Created new product ID: $productId");
+    }
+
+    // Only remove the old file once the DB row has been safely updated to
+    // point at the new one.
+    if ($newImage && $previousImage && $previousImage !== $newImage) {
+        deleteProductImage($previousImage);
     }
 
     $optionRepo->syncForProduct($productId, $options);

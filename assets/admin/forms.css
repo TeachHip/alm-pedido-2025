@@ -10,6 +10,16 @@
     margin: 0 auto;
 }
 
+/* Every field's declared width/padding/border must add up to what it
+   actually renders as -- without this, `width: 100%` + padding + border
+   overflows its container (the default content-box model stacks padding
+   and border ON TOP of the declared width instead of inside it). That
+   overflow was the real cause of the uneven right-edge padding and the
+   cramped/wrapping paired-field rows. */
+.edit-form * {
+    box-sizing: border-box;
+}
+
 .form-group {
     margin-bottom: 15px;
 }
@@ -29,6 +39,29 @@ input, textarea, select {
 
 textarea {
     height: 100px;
+    resize: vertical;
+}
+
+/* Every direct child of a form gets the same, non-collapsing gap -- this is
+   what actually guarantees even spacing. Adjacent block-level margins (the
+   old approach: margin-bottom on one element meeting margin-top on the
+   next) collapse to whichever is larger instead of adding up, which is what
+   made spacing look uneven depending on which two elements happened to be
+   next to each other. Flex children never collapse margins against each
+   other, so this is the reliable fix rather than another margin tweak. */
+.edit-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Direct children of the flex form no longer need their own margin -- the
+   form's gap already owns spacing between them. (.form-group's own margin
+   is still used standalone, e.g. settings.php's non-form toggle box.) */
+.edit-form form > .form-group,
+.edit-form form > .form-row,
+.edit-form form > .form-row-checkboxes {
+    margin-bottom: 0;
 }
 
 .form-actions {
@@ -66,6 +99,159 @@ textarea {
 .clone-hint {
     color: #666;
     font-style: italic;
+}
+
+/* Two related fields side by side (e.g. the two prices). CSS Grid
+   auto-fit/minmax instead of flex + a manually-guessed viewport breakpoint:
+   each column needs at least 200px, and the browser drops to a single
+   column on its own once that stops fitting the actual available width --
+   this is the standard, robust pattern for this, not a fixed breakpoint
+   that can be wrong for a given container/content combination. */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.form-row .form-group {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+/* Plain visual break, no label -- for separating groups that don't need an
+   explanatory heading (unlike .form-section-heading below). The form's gap
+   already provides the base 15px on each side; this margin is extra
+   breathing room around the line itself, and -- since the parent is flex --
+   adds on top of the gap predictably instead of collapsing into it. */
+.form-divider {
+    border-top: 1px solid #eee;
+    margin: 8px 0;
+}
+
+/* Visual break before the optional/secondary part of the form -- the
+   mandatory fields above need no heading, this is what tells the eye
+   "everything below here has a sensible default". Same additive-margin
+   reasoning as .form-divider above. */
+.form-section-heading {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #999;
+    margin-top: 8px;
+    padding-top: 14px;
+    border-top: 1px solid #eee;
+}
+
+/* Optional fields get a lighter label than the mandatory ones above, so the
+   eye naturally reads them as lower-priority without needing smaller text
+   that would hurt readability. */
+.form-group-optional label {
+    font-weight: 600;
+    color: #666;
+}
+
+/* Compact inline checkboxes (visible / fin de stock) instead of two full
+   stacked .form-group rows. */
+.form-row-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 30px;
+}
+
+.form-row-checkboxes .form-check {
+    flex: 1;
+    min-width: 200px;
+}
+
+.form-row-checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 0;
+}
+
+.form-row-checkboxes input[type="checkbox"] {
+    width: auto;
+}
+
+.image-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.current-image-thumb {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+}
+
+.image-upload-controls {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Override the global input{width:100%} -- a file input's own "Elegir
+   archivo" button + filename is far narrower than the text/number fields
+   above, stretching it full-width just leaves dead click-space. */
+.image-upload-controls input[type="file"] {
+    width: auto;
+    max-width: 100%;
+    display: block;
+}
+
+@media (max-width: 480px) {
+    .image-upload-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* Collapsible instructional hints (Fin de stock, Imagen, Opciones) -- pairs
+   with assets/admin/field-hint-toggle.js. Hidden by default so the form
+   reads clean at a glance; click the "?" to reveal. */
+.field-hint-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px solid #999;
+    border-radius: 50%;
+    background: none;
+    color: #999;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.field-hint-toggle:hover {
+    background: #f0f0f0;
+}
+
+.field-hint {
+    display: none;
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: #f8f9fa;
+    border-left: 3px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #555;
+}
+
+.field-hint.field-hint-open {
+    display: block;
 }
 
 /* Client-side validation (assets/admin/form-validate.js) */
