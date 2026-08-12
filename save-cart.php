@@ -75,10 +75,11 @@ try {
     );
 
     if ($result['success']) {
-        // Auto-create the ticket de compra + mock payment link right away
-        // instead of waiting for Hop to do it manually later. Fail-soft:
-        // the WhatsApp order must go through regardless of whether this
-        // succeeds (see AI/plans v10 Stage 2 -- confirmed 2026-08-12).
+        // Auto-create the ticket de compra + payment link (real PayGold if
+        // configured, mock fallback otherwise) right away instead of
+        // waiting for Hop to do it manually later. Fail-soft: the WhatsApp
+        // order must go through regardless of whether this succeeds
+        // (see AI/plans v10 Stage 2 -- confirmed 2026-08-12).
         $mock = null;
         try {
             $baseUrl = buildAppBaseUrl('');
@@ -87,6 +88,7 @@ try {
                 $ticketUrl = buildTicketUrl($invoiceResult['token'], $baseUrl);
                 $mock = [
                     'payment_url' => $invoiceResult['payment_url'],
+                    'is_mock' => $invoiceResult['payment_is_mock'],
                     'sms_message' => buildInvoiceSmsMessage(
                         $invoiceResult['ticket_number'],
                         $invoiceResult['total_amount'],

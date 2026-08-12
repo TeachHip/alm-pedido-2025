@@ -1,22 +1,20 @@
 <?php
 /**
  * Invoice Helper
- * Turns a completed cart into a ticket de compra (+ a mock payment link),
- * and builds the SMS text -- the one shared place for logic that was
- * previously duplicated between the manual admin "Crear ticket" action and
- * the automatic checkout flow (save-cart.php). Deliberately still "dumb"
- * about pricing/membership: everything here reads already-finalized
- * numbers off the cart, per the same principle InvoiceRepository documents.
- *
- * The "mock" payment link points at mock-payment.php on this same site --
- * a stand-in for the real PayGold/bank API integration, which isn't built
- * yet. Swap generateMockPaymentLink()'s body for a real API call later;
- * every caller of createInvoiceFromCart() gets the change for free.
+ * Turns a completed cart into a ticket de compra + a real PayGold payment
+ * link (falling back to a mock payment page if PayGold isn't configured
+ * yet, or if the request fails) -- the one shared place for logic that
+ * was previously duplicated between the manual admin "Crear ticket"
+ * action and the automatic checkout flow (save-cart.php). Deliberately
+ * still "dumb" about pricing/membership: everything here reads
+ * already-finalized numbers off the cart, per the same principle
+ * InvoiceRepository documents.
  */
 
 require_once __DIR__ . '/repositories/CartRepository-DB.php';
 require_once __DIR__ . '/repositories/InvoiceRepository-DB.php';
 require_once __DIR__ . '/repositories/SettingsRepository-DB.php';
+require_once __DIR__ . '/services/PayGoldClient.php';
 
 /**
  * Absolute base URL of the app (scheme + host + path), derived from the
@@ -42,6 +40,48 @@ function buildTicketUrl($token, $baseUrl) {
 
 function buildMockPaymentUrl($token, $baseUrl) {
     return rtrim($baseUrl, '/') . '/mock-payment.php?token=' . $token;
+}
+
+/**
+ * Request a real PayGold payment link if credentials are configured;
+ * fall back to the mock payment page otherwise (missing config, or the
+ * request itself failing) -- never blocks ticket creation either way.
+ * Returns ['url', 'reference', 'is_mock'].
+ */
+function requestPaymentLink($invoiceId, $token, $dueDate, $totalAmount, $baseUrl) {
+    $apiKeysFile = __DIR__ . '/config/api-keys-DB.php';
+    if (file_exists($apiKeysFile)) {
+        require_once $apiKeysFile;
+    }
+
+    $configured = defined('PAYGOLD_MERCHANT_CODE') && PAYGOLD_MERCHANT_CODE !== ''
+        && defined('PAYGOLD_TERMINAL') && PAYGOLD_TERMINAL !== ''
+        && defined('PAYGOLD_SECRET_KEY') && PAYGOLD_SECRET_KEY !== '';
+
+    if ($configured) {
+        try {
+            $client = new PayGoldClient(PAYGOLD_MERCHANT_CODE, PAYGOLD_TERMINAL, PAYGOLD_SECRET_KEY, PAYGOLD_ENVIRONMENT ?: 'TEST');
+            $orderRef = PayGoldClient::generateOrderReference($invoiceId);
+            // Stage 3 (payment-confirmation webhook) isn't built yet, but
+            // Redsys still requires a notification URL field on every request.
+            $notificationUrl = rtrim($baseUrl, '/') . '/paygold-notify.php';
+            $expiryDate = date('Y-m-d-H.i.s.000', strtotime($dueDate));
+
+            $result = $client->requestPaymentLink($orderRef, $totalAmount, $notificationUrl, $expiryDate);
+            if ($result['success']) {
+                return ['url' => $result['payment_url'], 'reference' => $orderRef, 'is_mock' => false];
+            }
+            error_log("PayGold request failed, falling back to mock payment page: " . $result['error']);
+        } catch (Exception $e) {
+            error_log("PayGold request threw, falling back to mock payment page: " . $e->getMessage());
+        }
+    }
+
+    return [
+        'url' => buildMockPaymentUrl($token, $baseUrl),
+        'reference' => 'MOCK-' . strtoupper(bin2hex(random_bytes(4))),
+        'is_mock' => true,
+    ];
 }
 
 /**
@@ -109,11 +149,8 @@ function createInvoiceFromCart($cartId, $baseUrl) {
             throw new Exception($result['error'] ?? 'Error desconocido');
         }
 
-        // Mock "bank API" call -- generateMockPaymentLink() is the one place
-        // to swap for a real PayGold request later.
-        $paymentUrl = buildMockPaymentUrl($result['token'], $baseUrl);
-        $mockReference = 'MOCK-' . strtoupper(bin2hex(random_bytes(4)));
-        $invoiceRepo->setPaymentUrl($result['invoice_id'], $paymentUrl, $mockReference);
+        $payment = requestPaymentLink($result['invoice_id'], $result['token'], $dueDate, $order['cart']['total_price'], $baseUrl);
+        $invoiceRepo->setPaymentUrl($result['invoice_id'], $payment['url'], $payment['reference']);
 
         return [
             'success' => true,
@@ -121,7 +158,8 @@ function createInvoiceFromCart($cartId, $baseUrl) {
             'token' => $result['token'],
             'ticket_number' => $result['ticket_number'],
             'total_amount' => $order['cart']['total_price'],
-            'payment_url' => $paymentUrl,
+            'payment_url' => $payment['url'],
+            'payment_is_mock' => $payment['is_mock'],
         ];
     } catch (Exception $e) {
         error_log("Error creating invoice from cart: " . $e->getMessage());
