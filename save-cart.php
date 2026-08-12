@@ -94,6 +94,8 @@ try {
                         $invoiceResult['total_amount'],
                         $ticketUrl
                     ),
+                    'sms_sent' => $invoiceResult['sms_sent'],
+                    'sms_is_mock' => $invoiceResult['sms_is_mock'],
                 ];
             } else {
                 error_log("Error auto-creating invoice at checkout: " . $invoiceResult['error']);

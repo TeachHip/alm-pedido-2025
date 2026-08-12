@@ -424,16 +424,18 @@ async function sendWhatsAppMessage() {
 
             // DO NOT clear cart here - let user do it via "Cerrar y vaciar carrito" button
 
-            // Bank/SMS API steps -- payment link is real PayGold once
-            // configured (see includes/config/api-keys-DB.php), mocked
-            // otherwise; SMS is still always mocked here (no real
-            // LabsMobile credentials yet -- see AI/plans v10 Stage 2).
+            // Bank/SMS API steps -- both real once configured (see
+            // includes/config/api-keys-DB.php), mocked otherwise.
             // alert() blocks until dismissed, so these are guaranteed to
             // be read before the WhatsApp redirect.
             if (result.mock) {
                 const bankLabel = result.mock.is_mock ? '🏦 API Banco (simulada)' : '🏦 API Banco (PayGold)';
                 alert(bankLabel + ': enlace de pago generado.\n' + result.mock.payment_url);
-                alert('📱 API SMS (simulada): mensaje que se enviaría al socio:\n\n' + result.mock.sms_message);
+                if (result.mock.sms_is_mock) {
+                    alert('📱 API SMS (simulada): mensaje que se enviaría al socio:\n\n' + result.mock.sms_message);
+                } else {
+                    alert('📱 SMS enviado (LabsMobile) al socio.');
+                }
             }
 
             // Generate WhatsApp message with ticket number

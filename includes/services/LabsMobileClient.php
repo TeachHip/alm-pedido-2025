@@ -13,11 +13,13 @@
 class LabsMobileClient {
     private $username;
     private $token;
+    private $testMode;
     private $endpoint = 'https://api.labsmobile.com/json/send';
 
-    public function __construct($username, $token) {
+    public function __construct($username, $token, $testMode = false) {
         $this->username = $username;
         $this->token = $token;
+        $this->testMode = $testMode;
     }
 
     /**
@@ -33,11 +35,15 @@ class LabsMobileClient {
     public function sendSms($toPhone, $message, $senderAlias) {
         $msisdn = ltrim((string) $toPhone, '+');
 
-        $payload = json_encode([
+        $params = [
             'message' => $message,
             'tpoa' => $senderAlias,
             'recipient' => [['msisdn' => $msisdn]],
-        ]);
+        ];
+        if ($this->testMode) {
+            $params['test'] = 1;
+        }
+        $payload = json_encode($params);
 
         $ch = curl_init($this->endpoint);
         curl_setopt_array($ch, [
@@ -65,7 +71,10 @@ class LabsMobileClient {
             return ['success' => false, 'error' => 'Invalid response from LabsMobile: ' . $responseBody];
         }
 
-        if (isset($data['code']) && $data['code'] === '0') {
+        // LabsMobile's own docs show "code" as both a JSON string ("0") and
+        // a JSON integer (0) across different examples -- compare as string
+        // so either representation is recognized as success.
+        if (isset($data['code']) && (string) $data['code'] === '0') {
             return ['success' => true, 'message_id' => $data['subid'] ?? null];
         }
 
