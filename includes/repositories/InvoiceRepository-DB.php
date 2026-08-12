@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/../db/database-DB.php';
+require_once __DIR__ . '/../TicketNumberHelper.php';
 
 class InvoiceRepository {
     private $db;
@@ -24,7 +25,6 @@ class InvoiceRepository {
     private function generateTicketNumber() {
         $year = date('Y');
         $month = date('m');
-        $prefix = "#ALM-{$year}-{$month}-";
 
         $sql = "SELECT COUNT(*) as count FROM invoices
                 WHERE DATE_FORMAT(created_at, '%Y-%m') = :year_month";
@@ -33,7 +33,7 @@ class InvoiceRepository {
         $result = $stmt->fetch();
 
         $nextNumber = ($result['count'] ?? 0) + 1;
-        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        return formatTicketNumber($year, $month, $nextNumber);
     }
 
     /**
@@ -106,12 +106,12 @@ class InvoiceRepository {
     }
 
     /**
-     * Look up an invoice by its public token, with the member's alias/phone
-     * joined in (the page needs both, and this keeps ticket.php from having
-     * to round-trip to MemberRepository separately).
+     * Look up an invoice by its public token, with the member's alias/phone/
+     * member_number joined in (the page needs all three, and this keeps
+     * ticket.php from having to round-trip to MemberRepository separately).
      */
     public function findByToken($token) {
-        $sql = "SELECT i.*, m.alias as member_alias, m.phone as member_phone
+        $sql = "SELECT i.*, m.alias as member_alias, m.phone as member_phone, m.member_number as member_number
                 FROM invoices i
                 JOIN members m ON i.member_id = m.id
                 WHERE i.token = :token

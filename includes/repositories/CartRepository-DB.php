@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../db/database-DB.php';
+require_once __DIR__ . '/../TicketNumberHelper.php';
 
 class CartRepository {
     private $db;
@@ -19,8 +20,7 @@ class CartRepository {
     public function generateTicketNumber() {
         $year = date('Y');
         $month = date('m');
-        $prefix = "#ALM-{$year}-{$month}-";
-        
+
         // Get the count of orders this month
         $sql = "SELECT COUNT(*) as count FROM carts 
                 WHERE DATE_FORMAT(created_at, '%Y-%m') = :year_month";
@@ -29,9 +29,8 @@ class CartRepository {
         $result = $stmt->fetch();
         
         $nextNumber = ($result['count'] ?? 0) + 1;
-        $paddedNumber = str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-        
-        return $prefix . $paddedNumber;
+
+        return formatTicketNumber($year, $month, $nextNumber);
     }
     
     /**
@@ -127,25 +126,6 @@ class CartRepository {
     }
     
     /**
-     * Get all carts (for admin)
-     */
-    public function getAll($limit = 100) {
-        $sql = "SELECT c.*,
-                COUNT(ci.id) as item_count,
-                m.alias as member_alias
-                FROM carts c
-                LEFT JOIN cart_items ci ON c.id = ci.cart_id
-                LEFT JOIN members m ON c.member_id = m.id
-                GROUP BY c.id
-                ORDER BY c.created_at DESC
-                LIMIT :limit";
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll();
-    }
-    
-    /**
      * Update cart status
      */
     public function updateStatus($cartId, $status) {
@@ -187,9 +167,8 @@ class CartRepository {
         $result = $stmt->fetch();
         
         $position = $result['position'] ?? 1;
-        $paddedNumber = str_pad($position, 4, '0', STR_PAD_LEFT);
-        
-        return "#ALM-{$year}-{$month}-{$paddedNumber}";
+
+        return formatTicketNumber($year, $month, $position);
     }
     
     /**

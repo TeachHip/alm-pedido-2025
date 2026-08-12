@@ -1,17 +1,18 @@
 <?php
 /**
  * Image Upload Helper
- * Validates and processes a product-image upload: enforces format/size/
- * dimension limits, center-crops to a square if not already one, resizes to
- * a fixed 800x800, and saves it into primgs/ under a collision-safe
- * filename. See AI/CHANGELOG.md.
+ * Validates and processes an uploaded listing image (product or section):
+ * enforces format/size/dimension limits, center-crops to a square if not
+ * already one, resizes to a fixed 800x800, and saves it under a
+ * collision-safe filename into the caller's target folder (products use
+ * primgs/, sections use grimgs/ -- see AI/CHANGELOG.md).
  */
 
-define('PRODUCT_IMAGE_MIN_DIMENSION', 600);
-define('PRODUCT_IMAGE_MAX_BYTES', 2 * 1024 * 1024);
-define('PRODUCT_IMAGE_OUTPUT_SIZE', 800);
+define('LISTING_IMAGE_MIN_DIMENSION', 600);
+define('LISTING_IMAGE_MAX_BYTES', 2 * 1024 * 1024);
+define('LISTING_IMAGE_OUTPUT_SIZE', 800);
 
-const PRODUCT_IMAGE_EXTENSIONS_BY_TYPE = [
+const LISTING_IMAGE_EXTENSIONS_BY_TYPE = [
     IMAGETYPE_JPEG => 'jpg',
     IMAGETYPE_PNG => 'png',
     IMAGETYPE_GIF => 'gif',
@@ -19,13 +20,14 @@ const PRODUCT_IMAGE_EXTENSIONS_BY_TYPE = [
 ];
 
 /**
- * Process an uploaded product image ($_FILES['image']). Returns the new
- * filename (relative to primgs/) on success, or null if no file was
- * uploaded (caller should then keep whatever image the product already
- * had -- a product isn't required to have one). Throws Exception with a
- * user-facing Spanish message on any validation failure.
+ * Process an uploaded listing image ($_FILES['image']) into $targetDir
+ * (relative to the project root, e.g. 'primgs' or 'grimgs'). Returns the
+ * new filename (relative to that folder) on success, or null if no file
+ * was uploaded (caller should then keep whatever image the listing already
+ * had -- neither products nor sections are required to have one). Throws
+ * Exception with a user-facing Spanish message on any validation failure.
  */
-function processProductImageUpload($file) {
+function processListingImageUpload($file, $targetDir = 'primgs') {
     if (!isset($file) || $file['error'] === UPLOAD_ERR_NO_FILE) {
         return null;
     }
@@ -34,7 +36,7 @@ function processProductImageUpload($file) {
         throw new Exception('Error al subir la imagen');
     }
 
-    if ($file['size'] > PRODUCT_IMAGE_MAX_BYTES) {
+    if ($file['size'] > LISTING_IMAGE_MAX_BYTES) {
         throw new Exception('La imagen supera el tamaño máximo de 2MB');
     }
 
@@ -45,14 +47,14 @@ function processProductImageUpload($file) {
 
     [$width, $height, $type] = $imageInfo;
 
-    if ($width < PRODUCT_IMAGE_MIN_DIMENSION || $height < PRODUCT_IMAGE_MIN_DIMENSION) {
-        throw new Exception('La imagen debe medir al menos ' . PRODUCT_IMAGE_MIN_DIMENSION . 'x' . PRODUCT_IMAGE_MIN_DIMENSION . 'px');
+    if ($width < LISTING_IMAGE_MIN_DIMENSION || $height < LISTING_IMAGE_MIN_DIMENSION) {
+        throw new Exception('La imagen debe medir al menos ' . LISTING_IMAGE_MIN_DIMENSION . 'x' . LISTING_IMAGE_MIN_DIMENSION . 'px');
     }
 
-    if (!isset(PRODUCT_IMAGE_EXTENSIONS_BY_TYPE[$type])) {
+    if (!isset(LISTING_IMAGE_EXTENSIONS_BY_TYPE[$type])) {
         throw new Exception('Formato de imagen no soportado (usa JPG, PNG, GIF o WEBP)');
     }
-    $extension = PRODUCT_IMAGE_EXTENSIONS_BY_TYPE[$type];
+    $extension = LISTING_IMAGE_EXTENSIONS_BY_TYPE[$type];
 
     $source = loadImageResourceByType($file['tmp_name'], $type);
 
@@ -62,23 +64,23 @@ function processProductImageUpload($file) {
     $srcX = (int) (($width - $squareSize) / 2);
     $srcY = (int) (($height - $squareSize) / 2);
 
-    $output = imagecreatetruecolor(PRODUCT_IMAGE_OUTPUT_SIZE, PRODUCT_IMAGE_OUTPUT_SIZE);
+    $output = imagecreatetruecolor(LISTING_IMAGE_OUTPUT_SIZE, LISTING_IMAGE_OUTPUT_SIZE);
     // Preserve transparency for PNG/WEBP/GIF sources (harmless no-op for JPEG).
     imagealphablending($output, false);
     imagesavealpha($output, true);
     $transparent = imagecolorallocatealpha($output, 0, 0, 0, 127);
-    imagefilledrectangle($output, 0, 0, PRODUCT_IMAGE_OUTPUT_SIZE, PRODUCT_IMAGE_OUTPUT_SIZE, $transparent);
+    imagefilledrectangle($output, 0, 0, LISTING_IMAGE_OUTPUT_SIZE, LISTING_IMAGE_OUTPUT_SIZE, $transparent);
 
     imagecopyresampled(
         $output, $source,
         0, 0, $srcX, $srcY,
-        PRODUCT_IMAGE_OUTPUT_SIZE, PRODUCT_IMAGE_OUTPUT_SIZE,
+        LISTING_IMAGE_OUTPUT_SIZE, LISTING_IMAGE_OUTPUT_SIZE,
         $squareSize, $squareSize
     );
     imagedestroy($source);
 
-    $filename = generateProductImageFilename($file['name'], $extension);
-    saveImageResourceByType($output, dirname(__FILE__) . '/../primgs/' . $filename, $type);
+    $filename = generateListingImageFilename($file['name'], $extension, $targetDir);
+    saveImageResourceByType($output, dirname(__FILE__) . '/../' . $targetDir . '/' . $filename, $type);
     imagedestroy($output);
 
     return $filename;
@@ -106,37 +108,37 @@ function saveImageResourceByType($image, $destPath, $type) {
 /**
  * '{sanitized-original-name}-{random5}.{ext}' -- keeps the uploaded file's
  * name recognizable while guaranteeing a fresh, never-before-seen filename
- * on every upload (so replacing a product's photo can never serve a stale
+ * on every upload (so replacing a listing's photo can never serve a stale
  * cached copy under the old name -- same reasoning as APP_VERSION_SAFE for
  * JS/CSS).
  */
-function generateProductImageFilename($originalName, $extension) {
+function generateListingImageFilename($originalName, $extension, $targetDir = 'primgs') {
     $base = strtolower(pathinfo($originalName, PATHINFO_FILENAME));
     $base = preg_replace('/[^a-z0-9]+/', '-', $base);
     $base = trim($base, '-');
     if ($base === '') {
-        $base = 'producto';
+        $base = 'imagen';
     }
     $base = substr($base, 0, 60);
 
-    $primgsDir = dirname(__FILE__) . '/../primgs/';
+    $dir = dirname(__FILE__) . '/../' . $targetDir . '/';
     do {
         $suffix = substr(bin2hex(random_bytes(4)), 0, 5);
         $filename = "{$base}-{$suffix}.{$extension}";
-    } while (file_exists($primgsDir . $filename));
+    } while (file_exists($dir . $filename));
 
     return $filename;
 }
 
 /**
- * Delete a product image file from primgs/, if it exists. Safe to call with
- * null/empty (no-op) -- products aren't required to have an image.
+ * Delete a listing image file from $targetDir, if it exists. Safe to call
+ * with null/empty (no-op) -- neither products nor sections require one.
  */
-function deleteProductImage($filename) {
+function deleteListingImage($filename, $targetDir = 'primgs') {
     if (empty($filename)) {
         return;
     }
-    $path = dirname(__FILE__) . '/../primgs/' . basename($filename);
+    $path = dirname(__FILE__) . '/../' . $targetDir . '/' . basename($filename);
     if (is_file($path)) {
         @unlink($path);
     }

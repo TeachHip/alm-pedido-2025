@@ -5,19 +5,24 @@ requireAdminAuth();
 
 require_once dirname(__FILE__) . '/../includes/repositories/MemberRepository-DB.php';
 
-$memberRepo = new MemberRepository();
-$member = null;
-$isEdit = false;
+try {
+    $memberRepo = new MemberRepository();
+    $member = null;
+    $isEdit = false;
 
-if (isset($_GET['member_id'])) {
-    $memberId = (int) $_GET['member_id'];
-    $member = $memberRepo->findById($memberId);
+    if (isset($_GET['member_id'])) {
+        $memberId = (int) $_GET['member_id'];
+        $member = $memberRepo->findById($memberId);
 
-    if (!$member) {
-        die("Miembro no encontrado");
+        if (!$member) {
+            die("Miembro no encontrado");
+        }
+
+        $isEdit = true;
     }
-
-    $isEdit = true;
+} catch (Exception $e) {
+    error_log("Error loading member: " . $e->getMessage());
+    die("Error: No se pudo cargar el miembro.");
 }
 
 $pageH1 = ($isEdit ? 'Editar' : 'Nuevo') . ' Miembro';

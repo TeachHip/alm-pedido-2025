@@ -14,13 +14,21 @@ class ProductRepository {
     }
 
     /**
+     * Base "product joined with its section" SELECT, shared by every
+     * listing method below -- only the WHERE/ORDER BY differs per caller.
+     * Previously this JOIN was retyped verbatim in 7 different methods.
+     */
+    private function selectWithSection() {
+        return "SELECT p.*, s.name as section_name, s.key as section_key
+                FROM products p
+                LEFT JOIN sections s ON p.section_id = s.id";
+    }
+
+    /**
      * Get all products
      */
     public function getAll() {
-        $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id
-                ORDER BY s.display_order ASC, p.display_order ASC";
+        $sql = $this->selectWithSection() . " ORDER BY s.display_order ASC, p.display_order ASC";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
@@ -29,9 +37,7 @@ class ProductRepository {
      * Get only visible products
      */
     public function getVisible() {
-        $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id
+        $sql = $this->selectWithSection() . "
                 WHERE p.visible = 1 AND p.active = 1
                 ORDER BY s.display_order ASC, p.display_order ASC, p.name ASC";
         $stmt = $this->db->query($sql);
@@ -42,10 +48,7 @@ class ProductRepository {
      * Get products by section ID
      */
     public function getBySectionId($sectionId, $visibleOnly = true) {
-        $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id
-                WHERE p.section_id = :section_id";
+        $sql = $this->selectWithSection() . " WHERE p.section_id = :section_id";
 
         if ($visibleOnly) {
             $sql .= " AND p.visible = 1 AND p.active = 1";
@@ -72,10 +75,7 @@ class ProductRepository {
     public function getBySectionKey($sectionKey, $visibleOnly = true) {
         // Special virtual section for "Fin de stock"
         if ($sectionKey === 'fin_stock') {
-            $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                    FROM products p
-                    LEFT JOIN sections s ON p.section_id = s.id
-                    WHERE p.almost_out_of_stock = 1";
+            $sql = $this->selectWithSection() . " WHERE p.almost_out_of_stock = 1";
 
             if ($visibleOnly) {
                 $sql .= " AND p.visible = 1 AND p.active = 1";
@@ -87,12 +87,9 @@ class ProductRepository {
             $stmt->execute();
             return $stmt->fetchAll();
         }
-        
+
         // Normal section query
-        $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id
-                WHERE s.key = :section_key";
+        $sql = $this->selectWithSection() . " WHERE s.key = :section_key";
 
         if ($visibleOnly) {
             $sql .= " AND p.visible = 1 AND p.active = 1";
@@ -131,10 +128,7 @@ class ProductRepository {
      * Get product by ID
      */
     public function getById($id) {
-        $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id
-                WHERE p.id = :id LIMIT 1";
+        $sql = $this->selectWithSection() . " WHERE p.id = :id LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['id' => $id]);
         return $stmt->fetch();
@@ -144,9 +138,7 @@ class ProductRepository {
      * Get products that are almost out of stock
      */
     public function getAlmostOutOfStock() {
-        $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id
+        $sql = $this->selectWithSection() . "
                 WHERE p.almost_out_of_stock = 1 AND p.visible = 1 AND p.active = 1
                 ORDER BY p.display_order ASC, p.name ASC";
         $stmt = $this->db->query($sql);
@@ -230,15 +222,6 @@ class ProductRepository {
     }
 
     /**
-     * Toggle product visibility
-     */
-    public function toggleVisibility($id) {
-        $sql = "UPDATE products SET visible = NOT visible WHERE id = :id";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute(['id' => $id]);
-    }
-
-    /**
      * Set product visibility
      */
     public function setVisibility($id, $visible) {
@@ -272,10 +255,7 @@ class ProductRepository {
      * Search products by name or description
      */
     public function search($query, $visibleOnly = true) {
-        $sql = "SELECT p.*, s.name as section_name, s.key as section_key
-                FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id
-                WHERE (p.name LIKE :query OR p.description LIKE :query)";
+        $sql = $this->selectWithSection() . " WHERE (p.name LIKE :query_name OR p.description LIKE :query_description)";
 
         if ($visibleOnly) {
             $sql .= " AND p.visible = 1 AND p.active = 1";
@@ -284,7 +264,8 @@ class ProductRepository {
         $sql .= " ORDER BY p.name ASC";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute(['query' => '%' . $query . '%']);
+        $searchTerm = '%' . $query . '%';
+        $stmt->execute(['query_name' => $searchTerm, 'query_description' => $searchTerm]);
         return $stmt->fetchAll();
     }
 
@@ -320,7 +301,8 @@ class ProductRepository {
             return true;
         } catch (Exception $e) {
             $this->db->rollBack();
-            throw $e;
+            error_log("Error updating product orders: " . $e->getMessage());
+            return false;
         }
     }
 }

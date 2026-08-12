@@ -10,12 +10,18 @@ try {
     $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
     $feeAmount = $settingsRepo->get('pedido_expres_fee_amount', '0');
     $feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
+
+    // BEGIN ticket de compra / invoice feature settings -- if the invoice
+    // feature is ever removed, this block and its matching HTML section
+    // below (search "END ticket de compra") are the only things in this
+    // file that need to go with it.
     $businessName = $settingsRepo->get('business_name', '');
     $businessNif = $settingsRepo->get('business_nif', '');
     $associationName = $settingsRepo->get('association_name', '');
     $businessAddress = $settingsRepo->get('business_address', '');
     $invoiceDueDays = $settingsRepo->get('invoice_due_days', '7');
     $smsSenderAlias = $settingsRepo->get('sms_sender_alias', '');
+    // END ticket de compra / invoice feature settings
 } catch (Exception $e) {
     error_log("Error loading settings: " . $e->getMessage());
     die("Error: No se pudieron cargar las configuraciones.");
@@ -73,7 +79,10 @@ include dirname(__FILE__) . '/partials/head.php';
         </form>
     </div>
 
-    <!-- AI: v10 -- ticket de compra + SMS, see AI/plans -->
+    <!-- BEGIN ticket de compra / invoice feature settings block -- see the
+         matching BEGIN/END markers in this file's PHP above. Also touches
+         actions/save-invoice-settings.php, InvoiceRepository-DB.php,
+         services/LabsMobileClient.php, and ticket.php if ever removed. -->
     <div class="edit-form" style="margin-top: 20px;">
         <form action="actions/save-invoice-settings.php" method="POST">
             <div class="form-group">
@@ -112,5 +121,6 @@ include dirname(__FILE__) . '/partials/head.php';
             </div>
         </form>
     </div>
+    <!-- END ticket de compra / invoice feature settings block -->
 </body>
 </html>

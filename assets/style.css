@@ -66,6 +66,88 @@ header {
     z-index: 100;
 }
 
+/* Member menu: hamburger button in the header (only rendered when a member
+   is logged in) opening a full-screen mobile-style menu -- see
+   partials/header.php + assets/member-menu.js. */
+.member-menu-toggle {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    z-index: 110;
+}
+
+.member-menu-toggle span {
+    display: block;
+    width: 24px;
+    height: 3px;
+    background: white;
+    border-radius: 2px;
+}
+
+.member-menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: #f0f2f5;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+}
+
+.member-menu-overlay[hidden] {
+    display: none;
+}
+
+.member-menu-close {
+    align-self: flex-end;
+    background: #006a8e;
+    color: white;
+    border: none;
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.member-menu-greeting {
+    background: #006a8e;
+    color: white;
+    padding: 16px 20px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-align: left;
+}
+
+.member-menu-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.member-menu-item {
+    padding: 18px 20px;
+    text-decoration: none;
+    color: #333;
+    font-size: 1.05rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
+}
+
+.member-menu-item:active {
+    background: #f5f5f5;
+}
+
 h1 {
     font-size: 1.8rem;
 }
@@ -192,7 +274,7 @@ a.menu-item {
     margin-bottom: 10px;
 }
 
-/* AI: unused since only price_public is displayed now, see AI/CHANGELOG.md */
+/* Struck-through public price shown next to the member price when dual pricing is on -- see includes/PriceHelper.php */
 .greyed {
     color: #aaa;
     font-weight: normal;

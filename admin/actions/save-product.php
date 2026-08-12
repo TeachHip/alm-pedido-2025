@@ -90,7 +90,7 @@ if (!empty($original_product_id)) {
     // Returns null if no new file was uploaded (keep whatever the product
     // already had -- a clone starts with no image since no products share
     // one, per how images are named/deleted below).
-    $newImage = processProductImageUpload($_FILES['image'] ?? null);
+    $newImage = processListingImageUpload($_FILES['image'] ?? null, 'primgs');
     $image = $newImage ?: $previousImage;
 
     $productData = [
@@ -122,7 +122,7 @@ if (!empty($original_product_id)) {
     // Only remove the old file once the DB row has been safely updated to
     // point at the new one.
     if ($newImage && $previousImage && $previousImage !== $newImage) {
-        deleteProductImage($previousImage);
+        deleteListingImage($previousImage, 'primgs');
     }
 
     $optionRepo->syncForProduct($productId, $options);

@@ -7,18 +7,23 @@ requireAdminAuth();
 
 require_once dirname(__FILE__) . '/../includes/repositories/InvoiceRepository-DB.php';
 
-$invoiceId = (int) ($_GET['invoice_id'] ?? 0);
-$invoiceRepo = new InvoiceRepository();
-$invoice = $invoiceRepo->findById($invoiceId);
+try {
+    $invoiceId = (int) ($_GET['invoice_id'] ?? 0);
+    $invoiceRepo = new InvoiceRepository();
+    $invoice = $invoiceRepo->findById($invoiceId);
 
-if (!$invoice) {
-    die("Ticket no encontrado");
+    if (!$invoice) {
+        die("Ticket no encontrado");
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'almercau.org';
+    $basePath = rtrim(str_replace('/admin', '', dirname($_SERVER['PHP_SELF'])), '/');
+    $invoiceUrl = "$scheme://$host$basePath/ticket.php?token=" . $invoice['token'];
+} catch (Exception $e) {
+    error_log("Error loading invoice: " . $e->getMessage());
+    die("Error: No se pudo cargar el ticket.");
 }
-
-$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'almercau.org';
-$basePath = rtrim(str_replace('/admin', '', dirname($_SERVER['PHP_SELF'])), '/');
-$invoiceUrl = "$scheme://$host$basePath/ticket.php?token=" . $invoice['token'];
 
 $pageH1 = 'Ticket de Compra Creado';
 $pageTitle = $pageH1 . ' - AlMercáu';

@@ -12,23 +12,28 @@ if (!$cartId) {
     die("Falta el id del pedido");
 }
 
-$cartRepo = new CartRepository();
-$order = $cartRepo->getOrderWithItems($cartId);
+try {
+    $cartRepo = new CartRepository();
+    $order = $cartRepo->getOrderWithItems($cartId);
 
-if (!$order) {
-    die("Pedido no encontrado");
+    if (!$order) {
+        die("Pedido no encontrado");
+    }
+
+    if (empty($order['cart']['member_id'])) {
+        die("Este pedido no tiene un miembro asociado (pedido anterior a exigir login en el checkout) — no se puede crear un ticket de compra.");
+    }
+
+    $memberRepo = new MemberRepository();
+    $member = $memberRepo->findById($order['cart']['member_id']);
+
+    $settingsRepo = new SettingsRepository();
+    $dueDays = (int) $settingsRepo->get('invoice_due_days', '7');
+    $dueDate = date('d/m/Y', strtotime("+{$dueDays} days"));
+} catch (Exception $e) {
+    error_log("Error loading order for invoice: " . $e->getMessage());
+    die("Error: No se pudo cargar el pedido.");
 }
-
-if (empty($order['cart']['member_id'])) {
-    die("Este pedido no tiene un miembro asociado (pedido anterior a exigir login en el checkout) — no se puede crear un ticket de compra.");
-}
-
-$memberRepo = new MemberRepository();
-$member = $memberRepo->findById($order['cart']['member_id']);
-
-$settingsRepo = new SettingsRepository();
-$dueDays = (int) $settingsRepo->get('invoice_due_days', '7');
-$dueDate = date('d/m/Y', strtotime("+{$dueDays} days"));
 
 $pageH1 = 'Crear Ticket de Compra';
 $pageTitle = $pageH1 . ' - AlMercáu';

@@ -3,6 +3,7 @@
 // closed community, see AI/plans v10) -- no member login required to view.
 require_once 'includes/repositories/InvoiceRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
+require_once 'includes/repositories/MemberRepository-DB.php';
 
 $token = $_GET['token'] ?? '';
 $invoice = null;
@@ -70,7 +71,7 @@ include 'partials/header.php';
         </div>
 
         <div class="invoice-meta">
-            <p><strong>Miembro:</strong> AM<?php echo sprintf('%03d', $invoice['member_id']); ?></p>
+            <p><strong>Miembro:</strong> AM<?php echo MemberRepository::formatMemberNumber($invoice['member_number']); ?></p>
             <p><strong>Fecha:</strong> <?php echo date('d/m/Y', strtotime($invoice['created_at'])); ?></p>
             <p><strong>Fecha límite de pago:</strong> <?php echo date('d/m/Y', strtotime($invoice['due_date'])); ?></p>
         </div>

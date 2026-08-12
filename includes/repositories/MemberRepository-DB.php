@@ -41,6 +41,16 @@ class MemberRepository {
     }
 
     /**
+     * Zero-padded 3-digit member_number, e.g. "007" -- shared by the admin
+     * member list (shown bare, per Hop's request) and the ticket de compra
+     * (shown with an "AM" prefix, e.g. "AM007") -- callers add their own
+     * prefix/none. Static since it's a pure format (no DB access).
+     */
+    public static function formatMemberNumber($memberNumber) {
+        return sprintf('%03d', (int) $memberNumber);
+    }
+
+    /**
      * Find member by phone (normalizes before lookup). Only active members.
      */
     public function findByPhone($phone) {
@@ -88,15 +98,30 @@ class MemberRepository {
     }
 
     /**
+     * Next correlative member_number (1, 2, 3...) -- decoupled from the DB
+     * id, never reused, so "highest number ever assigned" always answers
+     * "how many members have we ever had". Placeholder rows never have one
+     * (NULL), so MAX() here already skips them without needing a WHERE.
+     */
+    private function nextMemberNumber() {
+        $result = $this->db->query("SELECT COALESCE(MAX(member_number), 0) + 1 AS next_number FROM members")->fetch();
+        return (int) $result['next_number'];
+    }
+
+    /**
      * Create new member. Activation is atomic with creation -- Hop always
      * does this in person, there's no separate "pending activation" state.
+     * This is only ever used for real members (placeholder/bookkeeping rows
+     * like "OLD member" are created directly via migration), so it always
+     * assigns the next member_number.
      */
     public function create($data) {
-        $sql = "INSERT INTO members (phone, alias, internal_alias, notes, email, password_hash, membership_type, activated_at, active)
-                VALUES (:phone, :alias, :internal_alias, :notes, :email, :password_hash, :membership_type, NOW(), :active)";
+        $sql = "INSERT INTO members (member_number, phone, alias, internal_alias, notes, email, password_hash, membership_type, activated_at, active)
+                VALUES (:member_number, :phone, :alias, :internal_alias, :notes, :email, :password_hash, :membership_type, NOW(), :active)";
 
         $stmt = $this->db->prepare($sql);
         $result = $stmt->execute([
+            'member_number' => $this->nextMemberNumber(),
             'phone' => $this->normalizePhone($data['phone']),
             'alias' => $data['alias'],
             'internal_alias' => $data['internal_alias'] ?? null,
@@ -192,11 +217,14 @@ class MemberRepository {
     }
 
     /**
-     * Get all members, for the admin members list
+     * Get all real members, for the admin members list. Excludes
+     * placeholder/bookkeeping rows (see is_placeholder, migration 012) --
+     * they were never actual members and shouldn't show up here.
      */
     public function getAll() {
-        $sql = "SELECT id, phone, alias, email, membership_type, activated_at, active, last_login, created_at
+        $sql = "SELECT id, member_number, phone, alias, email, membership_type, activated_at, active, last_login, created_at
                 FROM members
+                WHERE is_placeholder = 0
                 ORDER BY alias ASC";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();

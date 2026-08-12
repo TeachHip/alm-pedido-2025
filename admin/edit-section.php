@@ -5,33 +5,38 @@ requireAdminAuth();
 
 require_once dirname(__FILE__) . '/../includes/repositories/SectionRepository-DB.php';
 
-$sectionRepo = new SectionRepository();
-$errors = [];
-$section = null;
-$isEdit = false;
+try {
+    $sectionRepo = new SectionRepository();
+    $errors = [];
+    $section = null;
+    $isEdit = false;
 
-// Check if editing existing section
-if (isset($_GET['section_id'])) {
-    $sectionId = (int)$_GET['section_id'];
-    $section = $sectionRepo->getById($sectionId);
-    
-    if (!$section) {
-        die("Sección no encontrada");
-    }
-    
-    $isEdit = true;
-}
+    // Check if editing existing section
+    if (isset($_GET['section_id'])) {
+        $sectionId = (int)$_GET['section_id'];
+        $section = $sectionRepo->getById($sectionId);
 
-// Get max display order for new sections
-if (!$isEdit) {
-    $allSections = $sectionRepo->getAll();
-    $maxOrder = 0;
-    foreach ($allSections as $s) {
-        if ($s['display_order'] > $maxOrder) {
-            $maxOrder = $s['display_order'];
+        if (!$section) {
+            die("Sección no encontrada");
         }
+
+        $isEdit = true;
     }
-    $defaultOrder = $maxOrder + 1;
+
+    // Get max display order for new sections
+    if (!$isEdit) {
+        $allSections = $sectionRepo->getAll();
+        $maxOrder = 0;
+        foreach ($allSections as $s) {
+            if ($s['display_order'] > $maxOrder) {
+                $maxOrder = $s['display_order'];
+            }
+        }
+        $defaultOrder = $maxOrder + 1;
+    }
+} catch (Exception $e) {
+    error_log("Error loading section: " . $e->getMessage());
+    die("Error: No se pudo cargar la sección.");
 }
 $pageH1 = ($isEdit ? 'Editar' : 'Nueva') . ' Sección';
 $pageTitle = $pageH1 . ' - AlMercáu';
@@ -81,9 +86,16 @@ include dirname(__FILE__) . '/partials/head.php';
             </div>
 
             <div class="form-group">
-                <label for="image">Nombre de imagen de sección:</label>
-                <input type="text" name="image" id="image" value="<?php echo $section ? htmlspecialchars(str_replace('grimgs/', '', $section['image'])) : ''; ?>" placeholder="imagen.jpg">
-                <small>Solo el nombre del archivo (ejemplo: pedido-expres.jpg). La ruta será siempre 'grimgs/'.</small>
+                <label>Imagen de la sección:</label>
+                <div class="image-upload-row">
+                    <?php if (!empty($section['image'])): ?>
+                    <img src="../<?php echo htmlspecialchars($section['image']); ?>" alt="Imagen actual" class="current-image-thumb">
+                    <?php endif; ?>
+                    <div class="image-upload-controls">
+                        <input type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
+                        <small>Mínimo 600x600px, máximo 2MB. JPG, PNG, GIF o WEBP. Se recorta al centro (cuadrado) y se ajusta a 800x800px.</small>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">

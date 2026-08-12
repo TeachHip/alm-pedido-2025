@@ -1,8 +1,14 @@
 <?php
 // cart-page.php - Shopping cart page
+// member-auth.php must load before any output on this page specifically --
+// unlike index.php/section.php/product.php/ticket.php, this page echoes a
+// <script> block before including partials/header.php (which needs a
+// session started for the member menu), and session_start() has to happen
+// before the response body starts.
+require_once 'includes/member-auth.php';
 require_once 'includes/repositories/ProductRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
-require_once 'includes/CartHelper.php';
+include 'partials/00.php';
 $pageTitle = 'Carrito - AlMercáu';
 
 // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
@@ -29,8 +35,6 @@ if ($feeAmount > 0) {
 
     <div id="cart-items">
         <?php
-        $cart = parseCartCookie();
-
         if (empty($cart)):
         ?>
         <div class="empty-cart">

@@ -36,4 +36,14 @@ function initFilterToggle(options) {
         applyFilter(onlyTrue);
         setCookie(options.cookieName, onlyTrue ? '1' : '0');
     });
+
+    // Re-apply immediately when an adminToggle() elsewhere on the page (see
+    // toggle-indicator.js) changes the same data-* flag this filter reads --
+    // otherwise a row toggled via AJAX keeps showing/hiding based on its
+    // state from page load until the next full reload.
+    document.addEventListener('admintoggle:changed', function(e) {
+        if (e.detail && e.detail.dataAttr === options.dataAttr) {
+            applyFilter(onlyTrue);
+        }
+    });
 }

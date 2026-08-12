@@ -141,7 +141,7 @@ include dirname(__FILE__) . '/partials/head.php';
                                 <td>€<?php echo number_format($product['price_member'], 2); ?></td>
                                 <td>€<?php echo number_format($product['price_public'], 2); ?></td>
                                 <td class="visibility-cell">
-                                    <a href="#" onclick="return adminToggle('actions/toggle-visibility.php?product_id=<?php echo $product['id']; ?>', this, {errorMessage: 'Error al cambiar la visibilidad'});">
+                                    <a href="#" onclick="return adminToggle('actions/toggle-visibility.php?product_id=<?php echo $product['id']; ?>', this, {valueKey: 'visible', trueLabel: 'Visible', falseLabel: 'Oculto', errorMessage: 'Error al cambiar la visibilidad', dataAttr: 'data-visible'});">
                                     <?php if ($product['visible']): ?>
                                     <span class="visible-indicator">✓</span>
                                     <br><small>Visible</small>

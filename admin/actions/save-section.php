@@ -4,6 +4,19 @@ include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
 require_once dirname(__FILE__) . '/../../includes/repositories/SectionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/ImageUploadHelper.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ../sections.php');
+    exit;
+}
+
+// Confirm the uploaded file actually arrived via this HTTP request (not
+// some other path PHP happens to be able to read) before ever touching it.
+if (!empty($_FILES['image']['tmp_name']) && !is_uploaded_file($_FILES['image']['tmp_name'])) {
+    header('Location: ../sections.php?error=' . urlencode('Error al subir la imagen'));
+    exit;
+}
 
 $sectionRepo = new SectionRepository();
 $errors = [];
@@ -34,19 +47,11 @@ if (!empty($_POST['key'])) {
     }
 }
 
-// Handle image upload
-// Handle image path (downgraded)
-// Handle image filename, always prepend 'imgs/'
-// Handle image filename, always prepend 'grimgs/'
-$imageName = isset($_POST['image']) ? trim($_POST['image']) : '';
-if ($imageName !== '') {
-    // Remove any accidental path and prepend grimgs/
-    $imageName = 'grimgs/' . basename($imageName);
-}
-if ($isEdit && $imageName === 'grimgs/') {
-    // Keep existing image if not provided
+// Previously-stored image (for updates), so we know what to keep/replace/delete below.
+$previousImage = null;
+if ($isEdit) {
     $existingSection = $sectionRepo->getById($sectionId);
-    $imageName = $existingSection['image'];
+    $previousImage = $existingSection ? $existingSection['image'] : null;
 }
 
 // If there are errors, redirect back
@@ -56,30 +61,41 @@ if (!empty($errors)) {
     exit;
 }
 
-// Prepare data
-$data = [
-    'key' => trim($_POST['key']),
-    'name' => trim($_POST['name']),
-    'description' => trim($_POST['description'] ?? ''),
-    'image' => $imageName,
-    'display_order' => (int)($_POST['display_order'] ?? 0),
-    'active' => isset($_POST['active']) ? 1 : 0,
-    'visible' => isset($_POST['visible']) ? 1 : 0
-];
-
 try {
+    // Returns null if no new file was uploaded (keep whatever the section
+    // already had). Sections store the full 'grimgs/...' path, unlike
+    // products (bare filename) -- prepend it here to match that convention.
+    $newImage = processListingImageUpload($_FILES['image'] ?? null, 'grimgs');
+    $imageName = $newImage ? ('grimgs/' . $newImage) : $previousImage;
+
+    $data = [
+        'key' => trim($_POST['key']),
+        'name' => trim($_POST['name']),
+        'description' => trim($_POST['description'] ?? ''),
+        'image' => $imageName,
+        'display_order' => (int)($_POST['display_order'] ?? 0),
+        'active' => isset($_POST['active']) ? 1 : 0,
+        'visible' => isset($_POST['visible']) ? 1 : 0
+    ];
+
     if ($isEdit) {
         $success = $sectionRepo->update($sectionId, $data);
     } else {
         $success = $sectionRepo->create($data);
     }
-    
-    if ($success) {
-        header("Location: ../sections.php?success=1");
-        exit;
-    } else {
+
+    if (!$success) {
         throw new Exception("Error al guardar la sección");
     }
+
+    // Only remove the old file once the DB row has been safely updated to
+    // point at the new one.
+    if ($newImage && $previousImage && $previousImage !== $imageName) {
+        deleteListingImage($previousImage, 'grimgs');
+    }
+
+    header("Location: ../sections.php?success=1");
+    exit;
 } catch (Exception $e) {
     error_log("Error saving section: " . $e->getMessage());
     $errorMsg = "Error al guardar: " . $e->getMessage();

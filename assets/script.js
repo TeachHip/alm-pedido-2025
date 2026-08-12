@@ -195,23 +195,22 @@ function saveCart() {
 function updateCartDisplay() {
     const cartItems = document.getElementById('cart-items');
     const cartTotal = document.getElementById('cart-total');
-    const whatsappLink = document.getElementById('whatsapp-link');
 
     if (!cartItems) return;
     document.querySelector('.whatsapp-btn').style.display = 'block'; //v11 4tres
 
     if (cart.length === 0) {
-        showEmptyCart(cartItems, cartTotal, whatsappLink);
+        showEmptyCart(cartItems, cartTotal);
         return;
     }
 
-    showCartItems(cartItems, cartTotal, whatsappLink);
+    showCartItems(cartItems, cartTotal);
 }
 
 /**
  * Display empty cart state
  */
-function showEmptyCart(cartItems, cartTotal, whatsappLink) {
+function showEmptyCart(cartItems, cartTotal) {
     cartItems.innerHTML = `
         <div class="empty-cart">
             <p>Tu carrito está vacío</p>
@@ -220,13 +219,12 @@ function showEmptyCart(cartItems, cartTotal, whatsappLink) {
     `;
 
     if (cartTotal) cartTotal.textContent = '0.00';
-    if (whatsappLink) whatsappLink.style.display = 'none';
 }
 
 /**
  * Display cart items and totals
  */
-function showCartItems(cartItems, cartTotal, whatsappLink) {
+function showCartItems(cartItems, cartTotal) {
     let total = 0;
     let itemsHtml = '';
 
@@ -277,7 +275,6 @@ function showCartItems(cartItems, cartTotal, whatsappLink) {
     document.querySelector('.whatsapp-btn').style.display = 'block'; //v11 4tres
 
     if (cartTotal) cartTotal.textContent = total.toFixed(2);
-    if (whatsappLink) updateWhatsAppLink(whatsappLink, total);
 }
 
 
@@ -356,30 +353,6 @@ function addToCartFromOptions(productId, selectId, resetQuantity) {
     const quantity = productQuantities[quantityKey] || 1;
     addToCart(line.id, line.name, line.price, line.image, quantity);
     if (resetQuantity) resetProductQuantity(quantityKey);
-}
-
-// ===== WHATSAPP FUNCTION =====
-function updateWhatsAppLink(whatsappLink, total) {
-    if (!whatsappLink) return;
-
-    if (cart.length === 0) {
-        whatsappLink.style.display = 'none';
-        return;
-    }
-
-    // Build the WhatsApp message
-    const itemsText = cart.map(item =>
-        `${item.quantity}x ${item.name} - ${(item.price * item.quantity).toFixed(2)}€`
-    ).join('%0A');
-
-    const message = `¡Hola! Me interesan los siguientes productos:%0A%0A${itemsText}%0A%0ATotal: ${total.toFixed(2)}€%0A%0A¡Gracias!`;
-
-    // Use web.whatsapp.com instead of wa.me
-    const phoneNumber = "34611183123"; // Your number
-
-    whatsappLink.href = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${message}`;
-    whatsappLink.target = '_blank';
-    whatsappLink.style.display = 'block';
 }
 
 // Also add this separate function for the button click

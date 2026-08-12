@@ -23,7 +23,7 @@ $pageTitle = 'AlMercáu - Carro de la compra para mercantes';
 <!-- Order Confirmation Banner -->
 <div id="order-confirmation-banner" style="display: none; background: #4CAF50; color: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 8px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
     <h3 style="margin: 0 0 10px 0; font-size: 20px;">✅ Pedido realizado<br><span style="font-weight: normal;">(si enviaste el whatsapp)</span></h3>
-    <p style="margin: 0 0 5px 0; font-size: 16px;">Ticket: <strong><span id="order-ticket"></span></strong></p>
+    <p style="margin: 0 0 5px 0; font-size: 16px;">Pedido: <strong><span id="order-ticket"></span></strong></p>
     <p style="margin: 0 0 15px 0; font-size: 14px;">Recibirás confirmación por WhatsApp</p>
     <button onclick="dismissOrderConfirmation()" style="background: white; color: #4CAF50; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
         Cerrar y vaciar carrito

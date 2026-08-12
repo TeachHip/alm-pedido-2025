@@ -5,6 +5,11 @@ requireAdminAuth();
 
 require_once dirname(__FILE__) . '/../../includes/repositories/SettingsRepository-DB.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ../settings.php');
+    exit;
+}
+
 $businessName = trim($_POST['business_name'] ?? '');
 $businessNif = trim($_POST['business_nif'] ?? '');
 $associationName = trim($_POST['association_name'] ?? '');

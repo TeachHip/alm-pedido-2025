@@ -5,6 +5,11 @@ requireAdminAuth();
 
 require_once dirname(__FILE__) . '/../../includes/repositories/SettingsRepository-DB.php';
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ../settings.php');
+    exit;
+}
+
 $errors = [];
 
 $amountRaw = trim($_POST['fee_amount'] ?? '');
