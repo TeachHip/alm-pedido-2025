@@ -110,6 +110,14 @@ if ($feeAmount > 0) {
         Total: <span id="cart-total">0.00</span>€
     </div>
 
+    <?php if (!isMemberLoggedIn()): ?>
+    <p class="login-required-notice">
+        Debes iniciar sesión para enviar tu pedido.
+        <a href="member-login.php?return_to=<?php echo urlencode($_SERVER['REQUEST_URI'] ?? '/cart-page.php'); ?>">Inicia sesión</a>
+        o pásate por AlMercáu para darte de alta.
+    </p>
+    <?php endif; ?>
+
     <!-- SIMPLE BUTTON THAT WILL DEFINITELY WORK -->
 <button type="button" class="whatsapp-btn" onclick="sendWhatsAppMessage()">
     Enviar pedido por WhatsApp

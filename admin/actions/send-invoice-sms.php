@@ -8,6 +8,7 @@ require_once dirname(__FILE__) . '/../../includes/repositories/InvoiceRepository
 require_once dirname(__FILE__) . '/../../includes/repositories/MemberRepository-DB.php';
 require_once dirname(__FILE__) . '/../../includes/repositories/SettingsRepository-DB.php';
 require_once dirname(__FILE__) . '/../../includes/services/LabsMobileClient.php';
+require_once dirname(__FILE__) . '/../../includes/InvoiceHelper.php';
 
 $invoiceId = (int) ($_GET['invoice_id'] ?? 0);
 
@@ -39,15 +40,13 @@ if (LABSMOBILE_USERNAME === '' || LABSMOBILE_TOKEN === '') {
     exit;
 }
 
-$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'almercau.org';
-$basePath = rtrim(str_replace('/admin/actions', '', dirname($_SERVER['PHP_SELF'])), '/');
-$invoiceUrl = "$scheme://$host$basePath/ticket.php?token=" . $invoice['token'];
+$baseUrl = buildAppBaseUrl('/admin/actions');
+$invoiceUrl = buildTicketUrl($invoice['token'], $baseUrl);
 
 $settingsRepo = new SettingsRepository();
 $senderAlias = $settingsRepo->get('sms_sender_alias', '');
 
-$message = "AlMercáu: tu ticket de compra " . $invoice['ticket_number'] . " (" . number_format($invoice['total_amount'], 2) . "€) esta listo: " . $invoiceUrl;
+$message = buildInvoiceSmsMessage($invoice['ticket_number'], $invoice['total_amount'], $invoiceUrl);
 
 try {
     $client = new LabsMobileClient(LABSMOBILE_USERNAME, LABSMOBILE_TOKEN);

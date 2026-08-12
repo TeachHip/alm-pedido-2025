@@ -6,6 +6,7 @@ include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
 
 require_once dirname(__FILE__) . '/../includes/repositories/InvoiceRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/InvoiceHelper.php';
 
 try {
     $invoiceId = (int) ($_GET['invoice_id'] ?? 0);
@@ -16,10 +17,8 @@ try {
         die("Ticket no encontrado");
     }
 
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'almercau.org';
-    $basePath = rtrim(str_replace('/admin', '', dirname($_SERVER['PHP_SELF'])), '/');
-    $invoiceUrl = "$scheme://$host$basePath/ticket.php?token=" . $invoice['token'];
+    $baseUrl = buildAppBaseUrl('/admin');
+    $invoiceUrl = buildTicketUrl($invoice['token'], $baseUrl);
 } catch (Exception $e) {
     error_log("Error loading invoice: " . $e->getMessage());
     die("Error: No se pudo cargar el ticket.");
@@ -38,6 +37,11 @@ include dirname(__FILE__) . '/partials/header.php';
         <h3>✅ Ticket <?php echo htmlspecialchars($invoice['ticket_number']); ?> creado</h3>
         <p>Enlace del ticket:</p>
         <p><a href="<?php echo htmlspecialchars($invoiceUrl); ?>" target="_blank"><?php echo htmlspecialchars($invoiceUrl); ?></a></p>
+
+        <?php if ($invoice['paygold_payment_url']): ?>
+        <p>Enlace de pago<?php echo strpos($invoice['paygold_payment_url'], 'mock-payment.php') !== false ? ' (simulado)' : ''; ?>:</p>
+        <p><a href="<?php echo htmlspecialchars($invoice['paygold_payment_url']); ?>" target="_blank"><?php echo htmlspecialchars($invoice['paygold_payment_url']); ?></a></p>
+        <?php endif; ?>
 
         <?php if ($invoice['sms_sent_at']): ?>
         <p>📱 SMS enviado el <?php echo date('d/m/Y H:i', strtotime($invoice['sms_sent_at'])); ?></p>

@@ -11,6 +11,7 @@ require_once __DIR__ . '/includes/repositories/CartRepository-DB.php';
 require_once __DIR__ . '/includes/repositories/ProductRepository-DB.php';
 require_once __DIR__ . '/includes/repositories/SettingsRepository-DB.php';
 require_once __DIR__ . '/includes/CartHelper.php';
+require_once __DIR__ . '/includes/InvoiceHelper.php';
 
 try {
     // Get JSON input
@@ -74,13 +75,39 @@ try {
     );
 
     if ($result['success']) {
+        // Auto-create the ticket de compra + mock payment link right away
+        // instead of waiting for Hop to do it manually later. Fail-soft:
+        // the WhatsApp order must go through regardless of whether this
+        // succeeds (see AI/plans v10 Stage 2 -- confirmed 2026-08-12).
+        $mock = null;
+        try {
+            $baseUrl = buildAppBaseUrl('');
+            $invoiceResult = createInvoiceFromCart($result['cart_id'], $baseUrl);
+            if ($invoiceResult['success']) {
+                $ticketUrl = buildTicketUrl($invoiceResult['token'], $baseUrl);
+                $mock = [
+                    'payment_url' => $invoiceResult['payment_url'],
+                    'sms_message' => buildInvoiceSmsMessage(
+                        $invoiceResult['ticket_number'],
+                        $invoiceResult['total_amount'],
+                        $ticketUrl
+                    ),
+                ];
+            } else {
+                error_log("Error auto-creating invoice at checkout: " . $invoiceResult['error']);
+            }
+        } catch (Exception $e) {
+            error_log("Error auto-creating invoice at checkout: " . $e->getMessage());
+        }
+
         echo json_encode([
             'success' => true,
             'cart_id' => $result['cart_id'],
             'ticket' => $result['ticket'],
             'total' => $result['total'],
             'fee_amount' => $result['fee_amount'],
-            'fee_label' => $result['fee_label']
+            'fee_label' => $result['fee_label'],
+            'mock' => $mock
         ]);
     } else {
         throw new Exception($result['error'] ?? 'Error desconocido');

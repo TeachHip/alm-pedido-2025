@@ -6,10 +6,20 @@ requireAdminAuth();
 require_once dirname(__FILE__) . '/../includes/repositories/CartRepository-DB.php';
 require_once dirname(__FILE__) . '/../includes/repositories/MemberRepository-DB.php';
 require_once dirname(__FILE__) . '/../includes/repositories/SettingsRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/InvoiceRepository-DB.php';
 
 $cartId = (int) ($_GET['cart_id'] ?? 0);
 if (!$cartId) {
     die("Falta el id del pedido");
+}
+
+// Orders now get a ticket automatically at checkout (see save-cart.php) --
+// this manual flow is a fallback for legacy pre-automation carts. Don't
+// let it create a duplicate for one that already has a ticket.
+$existingInvoice = (new InvoiceRepository())->findByCartId($cartId);
+if ($existingInvoice) {
+    header('Location: invoice-created.php?invoice_id=' . $existingInvoice['id']);
+    exit;
 }
 
 try {

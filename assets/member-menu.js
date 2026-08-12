@@ -1,31 +1,37 @@
-// Full-screen mobile-style menu triggered by the hamburger button in the
-// public header (see partials/header.php) -- only present in the DOM when
-// a member is logged in.
+// Dropdown member menu anchored under the header (see partials/header.php).
+// Always present; content (login vs. logout) depends on session state.
 document.addEventListener('DOMContentLoaded', function() {
     const toggleBtn = document.getElementById('member-menu-toggle');
     const closeBtn = document.getElementById('member-menu-close');
-    const overlay = document.getElementById('member-menu-overlay');
-    if (!toggleBtn || !overlay) return;
+    const backdrop = document.getElementById('member-menu-backdrop');
+    const panel = document.getElementById('member-menu-panel');
+    if (!toggleBtn || !panel) return;
 
     function openMenu() {
-        overlay.hidden = false;
+        if (backdrop) backdrop.classList.add('is-open');
+        panel.classList.add('is-open');
         toggleBtn.setAttribute('aria-expanded', 'true');
     }
 
     function closeMenu() {
-        overlay.hidden = true;
+        if (backdrop) backdrop.classList.remove('is-open');
+        panel.classList.remove('is-open');
         toggleBtn.setAttribute('aria-expanded', 'false');
     }
 
     toggleBtn.addEventListener('click', function() {
-        if (overlay.hidden) {
-            openMenu();
-        } else {
+        if (panel.classList.contains('is-open')) {
             closeMenu();
+        } else {
+            openMenu();
         }
     });
 
     if (closeBtn) {
         closeBtn.addEventListener('click', closeMenu);
+    }
+
+    if (backdrop) {
+        backdrop.addEventListener('click', closeMenu);
     }
 });

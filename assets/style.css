@@ -66,15 +66,21 @@ header {
     z-index: 100;
 }
 
-/* Member menu: hamburger button in the header (only rendered when a member
-   is logged in) opening a full-screen mobile-style menu -- see
-   partials/header.php + assets/member-menu.js. */
+/* Member menu: hamburger button in the header, always visible (shows
+   "Iniciar sesión" or "Cerrar sesión" depending on session state -- see
+   partials/header.php + assets/member-menu.js). Opens as a dropdown card
+   anchored under the header -- header has position:sticky, which already
+   establishes a containing block for the absolutely-positioned panel below,
+   so it tracks the header's position with no JS height measurement needed.
+   Deliberately narrower than .container (the page's own content width) per
+   the "slightly thinner than the products below" design direction. */
 .member-menu-toggle {
     position: absolute;
-    top: 14px;
-    right: 16px;
-    width: 34px;
-    height: 34px;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
     padding: 0;
     background: transparent;
     border: none;
@@ -89,44 +95,78 @@ header {
 
 .member-menu-toggle span {
     display: block;
-    width: 24px;
-    height: 3px;
+    width: 22px;
+    height: 2px;
     background: white;
     border-radius: 2px;
 }
 
-.member-menu-overlay {
+.member-menu-backdrop {
     position: fixed;
     inset: 0;
-    background: #f0f2f5;
-    z-index: 300;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 290;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.member-menu-backdrop.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.member-menu-panel {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: calc(100% - 32px);
+    max-width: 360px;
+    margin-top: 8px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    z-index: 301;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, -6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+.member-menu-panel.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+
+.member-menu-panel-header {
     display: flex;
-    flex-direction: column;
-}
-
-.member-menu-overlay[hidden] {
-    display: none;
-}
-
-.member-menu-close {
-    align-self: flex-end;
-    background: #006a8e;
-    color: white;
-    border: none;
-    width: 48px;
-    height: 48px;
-    font-size: 1.3rem;
-    line-height: 1;
-    cursor: pointer;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: #f7f9fa;
+    border-bottom: 1px solid #eee;
 }
 
 .member-menu-greeting {
-    background: #006a8e;
-    color: white;
-    padding: 16px 20px;
+    font-weight: 600;
+    color: #006a8e;
+    font-size: 0.95rem;
+}
+
+.member-menu-close {
+    background: none;
+    border: none;
+    color: #888;
     font-size: 1.1rem;
-    font-weight: bold;
-    text-align: left;
+    line-height: 1;
+    padding: 4px 6px;
+    cursor: pointer;
 }
 
 .member-menu-nav {
@@ -135,17 +175,22 @@ header {
 }
 
 .member-menu-item {
-    padding: 18px 20px;
+    padding: 14px 16px;
     text-decoration: none;
     color: #333;
-    font-size: 1.05rem;
+    font-size: 0.98rem;
     text-align: left;
-    border-bottom: 1px solid #e0e0e0;
     background: white;
 }
 
 .member-menu-item:active {
     background: #f5f5f5;
+}
+
+@media (min-width: 601px) {
+    .member-menu-panel {
+        max-width: 280px;
+    }
 }
 
 h1 {
@@ -786,6 +831,21 @@ a.menu-item {
     text-align: center;
     color: #666;
     font-size: 0.9rem;
+}
+
+.login-required-notice {
+    background: #fff3cd;
+    color: #856404;
+    text-align: center;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    font-size: 0.95rem;
+}
+
+.login-required-notice a {
+    color: #006a8e;
+    font-weight: 600;
 }
 
 /* ===== ENHANCED CART TOTAL STYLES ===== */

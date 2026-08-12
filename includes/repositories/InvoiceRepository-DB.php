@@ -128,6 +128,17 @@ class InvoiceRepository {
         return $stmt->fetch();
     }
 
+    /**
+     * Most recent active invoice for a cart, if any -- used to decide
+     * whether admin/orders.php should offer "Crear ticket" or "Ver ticket".
+     */
+    public function findByCartId($cartId) {
+        $sql = "SELECT * FROM invoices WHERE cart_id = :cart_id ORDER BY created_at DESC LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['cart_id' => $cartId]);
+        return $stmt->fetch();
+    }
+
     public function getItems($invoiceId) {
         $sql = "SELECT * FROM invoice_items WHERE invoice_id = :invoice_id ORDER BY display_order ASC, id ASC";
         $stmt = $this->db->prepare($sql);
@@ -173,6 +184,16 @@ class InvoiceRepository {
         }
 
         return $result;
+    }
+
+    /**
+     * Set the payment link/reference (real PayGold, or the mock stand-in --
+     * see includes/InvoiceHelper.php).
+     */
+    public function setPaymentUrl($invoiceId, $paymentUrl, $reference = null) {
+        $sql = "UPDATE invoices SET paygold_payment_url = :url, paygold_reference = :reference WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute(['id' => $invoiceId, 'url' => $paymentUrl, 'reference' => $reference]);
     }
 
     public function markPaid($invoiceId) {

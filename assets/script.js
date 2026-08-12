@@ -80,7 +80,8 @@ function initializeApp() {
 
     cleanupCart();
     updateCartCount();
-    document.querySelector('.whatsapp-btn').style.display = 'block';
+    const whatsappBtn = document.querySelector('.whatsapp-btn');
+    if (whatsappBtn) whatsappBtn.style.display = 'block';
     refreshCartCookie();
 
     if (document.getElementById('cart-items')) {
@@ -422,6 +423,14 @@ async function sendWhatsAppMessage() {
             }));
 
             // DO NOT clear cart here - let user do it via "Cerrar y vaciar carrito" button
+
+            // Mock bank/SMS API steps (no real PayGold/LabsMobile credentials
+            // yet -- see AI/plans v10 Stage 2). alert() blocks until dismissed,
+            // so these are guaranteed to be read before the WhatsApp redirect.
+            if (result.mock) {
+                alert('🏦 API Banco (simulada): enlace de pago generado.\n' + result.mock.payment_url);
+                alert('📱 API SMS (simulada): mensaje que se enviaría al socio:\n\n' + result.mock.sms_message);
+            }
 
             // Generate WhatsApp message with ticket number
             let message = "🛒 Pedido " + result.ticket + "\n\n";

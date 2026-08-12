@@ -5,9 +5,11 @@ requireAdminAuth();
 
 // Load database repository
 require_once dirname(__FILE__) . '/../includes/repositories/CartRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/InvoiceRepository-DB.php';
 
 try {
     $cartRepo = new CartRepository();
+    $invoiceRepo = new InvoiceRepository();
     
     // Pagination
     $perPage = 25;
@@ -95,8 +97,9 @@ include dirname(__FILE__) . '/partials/head.php';
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($orders as $order): 
+                <?php foreach ($orders as $order):
                     $ticket = $cartRepo->getTicketNumber($order['id']);
+                    $invoice = $invoiceRepo->findByCartId($order['id']);
                     $statusLabel = [
                         'active' => 'Activo',
                         'completed' => 'Completado',
@@ -113,7 +116,11 @@ include dirname(__FILE__) . '/partials/head.php';
                     <td><?php echo $statusLabel[$order['status']] ?? $order['status']; ?></td>
                     <td><?php echo $order['items_count']; ?> items</td>
                     <td onclick="event.stopPropagation();">
+                        <?php if ($invoice): ?>
+                        <a href="invoice-created.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-edit">Ver ticket</a>
+                        <?php else: ?>
                         <a href="create-invoice.php?cart_id=<?php echo $order['id']; ?>" class="btn-edit">Crear ticket</a>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <tr id="details-<?php echo $order['id']; ?>" style="display: none;">
