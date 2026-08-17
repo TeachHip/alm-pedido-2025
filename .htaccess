@@ -3,9 +3,16 @@
 # is safe as a direct check (no X-Forwarded-Proto handling needed). Applies
 # to admin/ too, since .htaccess rules cascade to subdirectories.
 #
+# Excludes localhost/127.0.0.1: local Apache dev setups typically have no
+# SSL listener on 443, so without this exclusion the redirect sends every
+# local request to a https://localhost URL nothing answers on -- broke
+# local browser testing the first time this rule was deployed (2026-08-17).
+#
 # Requires mod_rewrite (standard on Apache/LiteSpeed shared hosting). Not
 # testable against PHP's built-in dev server (`php -S`), which ignores
-# .htaccess entirely -- verify on the real host after deploying.
+# .htaccess entirely.
 RewriteEngine On
 RewriteCond %{HTTPS} off
+RewriteCond %{HTTP_HOST} !^localhost(:\d+)?$
+RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:\d+)?$
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
