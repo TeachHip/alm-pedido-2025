@@ -6,9 +6,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    if (loginAdmin($username, $password)) {
+    $result = loginAdmin($username, $password);
+    if ($result === true) {
         header('Location: index.php');
         exit;
+    } elseif ($result === 'locked') {
+        $error = 'Demasiados intentos fallidos. Cuenta bloqueada temporalmente, inténtalo de nuevo en unos minutos.';
     } else {
         $error = 'Usuario o contraseña incorrectos';
     }

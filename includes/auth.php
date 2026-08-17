@@ -12,11 +12,20 @@ function getLoggedInUser() {
     return $_SESSION['admin_user'] ?? null;
 }
 
+/**
+ * Attempt to log an admin/worker in. Returns true on success, false on
+ * wrong credentials, or 'locked' if UserRepository::authenticate() reports
+ * the account is in a brute-force lockout (see includes/repositories/UserRepository-DB.php).
+ */
 function loginAdmin($username, $password) {
     try {
         $userRepo = new UserRepository();
         $user = $userRepo->authenticate($username, $password);
-        
+
+        if ($user === 'locked') {
+            return 'locked';
+        }
+
         if ($user) {
             $_SESSION['admin_logged_in'] = true;
             $_SESSION['admin_user'] = [

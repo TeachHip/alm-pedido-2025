@@ -49,12 +49,18 @@ function getLoggedInMember() {
 }
 
 /**
- * Attempt to log a member in. Returns true on success.
+ * Attempt to log a member in. Returns true on success, false on wrong
+ * credentials, or 'locked' if MemberRepository::authenticate() reports the
+ * account is in a brute-force lockout (see includes/repositories/MemberRepository-DB.php).
  */
 function loginMember($phone, $password) {
     try {
         $memberRepo = new MemberRepository();
         $member = $memberRepo->authenticate($phone, $password);
+
+        if ($member === 'locked') {
+            return 'locked';
+        }
 
         if (!$member) {
             return false;

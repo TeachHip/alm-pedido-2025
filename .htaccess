@@ -1,0 +1,11 @@
+# Force HTTPS. No reverse proxy/CDN in front of this app in production
+# (confirmed 2026-08-17) -- %{HTTPS} reflects the real connection, so this
+# is safe as a direct check (no X-Forwarded-Proto handling needed). Applies
+# to admin/ too, since .htaccess rules cascade to subdirectories.
+#
+# Requires mod_rewrite (standard on Apache/LiteSpeed shared hosting). Not
+# testable against PHP's built-in dev server (`php -S`), which ignores
+# .htaccess entirely -- verify on the real host after deploying.
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

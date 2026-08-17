@@ -15,9 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = $_POST['phone'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    if (loginMember($phone, $password)) {
+    $result = loginMember($phone, $password);
+    if ($result === true) {
         header('Location: ' . $returnTo);
         exit;
+    } elseif ($result === 'locked') {
+        $error = 'Demasiados intentos fallidos. Cuenta bloqueada temporalmente, inténtalo de nuevo en unos minutos.';
     } else {
         $error = 'Teléfono o contraseña incorrectos';
     }

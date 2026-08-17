@@ -9,6 +9,9 @@
 require_once __DIR__ . '/../db/database-DB.php';
 
 class MemberRepository {
+    const MAX_LOGIN_ATTEMPTS = 5;
+    const LOCKOUT_MINUTES = 15;
+
     private $db;
 
     public function __construct() {
@@ -73,6 +76,12 @@ class MemberRepository {
     /**
      * Authenticate a member and return their row if valid
      */
+    /**
+     * Returns the member row on success, false on wrong credentials, or the
+     * string 'locked' if the account is currently in a brute-force lockout
+     * (see registerFailedLogin()) -- checked before the password so a
+     * locked-out attacker can't keep guessing.
+     */
     public function authenticate($phone, $password) {
         $member = $this->findByPhone($phone);
 
@@ -80,12 +89,42 @@ class MemberRepository {
             return false;
         }
 
+        if ($member['locked_until'] && strtotime($member['locked_until']) > time()) {
+            return 'locked';
+        }
+
         if (password_verify($password, $member['password_hash'])) {
+            $this->resetLoginAttempts($member['id']);
             $this->updateLastLogin($member['id']);
             return $member;
         }
 
+        $this->registerFailedLogin($member['id'], (int) $member['failed_login_attempts']);
         return false;
+    }
+
+    /**
+     * Increment the failed-attempt counter; once it reaches
+     * MAX_LOGIN_ATTEMPTS, lock the account for LOCKOUT_MINUTES. Interpolates
+     * the (non-user-controlled) lockout window directly into the SQL rather
+     * than binding it, since a duplicate named placeholder is invalid under
+     * real (non-emulated) PDO prepared statements.
+     */
+    private function registerFailedLogin($memberId, $currentAttempts) {
+        $newAttempts = $currentAttempts + 1;
+        if ($newAttempts >= self::MAX_LOGIN_ATTEMPTS) {
+            $sql = "UPDATE members SET failed_login_attempts = :attempts, locked_until = DATE_ADD(NOW(), INTERVAL " . self::LOCKOUT_MINUTES . " MINUTE) WHERE id = :id";
+        } else {
+            $sql = "UPDATE members SET failed_login_attempts = :attempts WHERE id = :id";
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['attempts' => $newAttempts, 'id' => $memberId]);
+    }
+
+    private function resetLoginAttempts($memberId) {
+        $sql = "UPDATE members SET failed_login_attempts = 0, locked_until = NULL WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id' => $memberId]);
     }
 
     /**
