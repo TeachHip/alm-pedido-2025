@@ -28,6 +28,7 @@ $settingsRepo = new SettingsRepository();
 $businessName = $settingsRepo->get('business_name', 'AlMercáu');
 $associationName = $settingsRepo->get('association_name', '');
 $businessAddress = $settingsRepo->get('business_address', '');
+$businessNif = $settingsRepo->get('business_nif', '');
 
 $pageTitle = $invoice ? "Ticket {$invoice['ticket_number']} - AlMercáu" : 'Ticket no encontrado - AlMercáu';
 include 'partials/head.php';
@@ -65,6 +66,7 @@ include 'partials/header.php';
     <div class="<?php echo $cardClass; ?>">
         <div class="invoice-header">
             <h2><?php echo htmlspecialchars($businessName); ?></h2>
+            <?php if ($businessNif): ?><p>NIF <?php echo htmlspecialchars($businessNif); ?></p><?php endif; ?>
             <?php if ($associationName): ?><p><?php echo htmlspecialchars($associationName); ?></p><?php endif; ?>
             <?php if ($businessAddress): ?><p><?php echo htmlspecialchars($businessAddress); ?></p><?php endif; ?>
             <p class="invoice-ticket">Ticket de compra <?php echo htmlspecialchars($invoice['ticket_number']); ?></p>

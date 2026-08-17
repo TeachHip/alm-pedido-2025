@@ -104,7 +104,7 @@ include dirname(__FILE__) . '/partials/head.php';
                 <input type="text" id="business_address" name="business_address" value="<?php echo htmlspecialchars($businessAddress); ?>" maxlength="255">
             </div>
             <div class="form-group">
-                <label for="business_nif">NIF <small>(no se muestra en el ticket de compra actualmente)</small></label>
+                <label for="business_nif">NIF</label>
                 <input type="text" id="business_nif" name="business_nif" value="<?php echo htmlspecialchars($businessNif); ?>" maxlength="50">
             </div>
             <div class="form-group">
