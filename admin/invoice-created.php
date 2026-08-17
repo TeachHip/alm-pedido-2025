@@ -28,7 +28,7 @@ $pageH1 = 'Ticket de Compra Creado';
 $pageTitle = $pageH1 . ' - AlMercáu';
 $activeNav = 'orders';
 $backUrl = 'orders.php';
-$successMessage = 'SMS enviado correctamente';
+$successMessage = ($_GET['success'] ?? '') === 'paid' ? 'Marcado como pagado' : 'SMS enviado correctamente';
 include dirname(__FILE__) . '/partials/head.php';
 include dirname(__FILE__) . '/partials/header.php';
 ?>
@@ -47,10 +47,19 @@ include dirname(__FILE__) . '/partials/header.php';
         <p>📱 SMS enviado el <?php echo date('d/m/Y H:i', strtotime($invoice['sms_sent_at'])); ?></p>
         <?php endif; ?>
 
+        <?php if ($invoice['payment_status'] === 'paid'): ?>
+        <p>✅ Pagado el <?php echo date('d/m/Y H:i', strtotime($invoice['paid_at'])); ?></p>
+        <?php endif; ?>
+
         <div class="form-actions">
             <a href="actions/send-invoice-sms.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-save" onclick="return confirm('¿Enviar el SMS con el enlace del ticket de compra?');">
                 📱 <?php echo $invoice['sms_sent_at'] ? 'Reenviar SMS' : 'Enviar SMS'; ?>
             </a>
+            <?php if ($invoice['payment_status'] !== 'paid'): ?>
+            <a href="actions/mark-invoice-paid.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-save" onclick="return confirm('¿Confirmas que el pago de este ticket se ha recibido?');">
+                ✅ Marcar como pagado
+            </a>
+            <?php endif; ?>
             <a href="orders.php" class="btn-cancel">Volver a Pedidos</a>
         </div>
     </div>

@@ -54,7 +54,7 @@ try {
 
     if ($result['success']) {
         $invoiceRepo->markSmsSent($invoiceId);
-        header('Location: ../invoice-created.php?invoice_id=' . $invoiceId . '&success=1');
+        header('Location: ../invoice-created.php?invoice_id=' . $invoiceId . '&success=sms');
     } else {
         header('Location: ../invoice-created.php?invoice_id=' . $invoiceId . '&error=' . urlencode('Error al enviar el SMS: ' . ($result['error'] ?? 'desconocido')));
     }
