@@ -23,7 +23,7 @@ try {
     }
 
     // Checkout requires a logged-in member (browsing does not) -- the ticket
-    // de compra/SMS flow needs a real, verified member on the cart.
+    // de compra needs a real, verified member on the cart.
     $member = getValidatedMember();
     if (!$member) {
         http_response_code(401);
@@ -90,13 +90,6 @@ try {
                     'payment_url' => $invoiceResult['payment_url'],
                     'is_mock' => $invoiceResult['payment_is_mock'],
                     'ticket_url' => $ticketUrl,
-                    'sms_message' => buildInvoiceSmsMessage(
-                        $invoiceResult['ticket_number'],
-                        $invoiceResult['total_amount'],
-                        $ticketUrl
-                    ),
-                    'sms_sent' => $invoiceResult['sms_sent'],
-                    'sms_is_mock' => $invoiceResult['sms_is_mock'],
                 ];
             } else {
                 error_log("Error auto-creating invoice at checkout: " . $invoiceResult['error']);

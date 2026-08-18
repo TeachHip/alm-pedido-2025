@@ -20,7 +20,6 @@ try {
     $associationName = $settingsRepo->get('association_name', '');
     $businessAddress = $settingsRepo->get('business_address', '');
     $invoiceDueDays = $settingsRepo->get('invoice_due_days', '7');
-    $smsSenderAlias = $settingsRepo->get('sms_sender_alias', '');
     // datetime-local inputs need "Y-m-d\TH:i" (no seconds); stored value is
     // "Y-m-d H:i:s" (same shape as invoices.due_date elsewhere).
     $deadlinePedidoExpres = str_replace(' ', 'T', substr($settingsRepo->get('deadline_pedido_expres', ''), 0, 16));
@@ -86,13 +85,13 @@ include dirname(__FILE__) . '/partials/head.php';
     <!-- BEGIN ticket de compra / invoice feature settings block -- see the
          matching BEGIN/END markers in this file's PHP above. Also touches
          actions/save-invoice-settings.php, InvoiceRepository-DB.php,
-         services/LabsMobileClient.php, and ticket.php if ever removed. -->
+         and ticket.php if ever removed. -->
     <div class="edit-form" style="margin-top: 20px;">
         <form action="actions/save-invoice-settings.php" method="POST">
             <div class="form-group">
-                <label>Ticket de compra y SMS</label>
+                <label>Ticket de compra</label>
                 <p style="color:#666; font-size: 14px;">
-                    Datos mostrados en el ticket de compra y remitente de los SMS con el enlace al ticket.
+                    Datos mostrados en el ticket de compra.
                 </p>
             </div>
             <div class="form-group">
@@ -125,11 +124,6 @@ include dirname(__FILE__) . '/partials/head.php';
                 <label for="deadline_pedido_grupo">Fecha límite de pago — Pedido de Grupo</label>
                 <input type="datetime-local" id="deadline_pedido_grupo" name="deadline_pedido_grupo" value="<?php echo htmlspecialchars($deadlinePedidoGrupo); ?>">
                 <small>Cualquier pedido con al menos un producto de esta sección debe pagarse antes de esta fecha/hora. Vacío = sin límite propio (usa "Días para el pago")</small>
-            </div>
-            <div class="form-group">
-                <label for="sms_sender_alias">Remitente SMS</label>
-                <input type="text" id="sms_sender_alias" name="sms_sender_alias" value="<?php echo htmlspecialchars($smsSenderAlias); ?>" maxlength="16">
-                <small>Numérico mientras LabsMobile no apruebe el alias "ALMERCAU"</small>
             </div>
             <div class="form-actions">
                 <button type="submit" class="btn-save">💾 Guardar</button>

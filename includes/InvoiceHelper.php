@@ -16,7 +16,6 @@ require_once __DIR__ . '/repositories/InvoiceRepository-DB.php';
 require_once __DIR__ . '/repositories/SettingsRepository-DB.php';
 require_once __DIR__ . '/repositories/MemberRepository-DB.php';
 require_once __DIR__ . '/services/PayGoldClient.php';
-require_once __DIR__ . '/services/LabsMobileClient.php';
 
 /**
  * Absolute base URL of the app (scheme + host + path), derived from the
@@ -103,62 +102,6 @@ function requestPaymentLink($invoiceId, $token, $dueDate, $totalAmount, $baseUrl
 }
 
 /**
- * SMS text sent to the member: just the ticket link -- the payment link
- * lives on that ticket page itself (ticket.php already shows it), not
- * duplicated into the SMS.
- */
-function buildInvoiceSmsMessage($ticketNumber, $totalAmount, $ticketUrl) {
-    $message = "AlMercáu: tu ticket de compra " . $ticketNumber . " (" . number_format($totalAmount, 2) . "€) esta listo: " . $ticketUrl;
-    return $message;
-}
-
-/**
- * Send the invoice SMS via LabsMobile if credentials are configured;
- * otherwise (or on any failure) return the composed text without sending,
- * same fail-soft principle as requestPaymentLink(). Never blocks the
- * caller. Returns ['sent' => bool, 'is_mock' => bool, 'message' => string].
- */
-function sendInvoiceSms($invoiceId, $memberId, $ticketNumber, $totalAmount, $ticketUrl) {
-    $message = buildInvoiceSmsMessage($ticketNumber, $totalAmount, $ticketUrl);
-
-    $apiKeysFile = __DIR__ . '/config/api-keys-DB.php';
-    if (file_exists($apiKeysFile)) {
-        require_once $apiKeysFile;
-    }
-
-    $configured = defined('LABSMOBILE_USERNAME') && LABSMOBILE_USERNAME !== ''
-        && defined('LABSMOBILE_TOKEN') && LABSMOBILE_TOKEN !== '';
-
-    if ($configured) {
-        try {
-            $memberRepo = new MemberRepository();
-            $member = $memberRepo->findById($memberId);
-            if (!$member) {
-                throw new Exception('Miembro no encontrado');
-            }
-
-            $settingsRepo = new SettingsRepository();
-            $senderAlias = $settingsRepo->get('sms_sender_alias', '');
-            $testMode = defined('LABSMOBILE_TEST_MODE') && LABSMOBILE_TEST_MODE;
-
-            $client = new LabsMobileClient(LABSMOBILE_USERNAME, LABSMOBILE_TOKEN, $testMode);
-            $result = $client->sendSms($member['phone'], $message, $senderAlias);
-
-            if ($result['success']) {
-                $invoiceRepo = new InvoiceRepository();
-                $invoiceRepo->markSmsSent($invoiceId);
-                return ['sent' => true, 'is_mock' => false, 'message' => $message];
-            }
-            error_log("LabsMobile SMS send failed, falling back to mock: " . ($result['error'] ?? 'unknown'));
-        } catch (Exception $e) {
-            error_log("LabsMobile SMS send threw, falling back to mock: " . $e->getMessage());
-        }
-    }
-
-    return ['sent' => false, 'is_mock' => true, 'message' => $message];
-}
-
-/**
  * Build a ticket de compra from a completed cart, and immediately generate
  * + store a mock payment link for it. Used by both the manual admin action
  * and the automatic checkout flow.
@@ -239,9 +182,6 @@ function createInvoiceFromCart($cartId, $baseUrl) {
         $payment = requestPaymentLink($result['invoice_id'], $result['token'], $dueDate, $order['cart']['total_price'], $baseUrl);
         $invoiceRepo->setPaymentUrl($result['invoice_id'], $payment['url'], $payment['reference']);
 
-        $ticketUrl = buildTicketUrl($result['token'], $baseUrl);
-        $sms = sendInvoiceSms($result['invoice_id'], $memberId, $result['ticket_number'], $order['cart']['total_price'], $ticketUrl);
-
         return [
             'success' => true,
             'invoice_id' => $result['invoice_id'],
@@ -250,8 +190,6 @@ function createInvoiceFromCart($cartId, $baseUrl) {
             'total_amount' => $order['cart']['total_price'],
             'payment_url' => $payment['url'],
             'payment_is_mock' => $payment['is_mock'],
-            'sms_sent' => $sms['sent'],
-            'sms_is_mock' => $sms['is_mock'],
         ];
     } catch (Exception $e) {
         error_log("Error creating invoice from cart: " . $e->getMessage());

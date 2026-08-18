@@ -232,12 +232,6 @@ class InvoiceRepository {
         return $stmt->execute(['id' => $invoiceId]);
     }
 
-    public function markSmsSent($invoiceId) {
-        $sql = "UPDATE invoices SET sms_sent_at = NOW() WHERE id = :id";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute(['id' => $invoiceId]);
-    }
-
     public function cancel($invoiceId) {
         $sql = "UPDATE invoices SET status = 'cancelled' WHERE id = :id";
         $stmt = $this->db->prepare($sql);

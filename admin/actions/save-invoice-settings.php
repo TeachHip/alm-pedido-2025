@@ -1,5 +1,5 @@
 <?php
-// admin/actions/save-invoice-settings.php - Save ticket-de-compra + SMS settings
+// admin/actions/save-invoice-settings.php - Save ticket-de-compra settings
 include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 
@@ -15,7 +15,6 @@ $businessNif = trim($_POST['business_nif'] ?? '');
 $associationName = trim($_POST['association_name'] ?? '');
 $businessAddress = trim($_POST['business_address'] ?? '');
 $dueDaysRaw = trim($_POST['invoice_due_days'] ?? '');
-$smsSenderAlias = trim($_POST['sms_sender_alias'] ?? '');
 $deadlinePedidoExpresRaw = trim($_POST['deadline_pedido_expres'] ?? '');
 $deadlinePedidoGrupoRaw = trim($_POST['deadline_pedido_grupo'] ?? '');
 
@@ -47,7 +46,6 @@ try {
     $settingsRepo->set('association_name', $associationName);
     $settingsRepo->set('business_address', $businessAddress);
     $settingsRepo->set('invoice_due_days', (string) (int) $dueDaysRaw);
-    $settingsRepo->set('sms_sender_alias', $smsSenderAlias);
     $settingsRepo->set('deadline_pedido_expres', $deadlinePedidoExpres);
     $settingsRepo->set('deadline_pedido_grupo', $deadlinePedidoGrupo);
 

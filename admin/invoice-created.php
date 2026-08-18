@@ -1,7 +1,5 @@
 <?php
-// admin/invoice-created.php - Confirmation page after creating a ticket de
-// compra: shows the ticket.php link and a "send SMS" button (Stage 1 =
-// manual send).
+// admin/invoice-created.php - Confirmation page after creating a ticket de compra.
 include dirname(__FILE__) . '/../includes/auth.php';
 requireAdminAuth();
 
@@ -28,7 +26,7 @@ $pageH1 = 'Ticket de Compra Creado';
 $pageTitle = $pageH1 . ' - AlMercáu';
 $activeNav = 'orders';
 $backUrl = 'orders.php';
-$successMessage = ($_GET['success'] ?? '') === 'paid' ? 'Marcado como pagado' : 'SMS enviado correctamente';
+$successMessage = 'Marcado como pagado';
 include dirname(__FILE__) . '/partials/head.php';
 include dirname(__FILE__) . '/partials/header.php';
 ?>
@@ -43,18 +41,11 @@ include dirname(__FILE__) . '/partials/header.php';
         <p><a href="<?php echo htmlspecialchars($invoice['paygold_payment_url']); ?>" target="_blank"><?php echo htmlspecialchars($invoice['paygold_payment_url']); ?></a></p>
         <?php endif; ?>
 
-        <?php if ($invoice['sms_sent_at']): ?>
-        <p>📱 SMS enviado el <?php echo date('d/m/Y H:i', strtotime($invoice['sms_sent_at'])); ?></p>
-        <?php endif; ?>
-
         <?php if ($invoice['payment_status'] === 'paid'): ?>
         <p>✅ Pagado el <?php echo date('d/m/Y H:i', strtotime($invoice['paid_at'])); ?></p>
         <?php endif; ?>
 
         <div class="form-actions">
-            <a href="actions/send-invoice-sms.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-save" onclick="return confirm('¿Enviar el SMS con el enlace del ticket de compra?');">
-                📱 <?php echo $invoice['sms_sent_at'] ? 'Reenviar SMS' : 'Enviar SMS'; ?>
-            </a>
             <?php if ($invoice['payment_status'] !== 'paid'): ?>
             <a href="actions/mark-invoice-paid.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-save" onclick="return confirm('¿Confirmas que el pago de este ticket se ha recibido?');">
                 ✅ Marcar como pagado
