@@ -686,9 +686,7 @@ a.menu-item {
     color: #006a8e;
     margin-bottom: -5px;
     padding: 0 2.2em 0 .2em;
-    /* Reduced from 5px */
     font-size: 1.1rem;
-    /* Same size */
     z-index: 2;
     transform-style: preserve-3d;
     text-shadow:
@@ -706,18 +704,14 @@ a.menu-item {
     color: #25D366;
     font-weight: bold;
     margin-bottom: 3px;
-    /* Reduced from 5px */
     font-size: 0.9rem;
-    /* Same size */
 }
 
 .cart-item-total {
     font-weight: bold;
     font-size: 1rem;
-    /* Same size */
 }
 
-/* Quantity controls container */
 /* Quantity controls container */
 .cart-item-quantity-container {
     display: block;
@@ -913,31 +907,6 @@ a.menu-item {
     font-size: 0.95rem;
 }
 
-.invoice-items {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-    font-size: 0.9rem;
-}
-
-.invoice-items th {
-    text-align: left;
-    border-bottom: 2px solid #eee;
-    padding: 6px 4px;
-    color: #666;
-    font-size: 0.85rem;
-}
-
-.invoice-items td {
-    padding: 6px 4px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.invoice-items small {
-    color: #666;
-    display: block;
-}
-
 .invoice-items-list {
     list-style: none;
     margin: 15px 0;
@@ -1020,8 +989,6 @@ a.menu-item {
     margin: 20px 0;
     text-align: center;
     font-size: 1.4rem;
-    /* Slightly larger */
     font-weight: 700;
-    /* Bolder than product prices */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }

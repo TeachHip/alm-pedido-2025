@@ -47,7 +47,7 @@ class CartRepository {
                 $totalPrice += ($item['price'] ?? 0) * ($item['quantity'] ?? 0);
             }
 
-            // AI: Pedido Expres cart fee, snapshot amount/label at creation time, see AI/CHANGELOG.md
+            // Pedido Expres cart fee, snapshot amount/label at creation time
             $feeAmount = (float) $feeAmount;
             if ($feeAmount > 0) {
                 $totalPrice += $feeAmount;

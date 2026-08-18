@@ -5,7 +5,7 @@
  * enforces format/size/dimension limits, center-crops to a square if not
  * already one, resizes to a fixed 800x800, and saves it under a
  * collision-safe filename into the caller's target folder (products use
- * primgs/, sections use grimgs/ -- see AI/CHANGELOG.md).
+ * primgs/, sections use grimgs/).
  */
 
 define('LISTING_IMAGE_MIN_DIMENSION', 600);

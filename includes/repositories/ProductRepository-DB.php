@@ -117,8 +117,8 @@ class ProductRepository {
     }
 
     /**
-     * AI: Check if any of the given product IDs belong to the given section key
-     * (used for the Pedido Expres cart fee, see AI/CHANGELOG.md)
+     * Check if any of the given product IDs belong to the given section key
+     * (used for the Pedido Expres cart fee).
      */
     public function anyInSectionKey($productIds, $sectionKey) {
         $productIds = array_values(array_unique(array_map('intval', $productIds)));

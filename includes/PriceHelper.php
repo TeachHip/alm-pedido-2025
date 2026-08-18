@@ -4,7 +4,7 @@
  * Shared price-selection logic for the show_dual_pricing setting (admin/settings.php).
  * Previously duplicated between product.php and section.php — that duplication
  * caused a real bug (displayed price didn't match cart/checkout price), fixed
- * 2026-07-06, see AI/CHANGELOG.md. Single source of truth from here on.
+ * 2026-07-06. Single source of truth from here on.
  */
 
 /**

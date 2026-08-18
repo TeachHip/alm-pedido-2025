@@ -143,6 +143,19 @@ class SectionRepository {
     }
     
     /**
+     * Toggle-friendly single-column update, matching
+     * ProductRepository::setVisibility()'s shape.
+     */
+    public function setVisibility($id, $visible) {
+        $sql = "UPDATE sections SET visible = :visible WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            'id' => $id,
+            'visible' => $visible ? 1 : 0
+        ]);
+    }
+
+    /**
      * Update display order for a single section
      */
     public function updateDisplayOrder($id, $order) {

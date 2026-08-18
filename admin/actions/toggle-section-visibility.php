@@ -25,20 +25,8 @@ try {
         exit;
     }
     
-    // Toggle visibility
     $newVisibility = $section['visible'] ? 0 : 1;
-    
-    $data = [
-        'key' => $section['key'],
-        'name' => $section['name'],
-        'description' => $section['description'],
-        'image' => $section['image'],
-        'display_order' => $section['display_order'],
-        'active' => $section['active'],
-        'visible' => $newVisibility
-    ];
-    
-    $success = $sectionRepo->update($sectionId, $data);
+    $success = $sectionRepo->setVisibility($sectionId, $newVisibility);
     
     if ($success) {
         echo json_encode(['success' => true, 'visible' => $newVisibility]);

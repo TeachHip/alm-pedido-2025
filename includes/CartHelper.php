@@ -3,7 +3,7 @@
  * Cart Helper
  * Shared logic for reading the client-side cart cookie and normalizing cart
  * item IDs. Previously duplicated across partials/00.php, partials/cart-component.php,
- * cart-page.php, and save-cart.php. See AI/CHANGELOG.md.
+ * cart-page.php, and save-cart.php.
  */
 
 /**

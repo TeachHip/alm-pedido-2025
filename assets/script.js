@@ -133,8 +133,6 @@ function addToCart(id, name, price, image, quantity = 1) {
     }
 
     saveCart();
-    //4tres
-    //showNotification(`${quantity}x ${name} añadido al carrito`);
 }
 
 /**
@@ -198,7 +196,7 @@ function updateCartDisplay() {
     const cartTotal = document.getElementById('cart-total');
 
     if (!cartItems) return;
-    document.querySelector('.whatsapp-btn').style.display = 'block'; //v11 4tres
+    document.querySelector('.whatsapp-btn').style.display = 'block';
 
     if (cart.length === 0) {
         showEmptyCart(cartItems, cartTotal);
@@ -251,7 +249,7 @@ function showCartItems(cartItems, cartTotal) {
         `;
     });
 
-    // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
+    // Pedido Expres cart fee
     const feeAmount = window.pedidoExpresFeeAmount || 0;
     const feeProductIds = window.pedidoExpresProductIds || [];
     if (feeAmount > 0 && feeProductIds.length > 0) {
@@ -273,7 +271,7 @@ function showCartItems(cartItems, cartTotal) {
     }
 
     cartItems.innerHTML = itemsHtml;
-    document.querySelector('.whatsapp-btn').style.display = 'block'; //v11 4tres
+    document.querySelector('.whatsapp-btn').style.display = 'block';
 
     if (cartTotal) cartTotal.textContent = total.toFixed(2);
 }
@@ -357,7 +355,7 @@ function addToCartFromOptions(productId, selectId, resetQuantity) {
 }
 
 // Also add this separate function for the button click
-// NEW: Save cart to database and open WhatsApp with ticket number
+// Submit the cart as an order and redirect to my-orders.php
 async function sendWhatsAppMessage() {
     // Get cart from localStorage
     const cartJson = localStorage.getItem('cart');
@@ -442,15 +440,6 @@ async function sendWhatsAppMessage() {
     return false;
 }
 
-
-// ===== HELPER FUNCTIONS =====
-
-/**
- * Show notification to user (simple alert)
- */
-function showNotification(message) {
-    alert(message);
-}
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeApp);

@@ -26,11 +26,11 @@ try {
     // Get section info
     $section = $sectionRepo->getById($product['section_id']);
 
-    // AI: show_dual_pricing toggle (admin/settings.php), see AI/CHANGELOG.md
+    // show_dual_pricing toggle (admin/settings.php)
     $showDualPricing = (new SettingsRepository())->getBool('show_dual_pricing', false);
     $cartPrice = getCartPrice($product, $showDualPricing);
 
-    // AI: product options (variants), see AI/CHANGELOG.md and includes/PriceHelper.php
+    // Product options (variants) -- see includes/PriceHelper.php
     $options = (new ProductOptionRepository())->getByProductId($productId);
     $hasOptions = !empty($options);
     $cartLines = $hasOptions ? resolveCartLines($product, $options, $showDualPricing) : [];
@@ -65,7 +65,7 @@ include 'partials/header.php';
         </div>
         <div class="detail-info">
             <h2 class="detail-name"><?php echo htmlspecialchars($product['name']); ?></h2>
-            <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md and includes/PriceHelper.php -->
+            <!-- Dual/single price controlled by show_dual_pricing setting, see includes/PriceHelper.php -->
             <div class="detail-price" id="price-display-<?php echo $product['id']; ?>">
                 <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $showDualPricing); ?>
             </div>
@@ -85,7 +85,7 @@ include 'partials/header.php';
                 Al carro!
             </button>
             <?php else: ?>
-            <button class="add-to-cart-btn" onclick="addToCartFromProduct('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $cartPrice; /* AI: price_member or price_public depending on show_dual_pricing */ ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
+            <button class="add-to-cart-btn" onclick="addToCartFromProduct('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $cartPrice; /* price_member or price_public depending on show_dual_pricing */ ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                 Al carro!
             </button>
             <?php endif; ?>

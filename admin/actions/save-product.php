@@ -32,7 +32,7 @@ $description = trim($_POST['description'] ?? '');
 $visible = isset($_POST['visible']) ? 1 : 0;
 $almostOutOfStock = isset($_POST['almost_out_of_stock']) ? 1 : 0;
 
-// Product options (variants), see AI/CHANGELOG.md
+// Product options (variants)
 $optionIds = $_POST['option_id'] ?? [];
 $optionLabels = $_POST['option_label'] ?? [];
 $optionPricesMember = $_POST['option_price_member'] ?? [];

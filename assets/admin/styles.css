@@ -1,4 +1,8 @@
-/* assets/admin/styles.css - Basic admin styles */
+/* assets/admin/styles.css - Base admin layout, nav, tables, buttons, badges,
+   and status messages shared across every admin page. Page-specific styling
+   lives in its own file instead (forms.css, sortable-table.css). */
+
+/* ===== BASE ===== */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -6,6 +10,7 @@ body {
     background: #f0f0f0;
 }
 
+/* ===== HEADER & NAV ===== */
 .admin-header {
     background: white;
     padding: 20px;
@@ -48,6 +53,7 @@ body {
     box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
 }
 
+/* ===== DASHBOARD STATS ===== */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -61,7 +67,7 @@ body {
     text-align: center;
 }
 
-/* Products Table Styles */
+/* ===== LISTING TABLES (products, sections) ===== */
 .products-table,
 .sections-table {
     width: 100%;
@@ -100,7 +106,7 @@ body {
     font-weight: bold;
 }
 
-/* Action Buttons */
+/* ===== ACTION BUTTONS ===== */
 .action-buttons {
     display: flex;
     flex-direction: row;
@@ -132,6 +138,7 @@ body {
     display: inline-block;
 }
 
+/* ===== EMPTY STATE & HINTS ===== */
 .empty-state {
     text-align: center;
     padding: 40px;
@@ -144,6 +151,7 @@ body {
     margin-bottom: 15px;
 }
 
+/* ===== BADGES ===== */
 .badge {
     display: inline-block;
     padding: 3px 8px;
@@ -162,6 +170,7 @@ body {
     color: #f44336;
 }
 
+/* ===== STATUS MESSAGES ===== */
 .success-message {
     background: #d4edda;
     color: #155724;

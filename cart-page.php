@@ -11,7 +11,7 @@ require_once 'includes/repositories/SettingsRepository-DB.php';
 include 'partials/00.php';
 $pageTitle = 'Carrito - AlMercáu';
 
-// AI: Pedido Expres cart fee, see AI/CHANGELOG.md
+// Pedido Expres cart fee
 $settingsRepo = new SettingsRepository();
 $productRepo = new ProductRepository();
 $feeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
@@ -68,7 +68,7 @@ if ($feeAmount > 0) {
         </div>
         <?php endforeach;
 
-        // AI: Pedido Expres cart fee (PHP fallback for non-JS rendering), see AI/CHANGELOG.md
+        // Pedido Expres cart fee (PHP fallback for non-JS rendering)
         $cartHasPedidoExpres = false;
         if (!empty($pedidoExpresProductIds)) {
             foreach ($cart as $item) {

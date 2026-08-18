@@ -59,7 +59,7 @@ include dirname(__FILE__) . '/partials/head.php';
         </div>
     </div>
 
-    <!-- AI: Pedido Expres cart fee, see AI/CHANGELOG.md -->
+    <!-- Pedido Expres cart fee -->
     <div class="edit-form" style="margin-top: 20px;">
         <form action="actions/save-fee-settings.php" method="POST">
             <div class="form-group">

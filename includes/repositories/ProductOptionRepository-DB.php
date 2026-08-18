@@ -2,7 +2,7 @@
 /**
  * Product Option Repository
  * Handles all database operations for product_options table (product variants:
- * weight/amount/color, each with its own price). See AI/CHANGELOG.md.
+ * weight/amount/color, each with its own price).
  */
 
 require_once __DIR__ . '/../db/database-DB.php';

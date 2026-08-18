@@ -53,7 +53,7 @@ try {
         ];
     }
     
-    // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
+    // Pedido Expres cart fee
     $settingsRepo = new SettingsRepository();
     $feeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
     $feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');

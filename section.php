@@ -34,15 +34,14 @@ try {
     $sectionDescription = $section['description'] ?? '';
     $pageTitle = "$sectionName - AlMercáu";
 
-    // AI: show_dual_pricing toggle (admin/settings.php), see AI/CHANGELOG.md
+    // show_dual_pricing toggle (admin/settings.php)
     $settingsRepo = new SettingsRepository();
     $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
 
-    // AI: product options (variants), batch-fetched to avoid N+1 queries, see
-    // AI/CHANGELOG.md and includes/PriceHelper.php
+    // Product options (variants), batch-fetched to avoid N+1 queries -- see includes/PriceHelper.php
     $optionsByProduct = (new ProductOptionRepository())->getByProductIds(array_column($products, 'id'));
 
-    // AI: Pedido Expres cart fee footline, see AI/CHANGELOG.md
+    // Pedido Expres cart fee footline
     $pedidoExpresFeeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
     $pedidoExpresFeeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
 
@@ -88,7 +87,7 @@ include 'partials/header.php';
                     <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link">
                         <div class="product-name"><?php echo htmlspecialchars($product['name']); ?></div>
                     </a>
-                    <!-- AI: dual/single price controlled by show_dual_pricing setting, see AI/CHANGELOG.md and includes/PriceHelper.php -->
+                    <!-- Dual/single price controlled by show_dual_pricing setting, see includes/PriceHelper.php -->
                     <div class="product-price" id="price-display-<?php echo $product['id']; ?>">
                         <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $showDualPricing); ?>
                     </div>
@@ -126,7 +125,7 @@ include 'partials/header.php';
 
     <?php endif; ?>
 
-    <!-- AI: Pedido Expres cart fee footline, see AI/CHANGELOG.md -->
+    <!-- Pedido Expres cart fee footline -->
     <?php if ($section['key'] === 'flash' && $pedidoExpresFeeAmount > 0): ?>
 
             <p>⚠️ <strong><?php echo htmlspecialchars($pedidoExpresFeeLabel); ?></strong>: <?php echo number_format($pedidoExpresFeeAmount, 2); ?>€ (cuota por pedido, no por producto).</p>
