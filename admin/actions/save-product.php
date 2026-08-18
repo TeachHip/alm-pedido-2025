@@ -76,11 +76,15 @@ try {
 // Determine display_order, and (for updates) fetch the previously-stored
 // image so we know what to replace/delete below.
 $previousImage = null;
+$active = 1;
 if (!empty($original_product_id)) {
-    // For updates, preserve the existing display_order
+    // For updates, preserve the existing display_order and active/deprecated
+    // state -- this form has no "active" field, so without this an edit
+    // would silently un-deprecate an "antiguo" product.
     $existingProduct = $productRepo->getById($original_product_id);
     $displayOrder = $existingProduct['display_order'];
     $previousImage = $existingProduct['image'];
+    $active = $existingProduct['active'];
 } else {
     // For new products, get the max order in the section and add 1
     $sectionProducts = $productRepo->getBySectionId($section['id'], false);
@@ -103,7 +107,7 @@ if (!empty($original_product_id)) {
         'image' => $image,
         'description' => $description,
         'display_order' => $displayOrder,
-        'active' => 1,
+        'active' => $active,
         'visible' => $visible,
         'almost_out_of_stock' => $almostOutOfStock
     ];

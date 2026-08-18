@@ -18,6 +18,9 @@ try {
 
     // Option counts per product, for the "N opciones" badge
     $optionCounts = $optionRepo->getCountsGroupedByProduct();
+
+    // Products with real order history can't be deleted -- see delete-product.php
+    $orderedProductIds = $productRepo->getOrderedProductIds();
     
     // Get sections as associative array
     $sectionsArray = $sectionRepo->getAll();
@@ -73,6 +76,22 @@ include dirname(__FILE__) . '/partials/head.php';
             showAllLabel: 'Mostrar todos'
         });
     });
+
+    // Marking a product antiguo removes it from this list entirely (getAll()
+    // excludes active=0), so this reloads on success rather than swapping an
+    // indicator in place like the visibility toggle does.
+    function markAsDeprecated(url) {
+        fetch(url)
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (!data.success) throw new Error();
+                location.reload();
+            })
+            .catch(function() {
+                alert('Error al marcar el producto como antiguo');
+            });
+        return false;
+    }
     </script>
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
@@ -154,11 +173,17 @@ include dirname(__FILE__) . '/partials/head.php';
                                 <td class="action-buttons">
                                     <a href="edit-product.php?product_id=<?php echo $product['id']; ?>" class="btn-edit">Editar</a>
                                     <a href="edit-product.php?product_id=<?php echo $product['id']; ?>&clone=1" class="btn-clone">Clonar</a>
+                                    <a href="#" class="btn-deprecate"
+                                       onclick="return confirm('¿Marcar este producto como antiguo? Dejará de aparecer aquí y en la tienda, pero se conserva para los tickets de compra que ya lo mencionan.') && markAsDeprecated('actions/toggle-active.php?product_id=<?php echo $product['id']; ?>');">
+                                        Marcar antiguo
+                                    </a>
+                                    <?php if (!isset($orderedProductIds[$product['id']])): ?>
                                     <a href="actions/delete-product.php?product_id=<?php echo $product['id']; ?>"
                                        class="btn-delete"
                                        onclick="return confirm('¿Eliminar este producto permanentemente? Esta acción no se puede deshacer.')">
                                         Eliminar
                                     </a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

@@ -5,7 +5,7 @@
 //
 // Caller may set before including:
 //   $pageH1         (string)  page heading, defaults to ''
-//   $activeNav      (string)  one of 'products'|'sections'|'members'|'orders'|'settings' to highlight
+//   $activeNav      (string)  one of 'products'|'antiguos'|'sections'|'members'|'orders'|'settings' to highlight
 //   $backUrl        (string)  defaults to 'index.php'
 //   $backLabel      (string)  defaults to '← Volver'
 //   $showBackLink   (bool)    defaults to true
@@ -22,6 +22,7 @@ $navItems = [
     'sections' => ['label' => 'Secciones', 'href' => 'sections.php'],
     'members' => ['label' => '👥 Miembros', 'href' => 'members.php'],
     'orders' => ['label' => '📋 Pedidos', 'href' => 'orders.php'],
+    'antiguos' => ['label' => '🗄️ Antiguos', 'href' => 'products-antiguos.php'],
     'settings' => ['label' => '⚙️ Configuración', 'href' => 'settings.php'],
 ];
 ?>

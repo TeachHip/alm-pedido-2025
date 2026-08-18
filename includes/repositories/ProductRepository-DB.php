@@ -25,10 +25,24 @@ class ProductRepository {
     }
 
     /**
-     * Get all products
+     * Get all non-deprecated products (the normal admin working set).
+     * Deprecated (active=0) products are excluded here on purpose -- see
+     * getDeprecated() -- so they never resurface in the regular list.
      */
     public function getAll() {
-        $sql = $this->selectWithSection() . " ORDER BY s.display_order ASC, p.display_order ASC";
+        $sql = $this->selectWithSection() . " WHERE p.active = 1 ORDER BY s.display_order ASC, p.display_order ASC";
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Get only deprecated ("antiguo") products -- permanently retired, kept
+     * solely so historical tickets/orders referencing them still resolve.
+     * Never shown in the storefront or the normal admin list; see
+     * admin/products-antiguos.php, the only place these surface.
+     */
+    public function getDeprecated() {
+        $sql = $this->selectWithSection() . " WHERE p.active = 0 ORDER BY s.display_order ASC, p.name ASC";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
@@ -222,6 +236,30 @@ class ProductRepository {
     }
 
     /**
+     * Whether this product has ever been ordered. cart_items.product_id's FK
+     * has no ON DELETE clause, so the DB already refuses to delete a product
+     * with history -- this lets callers check proactively and show a clean
+     * message ("mark it antiguo instead") rather than a raw FK error.
+     */
+    public function hasOrderHistory($id) {
+        $sql = "SELECT COUNT(*) FROM cart_items WHERE product_id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id' => $id]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * Set of product IDs that have ever been ordered, for the admin products
+     * list to hide "Eliminar" on those rows without an N+1 query. Mirrors
+     * ProductOptionRepository::getCountsGroupedByProduct()'s shape.
+     */
+    public function getOrderedProductIds() {
+        $sql = "SELECT DISTINCT product_id FROM cart_items";
+        $stmt = $this->db->query($sql);
+        return array_flip($stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
      * Set product visibility
      */
     public function setVisibility($id, $visible) {
@@ -230,6 +268,21 @@ class ProductRepository {
         return $stmt->execute([
             'id' => $id,
             'visible' => $visible ? 1 : 0
+        ]);
+    }
+
+    /**
+     * Set the deprecated ("antiguo") flag. Independent of visible -- see
+     * getDeprecated()/getAll() docblocks. Setting active=0 already hides the
+     * product from every storefront query (all of them require
+     * visible=1 AND active=1), so this alone is enough to retire a product.
+     */
+    public function setActive($id, $active) {
+        $sql = "UPDATE products SET active = :active WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            'id' => $id,
+            'active' => $active ? 1 : 0
         ]);
     }
 

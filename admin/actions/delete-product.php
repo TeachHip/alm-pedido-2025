@@ -21,7 +21,15 @@ try {
         header('Location: ../products.php?error=Producto no encontrado');
         exit;
     }
-    
+
+    // A product with real order history can't be deleted (cart_items.product_id's
+    // FK would refuse it anyway) -- catch it here with a clear message instead
+    // of letting a raw FK error surface. "Marcar antiguo" is the right move instead.
+    if ($productRepo->hasOrderHistory($product_id)) {
+        header('Location: ../products.php?error=' . urlencode('Este producto ya se ha vendido alguna vez -- no se puede eliminar. Márcalo como antiguo en su lugar.'));
+        exit;
+    }
+
     // Delete the product
     $result = $productRepo->delete($product_id);
     
