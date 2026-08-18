@@ -116,6 +116,10 @@ if ($feeAmount > 0) {
         <a href="member-login.php?return_to=<?php echo urlencode($_SERVER['REQUEST_URI'] ?? '/cart-page.php'); ?>">Inicia sesión</a>
         o pásate por AlMercáu para darte de alta.
     </p>
+    <?php else: ?>
+    <p class="login-required-notice">
+        Pedido para recogida en tienda antes de una semana. Plazo para productos de Pedido de Grupo, Pedido Exprés y frescos en general, como indicado por whatsapp.
+    </p>
     <?php endif; ?>
 
     <!-- SIMPLE BUTTON THAT WILL DEFINITELY WORK -->

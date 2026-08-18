@@ -106,6 +106,39 @@ header {
     z-index: 110;
 }
 
+.member-menu-toggle .fa-circle-user {
+    color: white;
+    font-size: 34px;
+}
+
+/* Small screens: centered header text has no reserved space for the
+   right-side icon button and can crowd it -- left-align instead, with
+   padding-right clearing the icon's footprint (40px button + 12px offset
+   + a bit of breathing room). Icons themselves also sized down slightly,
+   since 40px/34px felt oversized against the smaller header on a phone. */
+@media (max-width: 600px) {
+    header .container {
+        text-align: left;
+        padding-right: 60px;
+    }
+
+    .member-menu-toggle {
+        top: 10px;
+        transform: none;
+        width: 32px;
+        height: 32px;
+        gap: 4px;
+    }
+
+    .member-menu-toggle span {
+        width: 18px;
+    }
+
+    .member-menu-toggle .fa-circle-user {
+        font-size: 28px;
+    }
+}
+
 .member-menu-toggle span {
     display: block;
     width: 22px;
@@ -325,10 +358,14 @@ h3 {
 
 footer {
     text-align: center;
-    padding: 20px;
+    padding: 10px;
     color: #666;
     font-size: 0.9rem;
-    margin: 30px 0 50px 0;
+    margin: 30px 0 10px 0;
+}
+
+#legal-modal-trigger {
+    font-size: 0.8rem;
 }
 
 /* Pages */
@@ -343,6 +380,11 @@ footer {
 
 .page-desc p {
     margin-bottom: 1em;
+}
+
+.instructions-toggle {
+    cursor: pointer;
+    color: #006a8e;
 }
 
 /* ===== GRID LAYOUTS ===== */
@@ -437,6 +479,7 @@ a.menu-item {
 
 /* ===== LOGIN FORM ===== */
 .login-form {
+    position: relative;
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
@@ -444,6 +487,17 @@ a.menu-item {
     max-width: 360px;
     margin: 20px auto;
     text-align: center;
+}
+
+.login-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    color: #888;
+    font-size: 1.1rem;
+    text-decoration: none;
+    padding: 4px 6px;
+    line-height: 1;
 }
 
 .login-form h2 {

@@ -24,7 +24,10 @@ $pageTitle = 'AlMercáu - Carro de la compra para mercantes';
 <div id="order-confirmation-banner" style="display: none; background: #4CAF50; color: white; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 8px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
     <h3 style="margin: 0 0 10px 0; font-size: 20px;">✅ Pedido realizado<br><span style="font-weight: normal;">(si enviaste el whatsapp)</span></h3>
     <p style="margin: 0 0 5px 0; font-size: 16px;">Pedido: <strong><span id="order-ticket"></span></strong></p>
-    <p style="margin: 0 0 15px 0; font-size: 14px;">Recibirás confirmación por WhatsApp</p>
+    <p style="margin: 0 0 5px 0; font-size: 14px;">Recibirás confirmación por WhatsApp</p>
+    <p id="order-ticket-link-wrap" style="display: none; margin: 0 0 15px 0; font-size: 14px;">
+        <a id="order-ticket-link" href="#" style="color: white; font-weight: bold;">Ver ticket de compra</a>
+    </p>
     <button onclick="dismissOrderConfirmation()" style="background: white; color: #4CAF50; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px;">
         Cerrar y vaciar carrito
     </button>
@@ -47,6 +50,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (banner && ticketSpan) {
                     ticketSpan.textContent = order.ticket;
                     banner.style.display = 'block';
+
+                    // Ticket link -- points at the ticket de compra page,
+                    // which has the payment link (SMS deliberately doesn't
+                    // carry it directly, see includes/InvoiceHelper.php).
+                    if (order.ticketUrl) {
+                        const linkWrap = document.getElementById('order-ticket-link-wrap');
+                        const link = document.getElementById('order-ticket-link');
+                        if (linkWrap && link) {
+                            link.href = order.ticketUrl;
+                            linkWrap.style.display = 'block';
+                        }
+                    }
 
                     // Hide "Vaciar carrito" link when banner is showing
                     const emptyCartLink = document.querySelector('.empty-cart-link');
@@ -121,10 +136,39 @@ function dismissOrderConfirmation() {
     </div>
 </div>
 <div class="container page-desc">
-<p><strong>INSTRUCCIONES</strong>. Selecciona qué producto quieres, indica qué cantidad deseas y pulsa '<strong>Al carro!</strong>'. Cuando acabes de pedir cada producto, ve al carro (abajo a la derecha), revisa la lista del pedido y, si está correcto, da a '<strong>Enviar por whatsapp</strong>'.</p>
-<!-- <p><em>La presente aplicación sólo gestiona los pedidos de los miembros de AlMercáu. Uso exclusivo de mercantes (socias).</em></p>-->
-<p><em>La presente aplicación sólo gestiona los pedidos de usuarios de alta (presencial) en la Lista de Difusión de AlMercáu. Uso exclusivo.</em></p>
+<p>
+    <strong id="instructions-toggle" class="instructions-toggle" role="button" tabindex="0" aria-expanded="false" aria-controls="instructions-content">INSTRUCCIONES <span id="instructions-arrow">▸</span></strong>
+</p>
+<div id="instructions-content" style="display: none;">
+<p>Selecciona qué producto quieres, indica qué cantidad deseas y pulsa '<strong>Al carro!</strong>'. Cuando acabes de pedir cada producto, ve al carro (abajo a la derecha), revisa la lista del pedido y, si está correcto, da a '<strong>Enviar por whatsapp</strong>' y acaba de enviar el mensaje y hacer el pago en el enlace que recibirás en tu teléfono.</p>
 </div>
+<p><em>La presente aplicación es de uso exclusivo para pedidos de mercantes (usuarios de AlMercáu con alta presencial).</em></p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggle = document.getElementById('instructions-toggle');
+    const content = document.getElementById('instructions-content');
+    const arrow = document.getElementById('instructions-arrow');
+
+    function toggleInstructions() {
+        const isHidden = content.style.display === 'none';
+        content.style.display = isHidden ? 'block' : 'none';
+        arrow.textContent = isHidden ? '▾' : '▸';
+        toggle.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+    }
+
+    if (toggle) {
+        toggle.addEventListener('click', toggleInstructions);
+        toggle.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleInstructions();
+            }
+        });
+    }
+});
+</script>
 
 <?php
     include 'partials/cart-component.php';

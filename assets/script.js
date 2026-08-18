@@ -415,28 +415,17 @@ async function sendWhatsAppMessage() {
                 throw new Error(result.error || 'Error al guardar el pedido');
             }
 
-            // Store order info in localStorage
+            // Store order info in localStorage -- this (not in-page state) is
+            // what index.php's confirmation banner reads, since it's the one
+            // place proven to reliably reach the user afterward (see below).
             localStorage.setItem('last_order', JSON.stringify({
                 id: result.cart_id,
                 ticket: result.ticket,
+                ticketUrl: (result.mock && result.mock.ticket_url) || null,
                 timestamp: Date.now()
             }));
 
             // DO NOT clear cart here - let user do it via "Cerrar y vaciar carrito" button
-
-            // Bank/SMS API steps -- both real once configured (see
-            // includes/config/api-keys-DB.php), mocked otherwise.
-            // alert() blocks until dismissed, so these are guaranteed to
-            // be read before the WhatsApp redirect.
-            if (result.mock) {
-                const bankLabel = result.mock.is_mock ? '🏦 API Banco (simulada)' : '🏦 API Banco (PayGold)';
-                alert(bankLabel + ': enlace de pago generado.\n' + result.mock.payment_url);
-                if (result.mock.sms_is_mock) {
-                    alert('📱 API SMS (simulada): mensaje que se enviaría al socio:\n\n' + result.mock.sms_message);
-                } else {
-                    alert('📱 SMS enviado (LabsMobile) al socio.');
-                }
-            }
 
             // Generate WhatsApp message with ticket number
             let message = "🛒 Pedido " + result.ticket + "\n\n";
@@ -457,6 +446,14 @@ async function sendWhatsAppMessage() {
 
             // Create WhatsApp URL
             const whatsappURL = "https://api.whatsapp.com/send?phone=" + phoneNumber + "&text=" + encodeURIComponent(message);
+
+            // Just enough of an in-the-moment acknowledgment that the click
+            // never looks stuck/frozen while the WhatsApp handoff happens --
+            // the actual confirmation (ticket + payment link) lives only on
+            // index.php's banner, since that's what reliably reaches the
+            // user afterward (this tab is often abandoned once WhatsApp,
+            // frequently a separate app on mobile, takes over).
+            btn.textContent = 'Pedido enviado ✅';
 
             // Navigate directly to WhatsApp (works on iPhone, doesn't get blocked as popup)
             window.location.href = whatsappURL;

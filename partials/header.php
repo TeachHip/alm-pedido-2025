@@ -11,7 +11,11 @@
         </div>
 		</a>
         <button type="button" id="member-menu-toggle" class="member-menu-toggle" aria-label="Menú" aria-expanded="false" aria-controls="member-menu-panel">
+            <?php if ($loggedInMember): ?>
+            <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+            <?php else: ?>
             <span></span><span></span><span></span>
+            <?php endif; ?>
         </button>
         <div id="member-menu-backdrop" class="member-menu-backdrop"></div>
         <div id="member-menu-panel" class="member-menu-panel">
@@ -29,3 +33,4 @@
         </div>
         <script src="assets/member-menu.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
     </header>
+    <div class="main-content">

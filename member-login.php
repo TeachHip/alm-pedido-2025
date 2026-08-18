@@ -38,6 +38,7 @@ include 'partials/header.php';
 
 <div class="container">
     <div class="login-form">
+        <a href="<?php echo htmlspecialchars($returnTo); ?>" class="login-close" aria-label="Cerrar">✕</a>
         <h2>Iniciar sesión</h2>
         <?php if ($error): ?>
             <div class="error"><?php echo htmlspecialchars($error); ?></div>

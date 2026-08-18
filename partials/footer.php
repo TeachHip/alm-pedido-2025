@@ -1,6 +1,7 @@
+    </div>
     <footer>
         <div class="container">
-            <p>AlMercáu - Desarrollo 4tres.com <?php echo date('Y'); ?></p>
+            <p>AlMercáu - por 4tres.com <?php echo date('Y'); ?></p>
             <p><a href="#" id="legal-modal-trigger">Aviso legal y política de privacidad</a></p>
         </div>
     </footer>

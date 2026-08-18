@@ -89,6 +89,7 @@ try {
                 $mock = [
                     'payment_url' => $invoiceResult['payment_url'],
                     'is_mock' => $invoiceResult['payment_is_mock'],
+                    'ticket_url' => $ticketUrl,
                     'sms_message' => buildInvoiceSmsMessage(
                         $invoiceResult['ticket_number'],
                         $invoiceResult['total_amount'],
