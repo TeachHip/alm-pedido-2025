@@ -71,12 +71,21 @@ function requestPaymentLink($invoiceId, $token, $dueDate, $totalAmount, $baseUrl
         try {
             $client = new PayGoldClient(PAYGOLD_MERCHANT_CODE, PAYGOLD_TERMINAL, constant($secretConstant), $environment);
             $orderRef = PayGoldClient::generateOrderReference($invoiceId);
-            // Stage 3 (payment-confirmation webhook) isn't built yet, but
-            // Redsys still requires a notification URL field on every request.
             $notificationUrl = rtrim($baseUrl, '/') . '/paygold-notify.php';
             $expiryDate = date('Y-m-d-H.i.s.000', strtotime($dueDate));
 
-            $result = $client->requestPaymentLink($orderRef, $totalAmount, $notificationUrl, $expiryDate);
+            // Redirect back to ticket.php (not my-orders.php) after payment --
+            // it's the token-secured public page, so it works regardless of
+            // which device/browser the customer actually completes payment
+            // on (often not the one they were logged into when ordering,
+            // e.g. opening the pay link straight from the SMS on their
+            // phone). from_payment=1 lets ticket.php show a brief "confirming
+            // your payment" note if the webhook hasn't landed yet by the
+            // time the browser redirect does (the two aren't ordered).
+            $urlOk = rtrim($baseUrl, '/') . '/ticket.php?token=' . $token . '&from_payment=1';
+            $urlKo = rtrim($baseUrl, '/') . '/ticket.php?token=' . $token . '&payment_failed=1';
+
+            $result = $client->requestPaymentLink($orderRef, $totalAmount, $notificationUrl, $expiryDate, $urlOk, $urlKo);
             if ($result['success']) {
                 return ['url' => $result['payment_url'], 'reference' => $orderRef, 'is_mock' => false];
             }
@@ -171,8 +180,31 @@ function createInvoiceFromCart($cartId, $baseUrl) {
         }
 
         $settingsRepo = new SettingsRepository();
-        $dueDays = (int) $settingsRepo->get('invoice_due_days', '7');
-        $dueDate = date('Y-m-d', strtotime("+{$dueDays} days")) . ' 23:59:59';
+
+        // Pedido Exprés / Pedido de Grupo are order rounds with a hard,
+        // shared payment cutoff (set in admin/settings.php) instead of the
+        // usual N-days-from-purchase default -- any order touching either
+        // section must be paid before that section's own date/time. If an
+        // order touches both (each with a different deadline), the earlier
+        // one governs, since both sections' rules apply independently.
+        $sectionDeadlines = [
+            'Pedido Exprés' => $settingsRepo->get('deadline_pedido_expres', ''),
+            'Pedido de Grupo' => $settingsRepo->get('deadline_pedido_grupo', ''),
+        ];
+        $applicableDeadlines = [];
+        foreach ($order['items'] as $item) {
+            $sectionName = $item['section_name'] ?? null;
+            if ($sectionName && !empty($sectionDeadlines[$sectionName])) {
+                $applicableDeadlines[] = $sectionDeadlines[$sectionName];
+            }
+        }
+
+        if (!empty($applicableDeadlines)) {
+            $dueDate = min($applicableDeadlines);
+        } else {
+            $dueDays = (int) $settingsRepo->get('invoice_due_days', '7');
+            $dueDate = date('Y-m-d', strtotime("+{$dueDays} days")) . ' 23:59:59';
+        }
 
         $items = [];
         $subtotal = 0;

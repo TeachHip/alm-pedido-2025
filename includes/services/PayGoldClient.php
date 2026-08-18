@@ -51,13 +51,17 @@ class PayGoldClient {
      * Request a PayGold payment link.
      * $order: from generateOrderReference(). $amount: in euros (converted
      * to cents internally, Redsys's required unit). $notificationUrl:
-     * where Redsys POSTs the async payment-confirmation callback (Stage 3,
-     * not built yet -- still required as a field). $expiryDate (optional):
-     * 'aaaa-mm-dd-HH.MM.ss.sss', defaults to Redsys's own 24h window.
-     * Returns ['success' => true, 'payment_url', 'raw'] or
+     * where Redsys POSTs the async payment-confirmation callback (server-to-
+     * server, see paygold-notify.php -- the authoritative signal). $expiryDate
+     * (optional): 'aaaa-mm-dd-HH.MM.ss.sss', defaults to Redsys's own 24h
+     * window. $urlOk/$urlKo (optional): where Redsys redirects the customer's
+     * own browser after a completed/failed payment -- separate from
+     * $notificationUrl, and not guaranteed to fire in any particular order
+     * relative to it (the browser redirect can arrive before the webhook has
+     * been processed). Returns ['success' => true, 'payment_url', 'raw'] or
      * ['success' => false, 'error'].
      */
-    public function requestPaymentLink($order, $amount, $notificationUrl, $expiryDate = null) {
+    public function requestPaymentLink($order, $amount, $notificationUrl, $expiryDate = null, $urlOk = null, $urlKo = null) {
         $params = [
             'DS_MERCHANT_MERCHANTCODE' => $this->merchantCode,
             'DS_MERCHANT_TERMINAL' => (string) $this->terminal,
@@ -69,6 +73,12 @@ class PayGoldClient {
         ];
         if ($expiryDate) {
             $params['DS_MERCHANT_P2F_EXPIRYDATE'] = $expiryDate;
+        }
+        if ($urlOk) {
+            $params['DS_MERCHANT_URLOK'] = $urlOk;
+        }
+        if ($urlKo) {
+            $params['DS_MERCHANT_URLKO'] = $urlKo;
         }
 
         $merchantParameters = $this->base64UrlEncodeSafe(json_encode($params));
@@ -82,6 +92,60 @@ class PayGoldClient {
 
         $response = $this->post($body);
         return $this->parseResponse($response, $order);
+    }
+
+    /**
+     * Verify and decode an incoming payment-confirmation notification --
+     * Redsys POSTs this to whatever URL was set as Ds_Merchant_MerchantURL
+     * when the link was requested, the moment the customer completes (or
+     * fails) payment. This is the authoritative signal; a browser reaching
+     * a "thank you" page proves nothing on its own (could be interrupted,
+     * closed, spoofed). $receivedParams: the incoming request's
+     * Ds_MerchantParameters/Ds_Signature, however the caller extracted them
+     * (JSON body or form POST -- Redsys's own reference notification
+     * example merges both). Returns ['success' => true, 'order',
+     * 'approved' => bool, 'raw'] or ['success' => false, 'error'].
+     */
+    public function verifyNotification($receivedParams) {
+        if (!isset($receivedParams['Ds_MerchantParameters'], $receivedParams['Ds_Signature'])) {
+            return ['success' => false, 'error' => 'Notificación sin los campos esperados'];
+        }
+
+        $decodedJson = $this->base64UrlDecodeSafe($receivedParams['Ds_MerchantParameters']);
+        $decoded = json_decode($decodedJson, true);
+        if (!is_array($decoded)) {
+            return ['success' => false, 'error' => 'No se pudo decodificar la notificación'];
+        }
+
+        // Case-insensitive lookup, same reasoning as parseResponse().
+        $decodedUpper = [];
+        foreach ($decoded as $key => $value) {
+            $decodedUpper[strtoupper($key)] = $value;
+        }
+
+        $order = $decodedUpper['DS_ORDER'] ?? null;
+        if (!$order) {
+            return ['success' => false, 'error' => 'Notificación sin número de pedido'];
+        }
+
+        $expectedSignature = $this->computeSignature($receivedParams['Ds_MerchantParameters'], $order);
+        if (!hash_equals($expectedSignature, $receivedParams['Ds_Signature'])) {
+            return ['success' => false, 'error' => 'Firma de la notificación no válida'];
+        }
+
+        // Ds_Response 0-99 = authorized, per Redsys's own response-code
+        // tables (_mats/redsys-example/.../codResponseDescription) -- "0"
+        // is literally "Transacción autorizada para pagos y preautorizaciones".
+        // Anything else (or missing) is a decline/error, not a payment.
+        $responseCode = $decodedUpper['DS_RESPONSE'] ?? null;
+        $approved = $responseCode !== null && ctype_digit((string) $responseCode) && (int) $responseCode < 100;
+
+        return [
+            'success' => true,
+            'order' => $order,
+            'approved' => $approved,
+            'raw' => $decoded,
+        ];
     }
 
     private function post($body) {

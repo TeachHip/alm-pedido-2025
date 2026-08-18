@@ -208,9 +208,10 @@ class CartRepository {
         if (!$cart) return null;
         
         // Get cart items with product details
-        $sql = "SELECT ci.*, p.name as product_name, p.ticket_name as product_ticket_name, p.image as product_image, p.iva_rate as product_iva_rate, po.label as option_label
+        $sql = "SELECT ci.*, p.name as product_name, p.ticket_name as product_ticket_name, p.image as product_image, p.iva_rate as product_iva_rate, s.name as section_name, po.label as option_label
                 FROM cart_items ci
                 LEFT JOIN products p ON ci.product_id = p.id
+                LEFT JOIN sections s ON p.section_id = s.id
                 LEFT JOIN product_options po ON ci.product_option_id = po.id
                 WHERE ci.cart_id = :cart_id
                 ORDER BY ci.id ASC";

@@ -415,48 +415,21 @@ async function sendWhatsAppMessage() {
                 throw new Error(result.error || 'Error al guardar el pedido');
             }
 
-            // Store order info in localStorage -- this (not in-page state) is
-            // what index.php's confirmation banner reads, since it's the one
-            // place proven to reliably reach the user afterward (see below).
-            localStorage.setItem('last_order', JSON.stringify({
-                id: result.cart_id,
-                ticket: result.ticket,
-                ticketUrl: (result.mock && result.mock.ticket_url) || null,
-                timestamp: Date.now()
-            }));
+            // The cart's job is done once the order is submitted -- it's now
+            // an invoice, tracked server-side and shown on my-orders.php, not
+            // a cart concern anymore. Clear it immediately (not gated on
+            // payment) so a later visit to index.php/cart-page.php shows a
+            // genuinely empty cart instead of the already-submitted items
+            // sitting there inviting a duplicate order.
+            cart = [];
+            saveCart();
 
-            // DO NOT clear cart here - let user do it via "Cerrar y vaciar carrito" button
-
-            // Generate WhatsApp message with ticket number
-            let message = "🛒 Pedido " + result.ticket + "\n\n";
-
-            cartItems.forEach(item => {
-                const itemTotal = (item.price * item.quantity).toFixed(2);
-                message += "- " + item.quantity + "x " + item.name + " - " + itemTotal + "€\n";
-            });
-
-            // AI: Pedido Expres cart fee, see AI/CHANGELOG.md
-            if (result.fee_amount) {
-                message += "+ " + result.fee_label + " - " + result.fee_amount.toFixed(2) + "€\n";
-            }
-
-            message += "\nTotal: " + result.total.toFixed(2) + "€";
-
-            const phoneNumber = "34611183123"; // AlMercáu WhatsApp
-
-            // Create WhatsApp URL
-            const whatsappURL = "https://api.whatsapp.com/send?phone=" + phoneNumber + "&text=" + encodeURIComponent(message);
-
-            // Just enough of an in-the-moment acknowledgment that the click
-            // never looks stuck/frozen while the WhatsApp handoff happens --
-            // the actual confirmation (ticket + payment link) lives only on
-            // index.php's banner, since that's what reliably reaches the
-            // user afterward (this tab is often abandoned once WhatsApp,
-            // frequently a separate app on mobile, takes over).
-            btn.textContent = 'Pedido enviado ✅';
-
-            // Navigate directly to WhatsApp (works on iPhone, doesn't get blocked as popup)
-            window.location.href = whatsappURL;
+            // Order/payment confirmation comes first now, not WhatsApp --
+            // WhatsApp is a decorative, optional touch, only offered once
+            // the invoice is actually paid (partials/invoice-card.php builds
+            // that link itself from the paid invoice, not from anything
+            // passed here -- see my-orders.php / ticket.php).
+            window.location.href = 'my-orders.php';
 
         } catch (error) {
             console.error('Error:', error);

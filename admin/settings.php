@@ -21,6 +21,10 @@ try {
     $businessAddress = $settingsRepo->get('business_address', '');
     $invoiceDueDays = $settingsRepo->get('invoice_due_days', '7');
     $smsSenderAlias = $settingsRepo->get('sms_sender_alias', '');
+    // datetime-local inputs need "Y-m-d\TH:i" (no seconds); stored value is
+    // "Y-m-d H:i:s" (same shape as invoices.due_date elsewhere).
+    $deadlinePedidoExpres = str_replace(' ', 'T', substr($settingsRepo->get('deadline_pedido_expres', ''), 0, 16));
+    $deadlinePedidoGrupo = str_replace(' ', 'T', substr($settingsRepo->get('deadline_pedido_grupo', ''), 0, 16));
     // END ticket de compra / invoice feature settings
 } catch (Exception $e) {
     error_log("Error loading settings: " . $e->getMessage());
@@ -110,6 +114,17 @@ include dirname(__FILE__) . '/partials/head.php';
             <div class="form-group">
                 <label for="invoice_due_days">Días para el pago (por defecto)</label>
                 <input type="number" id="invoice_due_days" name="invoice_due_days" value="<?php echo htmlspecialchars($invoiceDueDays); ?>" min="1" step="1">
+                <small>Se usa solo si el pedido no lleva ningún producto de Pedido Exprés ni Pedido de Grupo</small>
+            </div>
+            <div class="form-group">
+                <label for="deadline_pedido_expres">Fecha límite de pago — Pedido Exprés</label>
+                <input type="datetime-local" id="deadline_pedido_expres" name="deadline_pedido_expres" value="<?php echo htmlspecialchars($deadlinePedidoExpres); ?>">
+                <small>Cualquier pedido con al menos un producto de esta sección debe pagarse antes de esta fecha/hora. Vacío = sin límite propio (usa "Días para el pago")</small>
+            </div>
+            <div class="form-group">
+                <label for="deadline_pedido_grupo">Fecha límite de pago — Pedido de Grupo</label>
+                <input type="datetime-local" id="deadline_pedido_grupo" name="deadline_pedido_grupo" value="<?php echo htmlspecialchars($deadlinePedidoGrupo); ?>">
+                <small>Cualquier pedido con al menos un producto de esta sección debe pagarse antes de esta fecha/hora. Vacío = sin límite propio (usa "Días para el pago")</small>
             </div>
             <div class="form-group">
                 <label for="sms_sender_alias">Remitente SMS</label>

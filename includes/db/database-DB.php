@@ -4,6 +4,13 @@
  * Provides singleton PDO connection with error handling
  */
 
+// Explicit app-wide timezone -- without this, PHP falls back to whatever
+// the server's php.ini default happens to be (UTC here locally), which
+// would make admin-entered deadlines (see settings.php's
+// deadline_pedido_expres/deadline_pedido_grupo) silently wrong by 1-2h.
+// Set here since this file loads on every DB-touching request.
+date_default_timezone_set('Europe/Madrid');
+
 require_once __DIR__ . '/config-DB.php';
 
 class Database {

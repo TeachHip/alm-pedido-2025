@@ -25,6 +25,7 @@
             </div>
             <nav class="member-menu-nav">
                 <?php if ($loggedInMember): ?>
+                <a href="my-orders.php" class="member-menu-item">📦 Mis pedidos</a>
                 <a href="member-logout.php" class="member-menu-item">Cerrar sesión</a>
                 <?php else: ?>
                 <a href="member-login.php?return_to=<?php echo urlencode($_SERVER['REQUEST_URI'] ?? '/'); ?>" class="member-menu-item">Iniciar sesión</a>

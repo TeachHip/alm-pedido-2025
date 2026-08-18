@@ -122,9 +122,8 @@ if ($feeAmount > 0) {
     </p>
     <?php endif; ?>
 
-    <!-- SIMPLE BUTTON THAT WILL DEFINITELY WORK -->
-<button type="button" class="whatsapp-btn" onclick="sendWhatsAppMessage()">
-    Enviar pedido por WhatsApp
+    <button type="button" class="whatsapp-btn" onclick="sendWhatsAppMessage()">
+    Hacer pedido
 </button>
     <?php endif; ?>
 </div>

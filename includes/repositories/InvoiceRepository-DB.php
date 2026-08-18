@@ -129,6 +129,23 @@ class InvoiceRepository {
     }
 
     /**
+     * A member's own recent invoices, most recent first -- powers
+     * my-orders.php. 14 days comfortably covers the real order lifecycle
+     * (pickup windows run up to ~10 days) without turning into a full
+     * historical archive nobody asked for.
+     */
+    public function findRecentByMember($memberId, $days = 14) {
+        $sql = "SELECT * FROM invoices
+                WHERE member_id = :member_id AND created_at >= NOW() - INTERVAL :days DAY
+                ORDER BY created_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue('member_id', $memberId, PDO::PARAM_INT);
+        $stmt->bindValue('days', $days, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Most recent active invoice for a cart, if any -- used to decide
      * whether admin/orders.php should offer "Crear ticket" or "Ver ticket".
      */
@@ -136,6 +153,19 @@ class InvoiceRepository {
         $sql = "SELECT * FROM invoices WHERE cart_id = :cart_id ORDER BY created_at DESC LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['cart_id' => $cartId]);
+        return $stmt->fetch();
+    }
+
+    /**
+     * Look up by PayGold's own order reference (paygold_reference,
+     * generated fresh per invoice by PayGoldClient::generateOrderReference()
+     * -- see requestPaymentLink()) -- used by paygold-notify.php to match an
+     * incoming payment confirmation back to the invoice it belongs to.
+     */
+    public function findByReference($reference) {
+        $sql = "SELECT * FROM invoices WHERE paygold_reference = :reference LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['reference' => $reference]);
         return $stmt->fetch();
     }
 

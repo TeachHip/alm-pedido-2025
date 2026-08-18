@@ -42,69 +42,19 @@ include 'partials/header.php';
     </div>
 <?php else: ?>
     <?php
-        $isOverdue = $invoice['payment_status'] === 'pending' && strtotime($invoice['due_date']) < time();
-        $cardClass = 'invoice-card';
-        if ($invoice['status'] === 'superseded') $cardClass .= ' invoice-superseded';
-        if ($invoice['status'] === 'cancelled') $cardClass .= ' invoice-cancelled';
+        // Redsys redirects the customer's own browser back here after they
+        // complete/fail a payment (see InvoiceHelper::requestPaymentLink()'s
+        // urlOk/urlKo). Gated on payment_status still being 'pending' so a
+        // stale query string never contradicts the invoice's real, current
+        // state -- if the webhook already landed, the card's own "✅ Pagado"
+        // banner (below) speaks for itself, no extra note needed.
     ?>
-
-    <?php if ($invoice['status'] === 'superseded'): ?>
-    <div class="invoice-banner invoice-banner-warning">
-        ⚠️ Este ticket ha sido sustituido por uno nuevo.
-        <?php if ($forwardToken): ?>
-            <a href="ticket.php?token=<?php echo htmlspecialchars($forwardToken); ?>">Ver ticket actual →</a>
-        <?php endif; ?>
-    </div>
-    <?php elseif ($invoice['status'] === 'cancelled'): ?>
-    <div class="invoice-banner invoice-banner-warning">❌ Este ticket ha sido cancelado.</div>
-    <?php elseif ($invoice['payment_status'] === 'paid'): ?>
-    <div class="invoice-banner invoice-banner-success">✅ Pagado</div>
-    <?php elseif ($isOverdue): ?>
-    <div class="invoice-banner invoice-banner-warning">⚠️ Plazo de pago vencido — contacta con AlMercáu.</div>
+    <?php if (isset($_GET['from_payment']) && $invoice['payment_status'] === 'pending'): ?>
+    <div class="invoice-banner invoice-banner-warning">⏳ Estamos confirmando tu pago, puede tardar unos segundos. Actualiza la página en un momento si no ves el cambio.</div>
+    <?php elseif (isset($_GET['payment_failed']) && $invoice['payment_status'] === 'pending'): ?>
+    <div class="invoice-banner invoice-banner-warning">⚠️ El pago no se completó. Puedes intentarlo de nuevo con el enlace de abajo.</div>
     <?php endif; ?>
-
-    <div class="<?php echo $cardClass; ?>">
-        <div class="invoice-header">
-            <h2><?php echo htmlspecialchars($businessName); ?></h2>
-            <?php if ($businessNif): ?><p>NIF <?php echo htmlspecialchars($businessNif); ?></p><?php endif; ?>
-            <?php if ($associationName): ?><p><?php echo htmlspecialchars($associationName); ?></p><?php endif; ?>
-            <?php if ($businessAddress): ?><p><?php echo htmlspecialchars($businessAddress); ?></p><?php endif; ?>
-            <p class="invoice-ticket">Ticket de compra <?php echo htmlspecialchars($invoice['ticket_number']); ?></p>
-        </div>
-
-        <div class="invoice-meta">
-            <p><strong>Miembro:</strong> AM<?php echo MemberRepository::formatMemberNumber($invoice['member_number']); ?></p>
-            <p><strong>Fecha:</strong> <?php echo date('d/m/Y', strtotime($invoice['created_at'])); ?></p>
-            <p><strong>Fecha límite de pago:</strong> <?php echo date('d/m/Y', strtotime($invoice['due_date'])); ?></p>
-        </div>
-
-        <ul class="invoice-items-list">
-            <?php foreach ($items as $item): ?>
-            <li>
-                <?php echo (int) $item['quantity']; ?>x
-                <?php echo htmlspecialchars($item['product_name']); ?>
-                <?php if ($item['option_label']): ?> (<?php echo htmlspecialchars($item['option_label']); ?>)<?php endif; ?>
-                - <?php echo number_format($item['line_total'], 2); ?>€
-                <?php if ($item['iva_rate']): ?> <small>(IVA <?php echo htmlspecialchars($item['iva_rate']); ?>% inc)</small><?php endif; ?>
-            </li>
-            <?php endforeach; ?>
-            <?php if ($invoice['surcharge_amount']): ?>
-            <li><?php echo htmlspecialchars($invoice['surcharge_label']); ?> - <?php echo number_format($invoice['surcharge_amount'], 2); ?>€</li>
-            <?php endif; ?>
-        </ul>
-
-        <div class="invoice-total">
-            Total: <?php echo number_format($invoice['total_amount'], 2); ?>€, impuestos incluidos
-        </div>
-
-        <?php if ($invoice['status'] === 'active' && $invoice['payment_status'] === 'pending' && !$isOverdue): ?>
-            <?php if ($invoice['paygold_payment_url']): ?>
-                <p class="invoice-pay-line">Haz el abono en el siguiente enlace: <a href="<?php echo htmlspecialchars($invoice['paygold_payment_url']); ?>"><?php echo htmlspecialchars($invoice['paygold_payment_url']); ?></a></p>
-            <?php else: ?>
-                <p class="invoice-pending-note">Pago pendiente — te contactaremos con las instrucciones.</p>
-            <?php endif; ?>
-        <?php endif; ?>
-    </div>
+    <?php include 'partials/invoice-card.php'; ?>
 <?php endif; ?>
 </div>
 
