@@ -4,6 +4,9 @@ includes/db/config-DB.php
 # External API credentials (LabsMobile, PayGold/Redsys)
 includes/config/api-keys-DB.php
 
+# Testing-mode Basic Auth password file (see .htaccess)
+.htpasswd
+
 # Data files (backup)
 data/*.data
 
