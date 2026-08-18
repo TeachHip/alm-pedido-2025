@@ -14,7 +14,7 @@
  * from running stale cached scripts after a deploy (caused a real bug
  * once already).
  */
-define('APP_VERSION', 'v10.2 ☀️branu');
+define('APP_VERSION', 'v10.6 ☀️branu');
 
 // URL-safe form for ?v=... query strings (APP_VERSION may contain spaces/emoji).
 define('APP_VERSION_SAFE', rawurlencode(APP_VERSION));
