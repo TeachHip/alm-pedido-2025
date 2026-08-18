@@ -1,6 +1,22 @@
 <?php
 // includes/auth.php - Database session-based authentication
-session_start();
+//
+// Explicit cookie params matter here: this app's production host defaults
+// to httponly=Off/secure=Off for session cookies (confirmed via phpinfo,
+// 2026-08-18), which member-auth.php already correctly overrides -- this
+// file used to just call session_start() bare, silently inheriting the
+// insecure host default for the admin session cookie specifically.
+if (session_status() === PHP_SESSION_NONE) {
+    $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'httponly' => true,
+        'secure' => $isHttps,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
 
 require_once __DIR__ . '/repositories/UserRepository-DB.php';
 

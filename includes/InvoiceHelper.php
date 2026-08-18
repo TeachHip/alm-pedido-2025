@@ -56,13 +56,20 @@ function requestPaymentLink($invoiceId, $token, $dueDate, $totalAmount, $baseUrl
         require_once $apiKeysFile;
     }
 
+    // Redsys issues a DIFFERENT signing key per environment (same merchant
+    // code/terminal for both) -- picking the matching secret here means
+    // flipping PAYGOLD_ENVIRONMENT is the only thing needed to switch, no
+    // manual secret-swapping to forget.
+    $environment = (defined('PAYGOLD_ENVIRONMENT') && PAYGOLD_ENVIRONMENT) ? PAYGOLD_ENVIRONMENT : 'TEST';
+    $secretConstant = $environment === 'PROD' ? 'PAYGOLD_SECRET_KEY_PROD' : 'PAYGOLD_SECRET_KEY_TEST';
+
     $configured = defined('PAYGOLD_MERCHANT_CODE') && PAYGOLD_MERCHANT_CODE !== ''
         && defined('PAYGOLD_TERMINAL') && PAYGOLD_TERMINAL !== ''
-        && defined('PAYGOLD_SECRET_KEY') && PAYGOLD_SECRET_KEY !== '';
+        && defined($secretConstant) && constant($secretConstant) !== '';
 
     if ($configured) {
         try {
-            $client = new PayGoldClient(PAYGOLD_MERCHANT_CODE, PAYGOLD_TERMINAL, PAYGOLD_SECRET_KEY, PAYGOLD_ENVIRONMENT ?: 'TEST');
+            $client = new PayGoldClient(PAYGOLD_MERCHANT_CODE, PAYGOLD_TERMINAL, constant($secretConstant), $environment);
             $orderRef = PayGoldClient::generateOrderReference($invoiceId);
             // Stage 3 (payment-confirmation webhook) isn't built yet, but
             // Redsys still requires a notification URL field on every request.
