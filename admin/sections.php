@@ -50,7 +50,7 @@ include dirname(__FILE__) . '/partials/head.php';
                 💡 <strong>Tip:</strong> Arrastra las filas para reordenar las secciones.
             </p>
             
-            <table>
+            <table width="100%">
                 <thead>
                     <tr>
                         <th width="5%">ID</th>
