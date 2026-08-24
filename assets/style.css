@@ -622,6 +622,7 @@ a.menu-item {
 .whatsapp-btn:hover,
 .add-to-cart-btn:hover {
     background: #128C7E;
+    text-decoration: none;
 }
 
 /* Base button */

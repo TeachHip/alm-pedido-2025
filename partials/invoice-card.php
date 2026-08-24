@@ -81,7 +81,7 @@ if ($invoice['status'] === 'cancelled' || $invoice['payment_status'] === 'expire
     <?php if ($invoice['status'] === 'active' && $invoice['payment_status'] === 'pending'): ?>
         <?php // Not paid yet -- pay link only, no WhatsApp link. ?>
         <?php if ($invoice['paygold_payment_url']): ?>
-            <p class="invoice-pay-line"><a href="<?php echo htmlspecialchars($invoice['paygold_payment_url']); ?>" class="whatsapp-btn">2. Ir al pago <small>(2/3)</small></a></p>
+            <a href="<?php echo htmlspecialchars($invoice['paygold_payment_url']); ?>" class="whatsapp-btn">2. Ir al pago <small>(2/3)</small></a>
         <?php else: ?>
             <p class="invoice-pending-note">Pago pendiente — te contactaremos con las instrucciones.</p>
         <?php endif; ?>
@@ -94,7 +94,7 @@ if ($invoice['status'] === 'cancelled' || $invoice['payment_status'] === 'expire
             $whatsappMessage = "✅ Pedido " . $invoice['ticket_number'] . " pagado. ¡Gracias!";
             $whatsappUrl = "https://api.whatsapp.com/send?phone=34611183123&text=" . urlencode($whatsappMessage);
         ?>
-        <p class="invoice-pay-line"><a href="<?php echo htmlspecialchars($whatsappUrl); ?>" class="whatsapp-btn">3. Enviar pedido <small>(3/3)</small></a></p>
+        <a href="<?php echo htmlspecialchars($whatsappUrl); ?>" class="whatsapp-btn">3. Enviar pedido <small>(3/3)</small></a>
     <?php endif; ?>
 
     <?php if ($invoice['payment_status'] !== 'paid'): ?>
