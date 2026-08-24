@@ -10,6 +10,7 @@ try {
     $invoiceId = (int) ($_GET['invoice_id'] ?? 0);
     $invoiceRepo = new InvoiceRepository();
     $invoice = $invoiceRepo->findById($invoiceId);
+    $invoice = $invoiceRepo->autoExpireIfOverdue($invoice);
 
     if (!$invoice) {
         die("Ticket no encontrado");
@@ -26,7 +27,7 @@ $pageH1 = 'Ticket de Compra Creado';
 $pageTitle = $pageH1 . ' - AlMercáu';
 $activeNav = 'orders';
 $backUrl = 'orders.php';
-$successMessage = 'Marcado como pagado';
+$successMessage = ($_GET['success'] ?? '') === 'cancelled' ? 'Ticket cancelado' : 'Marcado como pagado';
 include dirname(__FILE__) . '/partials/head.php';
 include dirname(__FILE__) . '/partials/header.php';
 ?>
@@ -36,20 +37,31 @@ include dirname(__FILE__) . '/partials/header.php';
         <p>Enlace del ticket:</p>
         <p><a href="<?php echo htmlspecialchars($invoiceUrl); ?>" target="_blank"><?php echo htmlspecialchars($invoiceUrl); ?></a></p>
 
-        <?php if ($invoice['paygold_payment_url']): ?>
-        <p>Enlace de pago<?php echo strpos($invoice['paygold_payment_url'], 'mock-payment.php') !== false ? ' (simulado)' : ''; ?>:</p>
-        <p><a href="<?php echo htmlspecialchars($invoice['paygold_payment_url']); ?>" target="_blank"><?php echo htmlspecialchars($invoice['paygold_payment_url']); ?></a></p>
+        <?php if ($invoice['paygold_payment_url'] && $invoice['status'] !== 'cancelled' && $invoice['payment_status'] !== 'expired'): ?>
+        <p>Enlace de pago<?php echo strpos($invoice['paygold_payment_url'], 'mock-payment.php') !== false ? ' (simulado)' : ''; ?> (referencia, no un enlace para usar aquí):</p>
+        <p><?php echo htmlspecialchars($invoice['paygold_payment_url']); ?></p>
         <?php endif; ?>
 
         <?php if ($invoice['payment_status'] === 'paid'): ?>
         <p>✅ Pagado el <?php echo date('d/m/Y H:i', strtotime($invoice['paid_at'])); ?></p>
         <?php endif; ?>
 
+        <?php if ($invoice['status'] === 'cancelled'): ?>
+        <p>❌ Este ticket está cancelado.</p>
+        <?php elseif ($invoice['payment_status'] === 'expired'): ?>
+        <p>⚠️ Este ticket está vencido (plazo de pago pasado).</p>
+        <?php endif; ?>
+
         <div class="form-actions">
-            <?php if ($invoice['payment_status'] !== 'paid'): ?>
-            <a href="actions/mark-invoice-paid.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-save" onclick="return confirm('¿Confirmas que el pago de este ticket se ha recibido?');">
-                ✅ Marcar como pagado
-            </a>
+            <?php if ($invoice['status'] === 'active'): ?>
+                <?php if ($invoice['payment_status'] !== 'paid'): ?>
+                <a href="actions/mark-invoice-paid.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-save" onclick="return confirm('¿Confirmas que el pago de este ticket se ha recibido?');">
+                    ✅ Marcar como pagado
+                </a>
+                <?php endif; ?>
+                <a href="actions/cancel-invoice.php?invoice_id=<?php echo $invoice['id']; ?>" class="btn-delete" onclick="return confirm('¿Seguro que quieres cancelar este ticket? Esta acción no se puede deshacer.');">
+                    🗑️ Cancelar ticket
+                </a>
             <?php endif; ?>
             <a href="orders.php" class="btn-cancel">Volver a Pedidos</a>
         </div>

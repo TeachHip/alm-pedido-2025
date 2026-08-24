@@ -117,12 +117,12 @@ include dirname(__FILE__) . '/partials/head.php';
             </div>
             <div class="form-group">
                 <label for="deadline_pedido_expres">Fecha límite de pago — Pedido Exprés</label>
-                <input type="datetime-local" id="deadline_pedido_expres" name="deadline_pedido_expres" value="<?php echo htmlspecialchars($deadlinePedidoExpres); ?>">
+                <input type="datetime-local" id="deadline_pedido_expres" name="deadline_pedido_expres" value="<?php echo htmlspecialchars($deadlinePedidoExpres); ?>" step="1800">
                 <small>Cualquier pedido con al menos un producto de esta sección debe pagarse antes de esta fecha/hora. Vacío = sin límite propio (usa "Días para el pago")</small>
             </div>
             <div class="form-group">
                 <label for="deadline_pedido_grupo">Fecha límite de pago — Pedido de Grupo</label>
-                <input type="datetime-local" id="deadline_pedido_grupo" name="deadline_pedido_grupo" value="<?php echo htmlspecialchars($deadlinePedidoGrupo); ?>">
+                <input type="datetime-local" id="deadline_pedido_grupo" name="deadline_pedido_grupo" value="<?php echo htmlspecialchars($deadlinePedidoGrupo); ?>" step="1800">
                 <small>Cualquier pedido con al menos un producto de esta sección debe pagarse antes de esta fecha/hora. Vacío = sin límite propio (usa "Días para el pago")</small>
             </div>
             <div class="form-actions">

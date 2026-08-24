@@ -4,7 +4,7 @@
 // call: this page IS that moment, not a separate page), rendered with the
 // exact same partials/invoice-card.php markup ticket.php uses -- same
 // receipt, same pay link, no design drift between the two pages. Older
-// ones (within the same 14-day window, see
+// ones (paid: 2 months, unpaid: 7 days -- see
 // InvoiceRepository::findRecentByMember()) listed more plainly below.
 require_once 'includes/member-auth.php';
 require_once 'includes/repositories/InvoiceRepository-DB.php';
@@ -18,7 +18,7 @@ if (!isMemberLoggedIn()) {
 
 $member = getLoggedInMember();
 $invoiceRepo = new InvoiceRepository();
-$orders = $invoiceRepo->findRecentByMember($member['id']);
+$orders = array_map([$invoiceRepo, 'autoExpireIfOverdue'], $invoiceRepo->findRecentByMember($member['id']));
 
 $latest = $orders ? array_shift($orders) : null;
 
@@ -29,9 +29,13 @@ $businessAddress = $settingsRepo->get('business_address', '');
 $businessNif = $settingsRepo->get('business_nif', '');
 
 function orderStatusLabel($invoice) {
+    // Cancelado (a person cancelled it) and Vencido (deadline passed
+    // automatically, nobody acted) are deliberately distinct -- see
+    // InvoiceRepository::autoExpireIfOverdue(), which already ran on
+    // $invoice above by the time this is called.
+    if ($invoice['status'] === 'cancelled') return ['label' => '❌ Cancelado', 'class' => 'invoice-banner-warning'];
     if ($invoice['payment_status'] === 'paid') return ['label' => '✅ Pagado', 'class' => 'invoice-banner-success'];
-    $isOverdue = strtotime($invoice['due_date']) < time();
-    if ($isOverdue) return ['label' => '⚠️ Plazo vencido', 'class' => 'invoice-banner-warning'];
+    if ($invoice['payment_status'] === 'expired') return ['label' => '⚠️ Vencido', 'class' => 'invoice-banner-warning'];
     return ['label' => '⏳ Pendiente de pago', 'class' => 'invoice-banner-warning'];
 }
 
@@ -43,9 +47,15 @@ include 'partials/header.php';
 <div class="container">
     <h2>Mis pedidos</h2>
 
+    <?php if (isset($_GET['cancelled'])): ?>
+    <div class="invoice-banner invoice-banner-success">✅ Pedido cancelado</div>
+    <?php elseif (isset($_GET['error'])): ?>
+    <div class="invoice-banner invoice-banner-warning"><?php echo htmlspecialchars($_GET['error']); ?></div>
+    <?php endif; ?>
+
     <?php if (!$latest): ?>
     <div class="empty-state">
-        <p>No tienes pedidos en los últimos 14 días.</p>
+        <p>No tienes pedidos recientes.</p>
     </div>
     <?php else: ?>
     <h3>¡Gracias por tu pedido!</h3>
@@ -54,9 +64,12 @@ include 'partials/header.php';
         $items = $invoiceRepo->getItems($invoice['id']);
         include 'partials/invoice-card.php';
     ?>
+    <?php if ($invoice['status'] === 'active' && $invoice['payment_status'] === 'pending'): ?>
+    <a href="cancel-order.php?invoice_id=<?php echo $invoice['id']; ?>" class="empty-cart-link" onclick="return confirm('¿Seguro que quieres cancelar este pedido? Esta acción no se puede deshacer.');">🗑️ Cancelar pedido</a>
+    <?php endif; ?>
 
     <?php if (!empty($orders)): ?>
-    <h3 style="margin-top: 25px;">Pedidos anteriores</h3>
+    <h3 style="margin-top: 25px;">Pedidos 2 meses anteriores</h3>
     <ul class="invoice-items-list">
         <?php foreach ($orders as $order): $s = orderStatusLabel($order); ?>
         <li>
@@ -66,6 +79,9 @@ include 'partials/header.php';
             &mdash; <?php echo number_format($order['total_amount'], 2); ?>€
             &mdash; <?php echo $s['label']; ?>
             &mdash; <?php echo date('d/m/Y', strtotime($order['created_at'])); ?>
+            <?php if ($order['status'] === 'active' && $order['payment_status'] === 'pending'): ?>
+            &mdash; <a href="cancel-order.php?invoice_id=<?php echo $order['id']; ?>" onclick="return confirm('¿Seguro que quieres cancelar este pedido? Esta acción no se puede deshacer.');">Cancelar</a>
+            <?php endif; ?>
         </li>
         <?php endforeach; ?>
     </ul>

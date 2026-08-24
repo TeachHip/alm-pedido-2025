@@ -641,6 +641,14 @@ a.menu-item {
     border-radius: 10px;
 }
 
+/* The button's own bold weight/1.1rem size otherwise swallows the browser's
+   subtle default <small> sizing (~83%), so the step-count suffix ("(1/3)")
+   barely read as smaller -- force it further down and drop the bold. */
+.whatsapp-btn small {
+    font-size: 0.65em;
+    font-weight: normal;
+}
+
 .add-to-cart-btn {
     margin-top: 15px;
 }
@@ -893,13 +901,28 @@ a.menu-item {
 
 .invoice-header h2 {
     color: #006a8e;
-    margin: 0 0 5px 0;
+    margin: 0;
 }
 
 .invoice-ticket {
     font-family: monospace;
     color: #666;
     margin: 0;
+}
+
+/* The global `* { font-family: ... }` reset applies directly to <strong>
+   too, and a direct rule always wins over an inherited one -- so without
+   this, bolding text inside .invoice-ticket silently knocks it back to
+   the sans-serif stack (and reads bigger, since that font is wider at the
+   same size). */
+.invoice-ticket strong {
+    font-family: inherit;
+}
+
+.invoice-header-divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 6px 0;
 }
 
 .invoice-meta p {
@@ -923,6 +946,22 @@ a.menu-item {
     color: #666;
 }
 
+/* Scoped separately from .invoice-items-list li (the plain-text "Pedidos
+   anteriores" rows on my-orders.php reuse that same list class with a very
+   different, non-flex content shape) -- only the actual product/surcharge
+   rows in invoice-card.php opt into this via the extra class. */
+.invoice-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.invoice-item-price {
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 .invoice-pay-line {
     text-align: center;
     font-size: 0.95rem;
@@ -935,6 +974,14 @@ a.menu-item {
     font-weight: 700;
     color: #25D366;
     margin: 15px 0;
+}
+
+.invoice-total-note {
+    display: block;
+    font-size: 0.7rem;
+    line-height: 1;
+    font-weight: 400;
+    color: #666;
 }
 
 .invoice-banner {

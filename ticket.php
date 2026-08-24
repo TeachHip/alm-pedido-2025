@@ -13,6 +13,7 @@ $forwardToken = null; // set when this ticket was superseded, links to the repla
 if (preg_match('/^[a-f0-9]{32}$/', $token)) {
     $invoiceRepo = new InvoiceRepository();
     $invoice = $invoiceRepo->findByToken($token);
+    $invoice = $invoiceRepo->autoExpireIfOverdue($invoice);
 
     if ($invoice) {
         $items = $invoiceRepo->getItems($invoice['id']);

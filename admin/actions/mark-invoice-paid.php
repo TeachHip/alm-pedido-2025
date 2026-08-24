@@ -1,9 +1,8 @@
 <?php
 // admin/actions/mark-invoice-paid.php - Manually mark an invoice as paid.
-// No payment-confirmation webhook exists yet (Stage 3, investigate-only --
-// see AI/plans v10), so whether the payment link is real PayGold or the
-// mock payment page, Hop has to confirm payment happened and flip this by
-// hand. This is the permanent fallback either way, not a mock-only stopgap.
+// paygold-notify.php already does this automatically for real PayGold
+// payments; this is the manual fallback -- for the mock payment page,
+// cash/in-person payments, or any case the webhook didn't fire for.
 include dirname(__FILE__) . '/../../includes/auth.php';
 requireAdminAuth();
 

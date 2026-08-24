@@ -26,7 +26,12 @@ function initFilterToggle(options) {
         });
     }
 
-    let onlyTrue = getCookie(options.cookieName) === '1';
+    // First-ever visit (no cookie yet) normally starts unfiltered -- pass
+    // defaultOnlyTrue: true to start filtered instead (e.g. orders.php
+    // hiding Cancelado/Vencido by default). Once a cookie exists, it always
+    // wins over this default, same as before.
+    const savedCookie = getCookie(options.cookieName);
+    let onlyTrue = savedCookie !== null ? savedCookie === '1' : !!options.defaultOnlyTrue;
     btn.textContent = onlyTrue ? options.showAllLabel : options.filterLabel;
     applyFilter(onlyTrue);
 

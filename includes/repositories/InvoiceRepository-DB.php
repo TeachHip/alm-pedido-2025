@@ -130,17 +130,28 @@ class InvoiceRepository {
 
     /**
      * A member's own recent invoices, most recent first -- powers
-     * my-orders.php. 14 days comfortably covers the real order lifecycle
-     * (pickup windows run up to ~10 days) without turning into a full
-     * historical archive nobody asked for.
+     * my-orders.php. Different retention windows by status: paid invoices
+     * are a receipt worth keeping visible for a while (2 months); unpaid
+     * ones reflect a live order, not a record -- past a week they're
+     * effectively lost/overdue anyway (see the per-section deadline logic
+     * in InvoiceHelper::createInvoiceFromCart()), so there's no reason to
+     * keep showing them. Joins member_number in, same shape as
+     * findByToken(), since both feed partials/invoice-card.php.
      */
-    public function findRecentByMember($memberId, $days = 14) {
-        $sql = "SELECT * FROM invoices
-                WHERE member_id = :member_id AND created_at >= NOW() - INTERVAL :days DAY
-                ORDER BY created_at DESC";
+    public function findRecentByMember($memberId, $paidDays = 60, $unpaidDays = 7) {
+        $sql = "SELECT i.*, m.member_number as member_number
+                FROM invoices i
+                JOIN members m ON i.member_id = m.id
+                WHERE i.member_id = :member_id
+                  AND (
+                    (i.payment_status = 'paid' AND i.created_at >= NOW() - INTERVAL :paid_days DAY)
+                    OR (i.payment_status != 'paid' AND i.created_at >= NOW() - INTERVAL :unpaid_days DAY)
+                  )
+                ORDER BY i.created_at DESC, i.id DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue('member_id', $memberId, PDO::PARAM_INT);
-        $stmt->bindValue('days', $days, PDO::PARAM_INT);
+        $stmt->bindValue('paid_days', $paidDays, PDO::PARAM_INT);
+        $stmt->bindValue('unpaid_days', $unpaidDays, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll();
     }
@@ -236,5 +247,40 @@ class InvoiceRepository {
         $sql = "UPDATE invoices SET status = 'cancelled' WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute(['id' => $invoiceId]);
+    }
+
+    /**
+     * Lazy auto-expire: no cron on this host, so this runs at view time --
+     * called wherever an invoice is fetched for display (ticket.php,
+     * my-orders.php, admin/orders.php, admin/invoice-created.php). Sets
+     * payment_status to 'expired' (an enum value that already existed in
+     * the schema, just never written until now) once due_date has passed
+     * on a still-unpaid, still-active invoice.
+     *
+     * Deliberately separate from cancel()/status='cancelled' -- Vencido
+     * (automatic, nobody acted) and Cancelado (a person cancelled it) are
+     * meant to read as different things, not the same state under two
+     * names. This never touches `status`.
+     *
+     * Mutates and returns $invoice so the same request already reflects
+     * the fresh state without a second page load. Pass $invoice = null
+     * straight through (callers that may not have found an invoice yet).
+     */
+    public function autoExpireIfOverdue($invoice) {
+        if (!$invoice) {
+            return $invoice;
+        }
+
+        if ($invoice['status'] === 'active'
+            && $invoice['payment_status'] === 'pending'
+            && strtotime($invoice['due_date']) < time()
+        ) {
+            $sql = "UPDATE invoices SET payment_status = 'expired' WHERE id = :id AND payment_status = 'pending'";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['id' => $invoice['id']]);
+            $invoice['payment_status'] = 'expired';
+        }
+
+        return $invoice;
     }
 }

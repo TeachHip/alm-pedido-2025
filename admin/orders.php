@@ -32,6 +32,7 @@ $pageH1 = '📋 Pedidos';
 $activeNav = 'orders';
 include dirname(__FILE__) . '/partials/head.php';
 ?>
+    <script src="../assets/admin/filter-toggle.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
     <style>
         .order-details {
             display: none;
@@ -74,6 +75,10 @@ include dirname(__FILE__) . '/partials/head.php';
     </style>
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
+    <button id="toggle-dead-orders-btn" type="button" style="margin-bottom: 15px; padding: 7px 16px; font-size: 15px; border-radius: 5px; border: 1px solid #bbb; background: #f8f8f8; cursor: pointer;">
+        Mostrar todos
+    </button>
+
     <div class="products-table">
         <?php if (empty($orders)): ?>
         <div class="empty-state">
@@ -83,7 +88,7 @@ include dirname(__FILE__) . '/partials/head.php';
         <p class="admin-tip">
             💡 <strong>Tip:</strong> Haz clic en una fila para ver los detalles del pedido.
         </p>
-        
+
         <table width="100%">
             <thead>
                 <tr>
@@ -98,22 +103,56 @@ include dirname(__FILE__) . '/partials/head.php';
             </thead>
             <tbody>
                 <?php foreach ($orders as $order):
-                    $ticket = $cartRepo->getTicketNumber($order['id']);
                     $invoice = $invoiceRepo->findByCartId($order['id']);
+                    $invoice = $invoiceRepo->autoExpireIfOverdue($invoice);
+                    // The real ticket number lives on the invoice, generated
+                    // once at creation time -- CartRepository::getTicketNumber()
+                    // recomputes a totally different number on the fly (the
+                    // cart's position among carts that month), so it drifts
+                    // from the real one as soon as cart/invoice counts diverge
+                    // (abandoned carts, corrections, etc). Only fall back to
+                    // it for a cart that has no invoice yet.
+                    $ticket = $invoice ? $invoice['ticket_number'] : $cartRepo->getTicketNumber($order['id']);
                     $statusLabel = [
                         'active' => 'Activo',
                         'completed' => 'Completado',
                         'abandoned' => 'Abandonado'
                     ];
+                    // Once an invoice exists, ITS status is the meaningful
+                    // one to show -- the cart's own status never changes
+                    // again after checkout (cancel-order.php/cancel-invoice.php
+                    // only touch the invoice), so showing the cart status here
+                    // would silently hide a cancelled/superseded ticket behind
+                    // whatever "Completado" the cart got at submission time.
+                    if ($invoice) {
+                        if ($invoice['status'] === 'cancelled') {
+                            $orderStatusDisplay = '❌ Cancelado';
+                        } elseif ($invoice['status'] === 'superseded') {
+                            $orderStatusDisplay = '🔄 Sustituido';
+                        } elseif ($invoice['payment_status'] === 'paid') {
+                            $orderStatusDisplay = '✅ Pagado';
+                        } elseif ($invoice['payment_status'] === 'expired') {
+                            $orderStatusDisplay = '⚠️ Vencido';
+                        } else {
+                            $orderStatusDisplay = '⏳ Pendiente de pago';
+                        }
+                    } else {
+                        $orderStatusDisplay = $statusLabel[$order['status']] ?? $order['status'];
+                    }
+                    // Cancelado/Vencido are hidden by default (see the
+                    // toggle-visible-btn-style filter button below) --
+                    // everything else ("live": pending/paid/no-invoice-yet)
+                    // stays visible.
+                    $isDeadOrder = $invoice && ($invoice['status'] === 'cancelled' || $invoice['payment_status'] === 'expired');
                 ?>
-                <tr class="order-row" onclick="toggleOrderDetails(<?php echo $order['id']; ?>)">
+                <tr class="order-row" data-live="<?php echo $isDeadOrder ? '0' : '1'; ?>" onclick="toggleOrderDetails(<?php echo $order['id']; ?>)">
                     <td>
                         <span class="expand-icon" id="icon-<?php echo $order['id']; ?>">▶</span>
                     </td>
                     <td><?php echo htmlspecialchars($ticket); ?></td>
                     <td><?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?></td>
                     <td><?php echo number_format($order['total_price'] ?? 0, 2); ?>€</td>
-                    <td><?php echo $statusLabel[$order['status']] ?? $order['status']; ?></td>
+                    <td><?php echo $orderStatusDisplay; ?></td>
                     <td><?php echo $order['items_count']; ?> items</td>
                     <td onclick="event.stopPropagation();">
                         <?php if ($invoice): ?>
@@ -151,8 +190,20 @@ include dirname(__FILE__) . '/partials/head.php';
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initFilterToggle({
+                buttonId: 'toggle-dead-orders-btn',
+                cookieName: 'admin_orders_show_all',
+                rowSelector: 'tr.order-row',
+                dataAttr: 'data-live',
+                filterLabel: 'Ocultar cancelados y vencidos',
+                showAllLabel: 'Mostrar todos',
+                defaultOnlyTrue: true
+            });
+        });
+
         const loadedOrders = {};
-        
+
         function toggleOrderDetails(orderId) {
             const detailsRow = document.getElementById('details-' + orderId);
             const contentDiv = document.getElementById('content-' + orderId);

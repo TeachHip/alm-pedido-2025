@@ -123,7 +123,7 @@ if ($feeAmount > 0) {
     <?php endif; ?>
 
     <button type="button" class="whatsapp-btn" onclick="sendWhatsAppMessage()">
-    Hacer pedido
+    1. Hacer pedido <small>(1/3)</small>
 </button>
     <?php endif; ?>
 </div>
