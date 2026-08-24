@@ -23,19 +23,15 @@ if (!isset($data['orders']) || !is_array($data['orders'])) {
 
 try {
     $productRepo = new ProductRepository();
-    
-    // Update display orders
-    $orderData = [];
-    foreach ($data['orders'] as $item) {
-        if (isset($item['id']) && isset($item['order'])) {
-            $orderData[$item['id']] = $item['order'];
-        }
-    }
-    
+
+    $orderData = array_values(array_filter($data['orders'], function ($item) {
+        return isset($item['id']) && isset($item['order']);
+    }));
+
     if (empty($orderData)) {
         throw new Exception('No valid order data provided');
     }
-    
+
     $success = $productRepo->updateMultipleDisplayOrders($orderData);
 
     if ($success) {

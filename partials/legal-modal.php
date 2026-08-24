@@ -52,10 +52,9 @@ $legalBusinessAddress = $legalSettingsRepo->get('business_address', '');
 
         <h3>Con quién compartimos tus datos</h3>
         <p>
-            Con los proveedores técnicos estrictamente necesarios para prestar el servicio: la pasarela de pago
-            (para generar el enlace de cobro de tu ticket) y el proveedor de SMS (para avisarte de que tu ticket
-            está listo). Ambos actúan como encargados del tratamiento, sólo con los datos mínimos
-            necesarios (teléfono e importe), y no pueden usarlos para nada distinto.
+            Con el proveedor técnico estrictamente necesario para prestar el servicio: la pasarela de pago
+            (para generar el enlace de cobro de tu ticket). Actúa como encargado del tratamiento, sólo con los
+            datos mínimos necesarios (teléfono e importe), y no puede usarlos para nada distinto.
         </p>
 
         <h3>Cuánto tiempo conservamos tus datos</h3>

@@ -287,24 +287,6 @@ class ProductRepository {
     }
 
     /**
-     * Get products grouped by section (for frontend compatibility)
-     */
-    public function getAllGroupedBySection($visibleOnly = true) {
-        $products = $visibleOnly ? $this->getVisible() : $this->getAll();
-
-        $grouped = [];
-        foreach ($products as $product) {
-            $sectionKey = $product['section_key'];
-            if (!isset($grouped[$sectionKey])) {
-                $grouped[$sectionKey] = [];
-            }
-            $grouped[$sectionKey][] = $product;
-        }
-
-        return $grouped;
-    }
-
-    /**
      * Search products by name or description
      */
     public function search($query, $visibleOnly = true) {
@@ -335,7 +317,8 @@ class ProductRepository {
     }
 
     /**
-     * Batch update display orders
+     * Batch update display orders. $orderData: list of ['id' => .., 'order' => ..]
+     * (same shape SectionRepository's equivalent expects).
      */
     public function updateMultipleDisplayOrders($orderData) {
         $this->db->beginTransaction();
@@ -343,10 +326,10 @@ class ProductRepository {
             $sql = "UPDATE products SET display_order = :display_order WHERE id = :id";
             $stmt = $this->db->prepare($sql);
 
-            foreach ($orderData as $id => $order) {
+            foreach ($orderData as $item) {
                 $stmt->execute([
-                    'id' => $id,
-                    'display_order' => $order
+                    'id' => $item['id'],
+                    'display_order' => $item['order']
                 ]);
             }
 

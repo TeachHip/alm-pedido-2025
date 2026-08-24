@@ -45,7 +45,7 @@ $pageTitle = 'AlMercáu - Carro de la compra para mercantes';
     <strong id="instructions-toggle" class="instructions-toggle" role="button" tabindex="0" aria-expanded="false" aria-controls="instructions-content">INSTRUCCIONES <span id="instructions-arrow">▸</span></strong>
 </p>
 <div id="instructions-content" style="display: none;">
-<p>Selecciona qué producto quieres, indica qué cantidad deseas y pulsa '<strong>Al carro!</strong>'. Cuando acabes de pedir cada producto, ve al carro (abajo a la derecha), revisa la lista del pedido y, si está correcto, da a '<strong>Hacer pedido</strong>'. Verás tu ticket de compra con el enlace de pago; también lo recibirás por SMS.</p>
+<p>Selecciona qué producto quieres, indica qué cantidad deseas y pulsa '<strong>Al carro!</strong>'. Cuando acabes de pedir cada producto, ve al carro (abajo a la derecha), revisa la lista del pedido y, si está correcto, da a '<strong>Hacer pedido</strong>'. Verás tu ticket de compra con el enlace de pago.</p>
 </div>
 <p><em>La presente aplicación es de uso exclusivo para pedidos de mercantes (usuarios de AlMercáu con alta presencial).</em></p>
 </div>

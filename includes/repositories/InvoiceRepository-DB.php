@@ -2,8 +2,8 @@
 /**
  * Invoice Repository
  * Handles the "ticket de compra" (simplified receipt, not a legal fiscal
- * factura) shown on a token-secured public page and sent by SMS. Deliberately
- * decoupled from pricing/membership logic -- create() only ever persists
+ * factura) shown on a token-secured public page. Deliberately decoupled
+ * from pricing/membership logic -- create() only ever persists
  * already-finalized numbers handed to it by the caller. See AI/plans v10.
  */
 
@@ -168,6 +168,33 @@ class InvoiceRepository {
     }
 
     /**
+     * Batched findByCartId() -- avoids an N+1 query when listing many
+     * orders at once (admin/orders.php). Returns [cart_id => most recent
+     * invoice row], same "most recent wins" tie-break as findByCartId(),
+     * just resolved in PHP after one query instead of one query per cart.
+     * Same pattern as ProductOptionRepository::getByProductIds().
+     */
+    public function findByCartIds($cartIds) {
+        $cartIds = array_values(array_unique(array_map('intval', $cartIds)));
+        if (empty($cartIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($cartIds), '?'));
+        $sql = "SELECT * FROM invoices WHERE cart_id IN ($placeholders) ORDER BY cart_id ASC, created_at DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($cartIds);
+
+        $byCartId = [];
+        foreach ($stmt->fetchAll() as $row) {
+            if (!isset($byCartId[$row['cart_id']])) {
+                $byCartId[$row['cart_id']] = $row;
+            }
+        }
+        return $byCartId;
+    }
+
+    /**
      * Look up by PayGold's own order reference (paygold_reference,
      * generated fresh per invoice by PayGoldClient::generateOrderReference()
      * -- see requestPaymentLink()) -- used by paygold-notify.php to match an
@@ -203,6 +230,12 @@ class InvoiceRepository {
      * supersedes_invoice_id, and marks the old one superseded with a forward
      * pointer -- never edits the old row's content. $newData is the same
      * shape as create()'s $data (minus supersedes_invoice_id, set here).
+     *
+     * Intentionally unshipped: no admin action currently calls this. Ticket
+     * corrections (supply shortfalls, a price fixed mid-round) are rare and
+     * small enough in this co-op's day-to-day that Hop settles them by hand
+     * rather than through the app -- decided 2026-08-24. Left in place, ready
+     * to wire up if that ever stops being true.
      */
     public function supersede($oldInvoiceId, $newData) {
         $newData['supersedes_invoice_id'] = $oldInvoiceId;

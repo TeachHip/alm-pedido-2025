@@ -170,11 +170,13 @@ class SectionRepository {
     public function updateMultipleDisplayOrders($orderData) {
         try {
             $this->db->beginTransaction();
-            
+
+            $sql = "UPDATE sections SET display_order = :order WHERE id = :id";
+            $stmt = $this->db->prepare($sql);
             foreach ($orderData as $item) {
-                $this->updateDisplayOrder($item['id'], $item['order']);
+                $stmt->execute(['id' => $item['id'], 'order' => $item['order']]);
             }
-            
+
             $this->db->commit();
             return true;
         } catch (Exception $e) {

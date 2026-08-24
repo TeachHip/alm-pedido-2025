@@ -1,0 +1,41 @@
+/* assets/admin/orders.css - Styling specific to admin/orders.php's
+   expandable order rows and pagination. */
+
+.order-details {
+    display: none;
+    background: #f9f9f9;
+    padding: 15px;
+    margin-top: 10px;
+    border-left: 3px solid #25D366;
+}
+.order-details.expanded {
+    display: block;
+}
+.order-row {
+    cursor: pointer;
+}
+.order-row:hover {
+    background: #f0f0f0;
+}
+.expand-icon {
+    transition: transform 0.2s;
+    display: inline-block;
+}
+.expand-icon.rotated {
+    transform: rotate(90deg);
+}
+.order-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd;
+}
+.order-item:last-child {
+    border-bottom: none;
+}
+.pagination-link {
+    padding: 8px 15px;
+    margin: 0 5px;
+    background: #25D366;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}

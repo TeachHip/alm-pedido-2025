@@ -126,7 +126,13 @@ class CartRepository {
     }
     
     /**
-     * Update cart status
+     * Update cart status. LEGACY / effectively unused: since checkout now
+     * auto-creates an invoice, the real order lifecycle lives entirely on
+     * invoices.status/payment_status -- nothing currently calls this method,
+     * and carts.status is only ever read as a fallback display for a cart
+     * that has no invoice yet (see admin/orders.php). Left in place rather
+     * than removed in case a future feature wants cart-level lifecycle
+     * tracking again, but don't treat carts.status as meaningful today.
      */
     public function updateStatus($cartId, $status) {
         $sql = "UPDATE carts SET status = :status";
@@ -145,10 +151,15 @@ class CartRepository {
     }
     
     /**
-     * Get ticket number by cart ID
+     * Get ticket number by cart ID. Pass $cart (an already-fetched cart row)
+     * when the caller has one, to skip re-fetching it -- getOrderWithItems()
+     * used to fetch the same cart row twice (once directly, once again
+     * inside this method) on every single checkout.
      */
-    public function getTicketNumber($cartId) {
-        $cart = $this->getById($cartId);
+    public function getTicketNumber($cartId, $cart = null) {
+        if ($cart === null) {
+            $cart = $this->getById($cartId);
+        }
         if (!$cart) return null;
         
         $createdAt = new DateTime($cart['created_at']);
@@ -208,7 +219,7 @@ class CartRepository {
         if (!$cart) return null;
         
         // Get cart items with product details
-        $sql = "SELECT ci.*, p.name as product_name, p.ticket_name as product_ticket_name, p.image as product_image, p.iva_rate as product_iva_rate, s.name as section_name, po.label as option_label
+        $sql = "SELECT ci.*, p.name as product_name, p.ticket_name as product_ticket_name, p.image as product_image, p.iva_rate as product_iva_rate, s.name as section_name, s.`key` as section_key, po.label as option_label
                 FROM cart_items ci
                 LEFT JOIN products p ON ci.product_id = p.id
                 LEFT JOIN sections s ON p.section_id = s.id
@@ -223,7 +234,7 @@ class CartRepository {
         return [
             'cart' => $cart,
             'items' => $items,
-            'ticket' => $this->getTicketNumber($cartId)
+            'ticket' => $this->getTicketNumber($cartId, $cart)
         ];
     }
 }

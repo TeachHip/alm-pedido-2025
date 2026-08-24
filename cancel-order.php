@@ -4,8 +4,21 @@
 // own member can cancel it (checked below, not just "any logged-in
 // member"), and only while it's still unpaid -- a paid order needs the
 // business involved (refund), not a customer self-service action.
+//
+// POST-only, not a GET link: a bare GET link is one prefetch/crawler/
+// middle-click away from silently cancelling a real order with no user
+// action ever confirming it (a JS confirm() only guards the anchor's own
+// click, not direct navigation). Combined with member-auth.php's session
+// cookie already being SameSite=Lax (blocks cookies on cross-site POSTs),
+// requiring POST here closes both the accidental-trigger and CSRF angles
+// without needing a separate token.
 require_once 'includes/member-auth.php';
 require_once 'includes/repositories/InvoiceRepository-DB.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: my-orders.php');
+    exit;
+}
 
 $member = getValidatedMember();
 if (!$member) {
@@ -13,7 +26,7 @@ if (!$member) {
     exit;
 }
 
-$invoiceId = (int) ($_GET['invoice_id'] ?? 0);
+$invoiceId = (int) ($_POST['invoice_id'] ?? 0);
 $invoiceRepo = new InvoiceRepository();
 $invoice = $invoiceRepo->findById($invoiceId);
 

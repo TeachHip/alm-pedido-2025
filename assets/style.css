@@ -47,6 +47,20 @@ a:hover {
     padding-bottom: 30px;
 }
 
+.section-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+}
+
+.section-deadline-note {
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: #666;
+}
+
 /* Responsive container widths */
 @media (min-width: 1200px) {
     .container {
@@ -617,17 +631,6 @@ a.menu-item {
     font-size: 0.9rem;
 }
 
-.btn-outline {
-    background: transparent;
-    border: 1px solid #25D366;
-    color: #25D366;
-}
-
-.btn-outline:hover {
-    background: #25D366;
-    color: white;
-}
-
 /* Special buttons */
 .whatsapp-btn,
 .add-to-cart-btn {
@@ -794,6 +797,34 @@ a.menu-item {
     z-index: 1000;
 }
 
+/* ===== ADD-TO-CART TOAST ===== */
+/* Above the floating cart button (1000), below the legal modal (2000+) --
+   same z-index ladder already used elsewhere in this file. */
+.add-to-cart-toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    max-width: calc(100% - 32px);
+    background: #25D366;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1500;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -12px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.add-to-cart-toast.add-to-cart-toast-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
 .cart-button {
     width: 60px;
     height: 60px;
@@ -851,6 +882,26 @@ a.menu-item {
 
 .empty-cart-link:hover {
     color: #ff4444;
+}
+
+/* State-changing actions (cancel, etc.) need to be a real POST form, not a
+   GET link -- a <button> can't be styled to look like plain text/a link by
+   default (browser chrome: background/border/padding), so this resets that
+   chrome. Combine with .empty-cart-link for the full block-centered look,
+   or use alone for a plain inline text-link look. */
+.link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    cursor: pointer;
+    color: #006a8e;
+    text-decoration: none;
+}
+
+.link-button:hover {
+    text-decoration: underline;
 }
 
 /* ===== UTILITY STYLES ===== */
@@ -1026,6 +1077,19 @@ a.menu-item {
 .login-required-notice a {
     color: #006a8e;
     font-weight: 600;
+}
+
+/* Same shape as .login-required-notice, neutral tone instead of amber --
+   for informational notes (e.g. pickup/deadline info shown to an already-
+   logged-in member) that aren't actually warning about anything. */
+.info-notice {
+    background: #f0f0f0;
+    color: #555;
+    text-align: center;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    font-size: 0.95rem;
 }
 
 /* ===== ENHANCED CART TOTAL STYLES ===== */

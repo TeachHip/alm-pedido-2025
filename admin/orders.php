@@ -22,7 +22,11 @@ try {
     
     // Get orders for current page
     $orders = $cartRepo->getAllOrders($perPage, $offset);
-    
+
+    // Batch-fetch invoices for this page's carts in one query instead of
+    // one findByCartId() call per row (was up to 25 extra queries per page load).
+    $invoicesByCartId = $invoiceRepo->findByCartIds(array_column($orders, 'id'));
+
 } catch (Exception $e) {
     error_log("Error loading orders: " . $e->getMessage());
     die("Error: No se pudieron cargar los pedidos.");
@@ -32,47 +36,8 @@ $pageH1 = '📋 Pedidos';
 $activeNav = 'orders';
 include dirname(__FILE__) . '/partials/head.php';
 ?>
+    <link rel="stylesheet" href="../assets/admin/orders.css?v=<?php echo APP_VERSION_SAFE; ?>">
     <script src="../assets/admin/filter-toggle.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
-    <style>
-        .order-details {
-            display: none;
-            background: #f9f9f9;
-            padding: 15px;
-            margin-top: 10px;
-            border-left: 3px solid #25D366;
-        }
-        .order-details.expanded {
-            display: block;
-        }
-        .order-row {
-            cursor: pointer;
-        }
-        .order-row:hover {
-            background: #f0f0f0;
-        }
-        .expand-icon {
-            transition: transform 0.2s;
-            display: inline-block;
-        }
-        .expand-icon.rotated {
-            transform: rotate(90deg);
-        }
-        .order-item {
-            padding: 8px 0;
-            border-bottom: 1px solid #ddd;
-        }
-        .order-item:last-child {
-            border-bottom: none;
-        }
-        .pagination-link {
-            padding: 8px 15px;
-            margin: 0 5px;
-            background: #25D366;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-    </style>
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
     <button id="toggle-dead-orders-btn" type="button" style="margin-bottom: 15px; padding: 7px 16px; font-size: 15px; border-radius: 5px; border: 1px solid #bbb; background: #f8f8f8; cursor: pointer;">
@@ -103,7 +68,7 @@ include dirname(__FILE__) . '/partials/head.php';
             </thead>
             <tbody>
                 <?php foreach ($orders as $order):
-                    $invoice = $invoiceRepo->findByCartId($order['id']);
+                    $invoice = $invoicesByCartId[$order['id']] ?? null;
                     $invoice = $invoiceRepo->autoExpireIfOverdue($invoice);
                     // The real ticket number lives on the invoice, generated
                     // once at creation time -- CartRepository::getTicketNumber()
@@ -112,7 +77,7 @@ include dirname(__FILE__) . '/partials/head.php';
                     // from the real one as soon as cart/invoice counts diverge
                     // (abandoned carts, corrections, etc). Only fall back to
                     // it for a cart that has no invoice yet.
-                    $ticket = $invoice ? $invoice['ticket_number'] : $cartRepo->getTicketNumber($order['id']);
+                    $ticket = $invoice ? $invoice['ticket_number'] : $cartRepo->getTicketNumber($order['id'], $order);
                     $statusLabel = [
                         'active' => 'Activo',
                         'completed' => 'Completado',
@@ -220,7 +185,6 @@ include dirname(__FILE__) . '/partials/head.php';
                     fetch('actions/get-order-details.php?id=' + orderId)
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Order data:', data); // Debug
                             if (data.success) {
                                 let html = '<h3>Pedido ' + data.ticket + '</h3>';
                                 html += '<div style="margin-top: 10px; font-family: monospace;">';

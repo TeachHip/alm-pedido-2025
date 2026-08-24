@@ -117,7 +117,7 @@ if ($feeAmount > 0) {
         o pásate por AlMercáu para darte de alta.
     </p>
     <?php else: ?>
-    <p class="login-required-notice">
+    <p class="info-notice">
         Pedido para recogida en tienda antes de una semana. Plazo para productos de Pedido de Grupo, Pedido Exprés y frescos en general, como indicado por whatsapp.
     </p>
     <?php endif; ?>

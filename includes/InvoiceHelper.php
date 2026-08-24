@@ -50,25 +50,10 @@ function buildMockPaymentUrl($token, $baseUrl) {
  * Returns ['url', 'reference', 'is_mock'].
  */
 function requestPaymentLink($invoiceId, $token, $dueDate, $totalAmount, $baseUrl) {
-    $apiKeysFile = __DIR__ . '/config/api-keys-DB.php';
-    if (file_exists($apiKeysFile)) {
-        require_once $apiKeysFile;
-    }
+    $client = PayGoldClient::fromConfig();
 
-    // Redsys issues a DIFFERENT signing key per environment (same merchant
-    // code/terminal for both) -- picking the matching secret here means
-    // flipping PAYGOLD_ENVIRONMENT is the only thing needed to switch, no
-    // manual secret-swapping to forget.
-    $environment = (defined('PAYGOLD_ENVIRONMENT') && PAYGOLD_ENVIRONMENT) ? PAYGOLD_ENVIRONMENT : 'TEST';
-    $secretConstant = $environment === 'PROD' ? 'PAYGOLD_SECRET_KEY_PROD' : 'PAYGOLD_SECRET_KEY_TEST';
-
-    $configured = defined('PAYGOLD_MERCHANT_CODE') && PAYGOLD_MERCHANT_CODE !== ''
-        && defined('PAYGOLD_TERMINAL') && PAYGOLD_TERMINAL !== ''
-        && defined($secretConstant) && constant($secretConstant) !== '';
-
-    if ($configured) {
+    if ($client) {
         try {
-            $client = new PayGoldClient(PAYGOLD_MERCHANT_CODE, PAYGOLD_TERMINAL, constant($secretConstant), $environment);
             $orderRef = PayGoldClient::generateOrderReference($invoiceId);
             $notificationUrl = rtrim($baseUrl, '/') . '/paygold-notify.php';
             $expiryDate = date('Y-m-d-H.i.s.000', strtotime($dueDate));
@@ -76,11 +61,10 @@ function requestPaymentLink($invoiceId, $token, $dueDate, $totalAmount, $baseUrl
             // Redirect back to ticket.php (not my-orders.php) after payment --
             // it's the token-secured public page, so it works regardless of
             // which device/browser the customer actually completes payment
-            // on (often not the one they were logged into when ordering,
-            // e.g. opening the pay link straight from the SMS on their
-            // phone). from_payment=1 lets ticket.php show a brief "confirming
-            // your payment" note if the webhook hasn't landed yet by the
-            // time the browser redirect does (the two aren't ordered).
+            // on (often not the one they were logged into when ordering).
+            // from_payment=1 lets ticket.php show a brief "confirming your
+            // payment" note if the webhook hasn't landed yet by the time
+            // the browser redirect does (the two aren't ordered).
             $urlOk = rtrim($baseUrl, '/') . '/ticket.php?token=' . $token . '&from_payment=1';
             $urlKo = rtrim($baseUrl, '/') . '/ticket.php?token=' . $token . '&payment_failed=1';
 
@@ -130,15 +114,22 @@ function createInvoiceFromCart($cartId, $baseUrl) {
         // section must be paid before that section's own date/time. If an
         // order touches both (each with a different deadline), the earlier
         // one governs, since both sections' rules apply independently.
+        //
+        // Matched by the section's stable `key` ('flash' / 'pedido_g'), NOT
+        // its editable display `name` -- the cart fee logic already keys off
+        // `flash` the same way (ProductRepository::anyInSectionKey()).
+        // Matching by name would silently stop applying the deadline the
+        // moment an admin renames the section (typo/accent fix) via
+        // admin/edit-section.php, with no error anywhere.
         $sectionDeadlines = [
-            'Pedido Exprés' => $settingsRepo->get('deadline_pedido_expres', ''),
-            'Pedido de Grupo' => $settingsRepo->get('deadline_pedido_grupo', ''),
+            'flash' => $settingsRepo->get('deadline_pedido_expres', ''),
+            'pedido_g' => $settingsRepo->get('deadline_pedido_grupo', ''),
         ];
         $applicableDeadlines = [];
         foreach ($order['items'] as $item) {
-            $sectionName = $item['section_name'] ?? null;
-            if ($sectionName && !empty($sectionDeadlines[$sectionName])) {
-                $applicableDeadlines[] = $sectionDeadlines[$sectionName];
+            $sectionKey = $item['section_key'] ?? null;
+            if ($sectionKey && !empty($sectionDeadlines[$sectionKey])) {
+                $applicableDeadlines[] = $sectionDeadlines[$sectionKey];
             }
         }
 

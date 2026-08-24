@@ -38,6 +38,12 @@ try {
     $settingsRepo = new SettingsRepository();
     $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
 
+    // Pedido Exprés / Pedido de Grupo are the only sections with a fixed,
+    // admin-set payment deadline (see InvoiceHelper::createInvoiceFromCart(),
+    // matched by section key -- stable even if the name is edited later).
+    $sectionDeadlineSettingKey = ['flash' => 'deadline_pedido_expres', 'pedido_g' => 'deadline_pedido_grupo'][$section['key']] ?? null;
+    $sectionDeadline = $sectionDeadlineSettingKey ? $settingsRepo->get($sectionDeadlineSettingKey, '') : '';
+
     // Product options (variants), batch-fetched to avoid N+1 queries -- see includes/PriceHelper.php
     $optionsByProduct = (new ProductOptionRepository())->getByProductIds(array_column($products, 'id'));
 
@@ -58,7 +64,12 @@ include 'partials/header.php';
 
 <div class="container">
     <a href="./" class="back-btn">&larr; Volver a la compra</a>
-    <h2><?php echo htmlspecialchars($sectionName); ?></h2>
+    <div class="section-title-row">
+        <h2><?php echo htmlspecialchars($sectionName); ?></h2>
+        <?php if ($sectionDeadline): ?>
+        <span class="section-deadline-note">Fecha límite de pago: <?php echo date('d/m/Y H:i', strtotime($sectionDeadline)); ?></span>
+        <?php endif; ?>
+    </div>
 
 <?php if (empty($products)): ?>
     <div class="empty-state">
@@ -73,11 +84,7 @@ include 'partials/header.php';
         ?>
             <div class="product-card">
                 <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link" style="position: relative; display: block;">
-                    <?php if ($product['almost_out_of_stock']): ?>
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #FFFF00; color: black; padding: 5px 8px 8px 8px; border-radius: 5px; font-size: 13px; font-weight: bold; z-index: 10; text-align: center; line-height: 1.3; white-space: nowrap;">
-                        ⚠️ Fin de stock
-                    </div>
-                    <?php endif; ?>
+                    <?php include 'partials/out-of-stock-badge.php'; ?>
                     <img src="<?php echo !empty($product['image']) ? 'primgs/' . htmlspecialchars($product['image']) : 'https://placehold.co/300x200/25D366/ffffff?text=Imagen+no+disponible'; ?>"
                          alt="<?php echo htmlspecialchars($product['name']); ?>"
                          class="product-image"

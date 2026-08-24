@@ -65,7 +65,10 @@ include 'partials/header.php';
         include 'partials/invoice-card.php';
     ?>
     <?php if ($invoice['status'] === 'active' && $invoice['payment_status'] === 'pending'): ?>
-    <a href="cancel-order.php?invoice_id=<?php echo $invoice['id']; ?>" class="empty-cart-link" onclick="return confirm('¿Seguro que quieres cancelar este pedido? Esta acción no se puede deshacer.');">🗑️ Cancelar pedido</a>
+    <form method="POST" action="cancel-order.php" onsubmit="return confirm('¿Seguro que quieres cancelar este pedido? Esta acción no se puede deshacer.');">
+        <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
+        <button type="submit" class="empty-cart-link link-button">🗑️ Cancelar pedido</button>
+    </form>
     <?php endif; ?>
 
     <?php if (!empty($orders)): ?>
@@ -80,7 +83,10 @@ include 'partials/header.php';
             &mdash; <?php echo $s['label']; ?>
             &mdash; <?php echo date('d/m/Y', strtotime($order['created_at'])); ?>
             <?php if ($order['status'] === 'active' && $order['payment_status'] === 'pending'): ?>
-            &mdash; <a href="cancel-order.php?invoice_id=<?php echo $order['id']; ?>" onclick="return confirm('¿Seguro que quieres cancelar este pedido? Esta acción no se puede deshacer.');">Cancelar</a>
+            &mdash; <form method="POST" action="cancel-order.php" style="display: inline;" onsubmit="return confirm('¿Seguro que quieres cancelar este pedido? Esta acción no se puede deshacer.');">
+                <input type="hidden" name="invoice_id" value="<?php echo $order['id']; ?>">
+                <button type="submit" class="link-button">Cancelar</button>
+            </form>
             <?php endif; ?>
         </li>
         <?php endforeach; ?>

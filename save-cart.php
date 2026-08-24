@@ -9,9 +9,11 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/includes/member-auth.php';
 require_once __DIR__ . '/includes/repositories/CartRepository-DB.php';
 require_once __DIR__ . '/includes/repositories/ProductRepository-DB.php';
+require_once __DIR__ . '/includes/repositories/ProductOptionRepository-DB.php';
 require_once __DIR__ . '/includes/repositories/SettingsRepository-DB.php';
 require_once __DIR__ . '/includes/CartHelper.php';
 require_once __DIR__ . '/includes/InvoiceHelper.php';
+require_once __DIR__ . '/includes/PriceHelper.php';
 
 try {
     // Get JSON input
@@ -36,31 +38,59 @@ try {
     }
 
     $cartRepo = new CartRepository();
-    
-    // Prepare cart items with proper structure
+    $productRepo = new ProductRepository();
+    $optionRepo = new ProductOptionRepository();
+    $settingsRepo = new SettingsRepository();
+    $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
+
+    // Prepare cart items with proper structure. Price is NEVER taken from
+    // the client -- it's fully attacker-controlled (cart lives in a browser
+    // cookie/localStorage) and flows untouched into the invoice and the
+    // amount actually charged via PayGold if trusted. Re-derive it
+    // server-side from the product/option row instead, the same way
+    // product.php/section.php compute it for display (PriceHelper::getCartPrice()).
+    $productIds = array_values(array_unique(array_filter(array_map(
+        function ($item) { return extractProductId($item['id'] ?? $item['product_id'] ?? null); },
+        $data['items']
+    ))));
+    $optionsById = [];
+    foreach ($optionRepo->getByProductIds($productIds) as $productOptions) {
+        foreach ($productOptions as $option) {
+            $optionsById[$option['id']] = $option;
+        }
+    }
+
     $cartItems = [];
     foreach ($data['items'] as $item) {
         // Extract numeric ID from formats like 'product-7', 'product-7-option-12', or just '7'
         $productId = extractProductId($item['id'] ?? $item['product_id'] ?? null);
         $optionId = extractOptionId($item['id'] ?? null);
 
+        if ($optionId && isset($optionsById[$optionId])) {
+            $price = getCartPrice($optionsById[$optionId], $showDualPricing);
+        } else {
+            $product = $productRepo->getById($productId);
+            if (!$product) {
+                throw new Exception('Producto no encontrado');
+            }
+            $price = getCartPrice($product, $showDualPricing);
+        }
+
         $cartItems[] = [
             'product_id' => $productId,
             'product_option_id' => $optionId,
             'quantity' => $item['quantity'] ?? 1,
-            'price' => $item['price'] ?? 0,
+            'price' => $price,
             'name' => $item['name'] ?? ''
         ];
     }
     
     // Pedido Expres cart fee
-    $settingsRepo = new SettingsRepository();
     $feeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
     $feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
     if ($feeAmount > 0) {
-        $productRepo = new ProductRepository();
-        $productIds = array_column($cartItems, 'product_id');
-        if (!$productRepo->anyInSectionKey($productIds, 'flash')) {
+        $cartProductIds = array_column($cartItems, 'product_id');
+        if (!$productRepo->anyInSectionKey($cartProductIds, 'flash')) {
             $feeAmount = 0;
         }
     }
@@ -105,6 +135,13 @@ try {
             'total' => $result['total'],
             'fee_amount' => $result['fee_amount'],
             'fee_label' => $result['fee_label'],
+            // The cart itself always saves successfully even when ticket
+            // creation below fails (deliberately fail-soft -- see comment
+            // above). But my-orders.php only ever reads from `invoices`, so
+            // if this is false the customer would land on a page showing
+            // nothing at all with no clue their order was actually received.
+            // The caller needs to be able to tell the two outcomes apart.
+            'ticket_created' => $mock !== null,
             'mock' => $mock
         ]);
     } else {

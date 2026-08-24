@@ -25,22 +25,11 @@ $jsonBody = json_decode(file_get_contents('php://input'), true);
 $receivedParams = array_merge($_GET, $_POST, is_array($jsonBody) ? $jsonBody : []);
 
 try {
-    $apiKeysFile = __DIR__ . '/includes/config/api-keys-DB.php';
-    if (file_exists($apiKeysFile)) {
-        require_once $apiKeysFile;
-    }
+    $client = PayGoldClient::fromConfig();
 
-    $environment = (defined('PAYGOLD_ENVIRONMENT') && PAYGOLD_ENVIRONMENT) ? PAYGOLD_ENVIRONMENT : 'TEST';
-    $secretConstant = $environment === 'PROD' ? 'PAYGOLD_SECRET_KEY_PROD' : 'PAYGOLD_SECRET_KEY_TEST';
-
-    $configured = defined('PAYGOLD_MERCHANT_CODE') && PAYGOLD_MERCHANT_CODE !== ''
-        && defined('PAYGOLD_TERMINAL') && PAYGOLD_TERMINAL !== ''
-        && defined($secretConstant) && constant($secretConstant) !== '';
-
-    if (!$configured) {
+    if (!$client) {
         error_log('PayGold notification received but PayGold is not configured -- ignoring.');
     } else {
-        $client = new PayGoldClient(PAYGOLD_MERCHANT_CODE, PAYGOLD_TERMINAL, constant($secretConstant), $environment);
         $result = $client->verifyNotification($receivedParams);
 
         if (!$result['success']) {
@@ -53,6 +42,16 @@ try {
                 error_log('PayGold notification for unknown order reference: ' . $result['order']);
             } elseif ($result['approved']) {
                 if ($invoice['payment_status'] !== 'paid') {
+                    // The money moved regardless of what happened to the
+                    // invoice meanwhile -- always record it. But if it's not
+                    // 'active' (e.g. an admin cancelled it while the customer
+                    // had the payment page open), that combination looks
+                    // identical to a normal "cancelled after a manual
+                    // refund" case with no way to tell them apart later, so
+                    // flag it distinctly for Hop to reconcile by hand.
+                    if ($invoice['status'] !== 'active') {
+                        error_log('PayGold notification: payment approved for order ' . $result['order'] . ' but invoice ' . $invoice['id'] . ' status is "' . $invoice['status'] . '", not active -- needs manual reconciliation (was it cancelled after this payment, not before?).');
+                    }
                     $invoiceRepo->markPaid($invoice['id']);
                 }
             } else {

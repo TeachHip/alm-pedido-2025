@@ -48,7 +48,7 @@ include dirname(__FILE__) . '/partials/head.php';
     <link rel="stylesheet" href="../assets/admin/forms.css?v=<?php echo APP_VERSION_SAFE; ?>">
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
-    <div class="form-container">
+    <div class="edit-form">
         <form action="actions/save-section.php" method="POST" enctype="multipart/form-data">
             <?php if ($isEdit): ?>
             <input type="hidden" name="section_id" value="<?php echo $section['id']; ?>">

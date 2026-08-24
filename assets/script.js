@@ -73,8 +73,11 @@ function getCookieCart() {
 function initializeApp() {
     // Check if cookie and localStorage are in sync
     const cookieCart = getCookieCart();
-    if (JSON.stringify(cart) !== JSON.stringify(cookieCart)) {
-        // Cookie is out of sync, resync it
+    const wasInSync = JSON.stringify(cart) === JSON.stringify(cookieCart);
+    if (!wasInSync) {
+        // Cookie is out of sync, resync it (localStorage wins -- it has the
+        // longer 48h staleness window vs. the cookie's 24h expiry, so an
+        // empty/expired cookie must never overwrite a still-valid cart).
         syncCartWithPHP();
     }
 
@@ -84,7 +87,13 @@ function initializeApp() {
     if (whatsappBtn) whatsappBtn.style.display = 'block';
     refreshCartCookie();
 
-    if (document.getElementById('cart-items')) {
+    // cart-page.php already server-renders the cart from the cookie (with
+    // equivalent onclick handlers baked in) -- only re-render client-side
+    // when there was an actual mismatch to correct. Re-rendering
+    // unconditionally on every load meant the customer could see the cart
+    // visibly change right after the page finished painting, even when
+    // cookie and localStorage already agreed (the common case).
+    if (document.getElementById('cart-items') && !wasInSync) {
         updateCartDisplay();
     }
 }
@@ -133,6 +142,35 @@ function addToCart(id, name, price, image, quantity = 1) {
     }
 
     saveCart();
+    showAddedToCartToast(name, quantity);
+}
+
+/**
+ * Brief fading confirmation shown above the page (product.php and
+ * section.php both funnel through addToCart(), so one call here covers
+ * every add-to-cart path -- no separate toast trigger needed per page).
+ */
+function showAddedToCartToast(name, quantity) {
+    let toast = document.getElementById('add-to-cart-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'add-to-cart-toast';
+        toast.className = 'add-to-cart-toast';
+        document.body.appendChild(toast);
+    }
+
+    toast.textContent = `✓ ${quantity}x ${name} añadido al carrito`;
+
+    // Restart the fade-in even on rapid repeated clicks (force a reflow
+    // between removing and re-adding the visible class).
+    toast.classList.remove('add-to-cart-toast-visible');
+    void toast.offsetWidth;
+    toast.classList.add('add-to-cart-toast-visible');
+
+    clearTimeout(showAddedToCartToast._timer);
+    showAddedToCartToast._timer = setTimeout(() => {
+        toast.classList.remove('add-to-cart-toast-visible');
+    }, 2000);
 }
 
 /**
@@ -311,6 +349,7 @@ function addToCartFromSection(productId, name, price, image) {
 function addToCartFromProduct(productId, name, price, image) {
     const quantity = productQuantities[productId] || 1;
     addToCart(productId, name, price, image, quantity);
+    resetProductQuantity(productId);
 }
 
 /**
@@ -411,6 +450,20 @@ async function sendWhatsAppMessage() {
                     return false;
                 }
                 throw new Error(result.error || 'Error al guardar el pedido');
+            }
+
+            // The cart itself saved, but ticket/invoice creation can still
+            // fail server-side (fail-soft by design). If it did, my-orders.php
+            // would show nothing at all (it only reads from `invoices`) --
+            // don't silently clear the cart and send the customer to a page
+            // that looks like their order vanished. Leave the cart intact so
+            // they still have something to fall back on (retry, or contact
+            // AlMercáu directly) and re-enable the button instead.
+            if (!result.ticket_created) {
+                alert('Tu pedido se ha recibido, pero hubo un problema generando el ticket. Contacta con AlMercáu para confirmar tu pedido.');
+                btn.textContent = originalText;
+                btn.disabled = false;
+                return false;
             }
 
             // The cart's job is done once the order is submitted -- it's now

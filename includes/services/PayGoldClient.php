@@ -36,6 +36,34 @@ class PayGoldClient {
     }
 
     /**
+     * Load includes/config/api-keys-DB.php (if present) and build a client
+     * from its constants, picking the secret key matching PAYGOLD_ENVIRONMENT
+     * (Redsys issues a different signing key per environment, same merchant
+     * code/terminal for both). Returns null if the file is missing or the
+     * required constants aren't set/filled in -- callers should fall back
+     * to mock behavior in that case, same as before this was shared.
+     */
+    public static function fromConfig() {
+        $apiKeysFile = __DIR__ . '/../config/api-keys-DB.php';
+        if (file_exists($apiKeysFile)) {
+            require_once $apiKeysFile;
+        }
+
+        $environment = (defined('PAYGOLD_ENVIRONMENT') && PAYGOLD_ENVIRONMENT) ? PAYGOLD_ENVIRONMENT : 'TEST';
+        $secretConstant = $environment === 'PROD' ? 'PAYGOLD_SECRET_KEY_PROD' : 'PAYGOLD_SECRET_KEY_TEST';
+
+        $configured = defined('PAYGOLD_MERCHANT_CODE') && PAYGOLD_MERCHANT_CODE !== ''
+            && defined('PAYGOLD_TERMINAL') && PAYGOLD_TERMINAL !== ''
+            && defined($secretConstant) && constant($secretConstant) !== '';
+
+        if (!$configured) {
+            return null;
+        }
+
+        return new self(PAYGOLD_MERCHANT_CODE, PAYGOLD_TERMINAL, constant($secretConstant), $environment);
+    }
+
+    /**
      * Redsys requires Ds_Merchant_Order to be 4-12 characters, the first 4
      * of which must be digits. Not reusable as our own ticket_number
      * (format "#ALM-YYYY-MM-####" doesn't qualify) -- generate a fresh one

@@ -5,8 +5,11 @@
  */
 
 require_once __DIR__ . '/../db/database-DB.php';
+require_once __DIR__ . '/LoginLockoutTrait.php';
 
 class UserRepository {
+    use LoginLockoutTrait;
+
     const MAX_LOGIN_ATTEMPTS = 5;
     const LOCKOUT_MINUTES = 15;
 
@@ -15,7 +18,11 @@ class UserRepository {
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
     }
-    
+
+    protected function lockoutTableName() {
+        return 'users';
+    }
+
     /**
      * Find user by username
      */
@@ -25,30 +32,7 @@ class UserRepository {
         $stmt->execute(['username' => $username]);
         return $stmt->fetch();
     }
-    
-    /**
-     * Find user by email
-     */
-    public function findByEmail($email) {
-        $sql = "SELECT * FROM users WHERE email = :email AND active = 1 LIMIT 1";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['email' => $email]);
-        return $stmt->fetch();
-    }
-    
-    /**
-     * Verify user password
-     */
-    public function verifyPassword($username, $password) {
-        $user = $this->findByUsername($username);
-        
-        if (!$user) {
-            return false;
-        }
-        
-        return password_verify($password, $user['password_hash']);
-    }
-    
+
     /**
      * Authenticate user and return user data if valid. Returns the user row
      * on success, false on wrong credentials, or the string 'locked' if the
@@ -76,39 +60,6 @@ class UserRepository {
         return false;
     }
 
-    /**
-     * Increment the failed-attempt counter; once it reaches
-     * MAX_LOGIN_ATTEMPTS, lock the account for LOCKOUT_MINUTES. Interpolates
-     * the (non-user-controlled) lockout window directly into the SQL rather
-     * than binding it, since a duplicate named placeholder is invalid under
-     * real (non-emulated) PDO prepared statements.
-     */
-    private function registerFailedLogin($userId, $currentAttempts) {
-        $newAttempts = $currentAttempts + 1;
-        if ($newAttempts >= self::MAX_LOGIN_ATTEMPTS) {
-            $sql = "UPDATE users SET failed_login_attempts = :attempts, locked_until = DATE_ADD(NOW(), INTERVAL " . self::LOCKOUT_MINUTES . " MINUTE) WHERE id = :id";
-        } else {
-            $sql = "UPDATE users SET failed_login_attempts = :attempts WHERE id = :id";
-        }
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['attempts' => $newAttempts, 'id' => $userId]);
-    }
-
-    private function resetLoginAttempts($userId) {
-        $sql = "UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = :id";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['id' => $userId]);
-    }
-
-    /**
-     * Update last login timestamp
-     */
-    public function updateLastLogin($userId) {
-        $sql = "UPDATE users SET last_login = NOW() WHERE id = :id";
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute(['id' => $userId]);
-    }
-    
     /**
      * Create new user
      */

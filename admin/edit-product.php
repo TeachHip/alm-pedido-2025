@@ -113,7 +113,7 @@ include dirname(__FILE__) . '/partials/head.php';
     <div class="edit-form">
         <div id="form-error-summary" class="error-message" style="display:none;"></div>
         <form method="POST" action="actions/save-product.php" enctype="multipart/form-data" novalidate>
-            <input type="hidden" name="original_product_id" value="<?php echo $isEdit ? $product_id : ''; ?>"> <!-- CHANGED: original_product_id -->
+            <input type="hidden" name="original_product_id" value="<?php echo $isEdit ? $product_id : ''; ?>">
 
             <div class="form-row">
                 <div class="form-group">
