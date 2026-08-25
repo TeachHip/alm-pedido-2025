@@ -12,6 +12,15 @@ $pageDescription = $pageDescription ?? 'Catálogo online de alimentos para la co
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" href="favicon.ico?v=1" type="image/x-icon">
     <title><?php echo htmlspecialchars($pageTitle); ?></title>
+
+    <!-- PWA: installable home-screen app, no service worker (no offline
+         support) -- see manifest.json. apple-* tags cover iOS Safari,
+         which doesn't fully honor the manifest spec on its own. -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#006a8e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="AlMercáu">
+    <link rel="apple-touch-icon" href="imgs/apple-touch-icon.png">
     <meta name="description" content="<?php echo htmlspecialchars($pageDescription); ?>">
 
     <meta property="og:title" content="AlMercáu - Carro de la compra para mercantes">
