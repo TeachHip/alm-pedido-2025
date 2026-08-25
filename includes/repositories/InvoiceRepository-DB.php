@@ -265,7 +265,7 @@ class InvoiceRepository {
      * see includes/InvoiceHelper.php).
      */
     public function setPaymentUrl($invoiceId, $paymentUrl, $reference = null) {
-        $sql = "UPDATE invoices SET paygold_payment_url = :url, paygold_reference = :reference WHERE id = :id";
+        $sql = "UPDATE invoices SET paygold_payment_url = :url, paygold_reference = :reference, paygold_link_generated_at = NOW() WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute(['id' => $invoiceId, 'url' => $paymentUrl, 'reference' => $reference]);
     }

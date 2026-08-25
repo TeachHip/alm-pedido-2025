@@ -4,9 +4,6 @@ includes/db/config-DB.php
 # External API credentials (PayGold/Redsys)
 includes/config/api-keys-DB.php
 
-# Per-deployment environment switch (dev/prod)
-includes/config/environment.php
-
 # Testing-mode Basic Auth password file (see .htaccess)
 .htpasswd
 

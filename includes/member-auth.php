@@ -95,9 +95,14 @@ function logoutMember() {
             error_log("Member logout error: " . $e->getMessage());
         }
     }
+    // No session_destroy() -- that wipes the ENTIRE native PHP session,
+    // including a coexisting admin session's keys (admin_logged_in,
+    // admin_user), logging the admin out as a side effect of a member
+    // logging out in the same browser (found via real testing, 2026-08-25).
+    // Unsetting just this system's own keys is already a complete logout
+    // for it.
     $_SESSION['member_logged_in'] = false;
     unset($_SESSION['member'], $_SESSION['member_session_token']);
-    session_destroy();
 }
 
 /**

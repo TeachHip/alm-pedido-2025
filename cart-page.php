@@ -5,6 +5,9 @@
 // <script> block before including partials/header.php (which needs a
 // session started for the member menu), and session_start() has to happen
 // before the response body starts.
+require_once 'includes/maintenance.php';
+enforceMaintenanceMode();
+
 require_once 'includes/member-auth.php';
 require_once 'includes/repositories/ProductRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
@@ -117,8 +120,8 @@ if ($feeAmount > 0) {
         o pásate por AlMercáu para darte de alta.
     </p>
     <?php else: ?>
-    <p class="info-notice">
-        Pedido para recogida en tienda antes de una semana. Plazo para productos de Pedido de Grupo, Pedido Exprés y frescos en general, como indicado por whatsapp.
+    <p class="login-required-notice">
+        Pedido para recogida en tienda antes de una semana.<br>Plazo para productos de Pedido de Grupo, Pedido Exprés y frescos en general, como indicado por whatsapp.
     </p>
     <?php endif; ?>
 

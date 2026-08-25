@@ -17,32 +17,14 @@ RewriteCond %{HTTP_HOST} !^localhost(:\d+)?$
 RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:\d+)?$
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Testing-mode gate: visit /acceso.php?k=<secret token, in
-# includes/config/api-keys-DB.php> once per device/browser to set a
-# long-lived cookie -- everyone else (or that device before visiting) sees
-# the message below. Replaces an earlier Basic Auth version (2026-08-18):
-# that broke inside in-app webviews (links opened from WhatsApp itself have
-# no native HTTP-auth UI at all -- straight to the 401 body, no prompt ever
-# shown) and had inconsistent browser credential-caching across tabs. A
-# cookie needs no browser UI, so it can't hit either failure mode.
-# Excludes localhost/127.0.0.1 same as the HTTPS rule above -- local Apache
-# testing shouldn't need the cookie either.
-#
-# IMPORTANT -- REPLACE_WITH_REAL_TOKEN below is a PLACEHOLDER, not the real
-# secret: unlike api-keys-DB.php, mod_rewrite has no way to read a value out
-# of a gitignored PHP file, so this line unavoidably needs the literal
-# secret and this file IS tracked in git. Replace the placeholder with the
-# real token (same value as TESTING_ACCESS_TOKEN in
-# includes/config/api-keys-DB.php) directly on the server after uploading --
-# and see _AI/DEPLOY_SECRETS.md: .htaccess is now on the "don't blindly
-# overwrite via a full-project sync" list for exactly this reason (a
-# placeholder here already broke the previous Basic Auth version once).
+# Deny direct web access to dotfiles (.htaccess, .htpasswd if it still
+# exists from the old Basic Auth version, .user.ini, etc).
 <FilesMatch "^\.ht">
     Require all denied
 </FilesMatch>
-RewriteCond %{HTTP_HOST} !^localhost(:\d+)?$
-RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:\d+)?$
-RewriteCond %{REQUEST_URI} !acceso\.php$
-RewriteCond %{HTTP_COOKIE} !pedido_access=REPLACE_WITH_REAL_TOKEN
-RewriteRule ^ - [R=403,L]
-ErrorDocument 403 "Estamos en pruebas. Si te urge comprar, escribe o pasa cuando abramos."
+
+# The earlier testing-mode gate (cookie-based, before that Basic Auth) was
+# replaced 2026-08-24 by an in-app "maintenance mode" -- see
+# includes/maintenance.php, toggled from admin/settings.php. That one runs
+# inside PHP (admin-bypassable, no FTP/.htaccess access needed to flip),
+# rather than blocking all PHP execution outright at this level.

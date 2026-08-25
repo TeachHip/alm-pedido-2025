@@ -66,9 +66,14 @@ function loginAdmin($username, $password) {
 }
 
 function logoutAdmin() {
+    // No session_destroy() -- that wipes the ENTIRE native PHP session,
+    // including a coexisting member session's keys (member_logged_in,
+    // member, ...), logging a customer out of their own account as a side
+    // effect of an admin logging out in the same browser (found via real
+    // testing, 2026-08-25). Unsetting just this system's own keys is
+    // already a complete logout for it.
     $_SESSION['admin_logged_in'] = false;
     unset($_SESSION['admin_user']);
-    session_destroy();
 }
 
 function requireAdminAuth() {

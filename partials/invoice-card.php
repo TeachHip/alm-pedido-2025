@@ -7,7 +7,10 @@
  *
  * Expects in scope: $invoice, $items, $businessName, $associationName,
  * $businessAddress, $businessNif. $forwardToken (superseded-ticket redirect)
- * is optional -- only ticket.php ever sets it.
+ * is optional -- only ticket.php ever sets it. $showCancelInCard (bool) is
+ * also optional -- only ticket.php sets it true, to render its own cancel
+ * link inside the card; my-orders.php renders its equivalent separately,
+ * outside the card, so leaving this unset there avoids a duplicate.
  *
  * Vencido (payment_status='expired', set lazily by
  * InvoiceRepository::autoExpireIfOverdue() -- called by every page that
@@ -113,5 +116,12 @@ if ($invoice['status'] === 'cancelled' || $invoice['payment_status'] === 'expire
         ?>
         <p style="text-align: center;"><strong>Fecha límite de pago:</strong> <?php echo $dueDateDisplay; ?></p>
     </div>
+    <?php endif; ?>
+
+    <?php if (!empty($showCancelInCard) && $invoice['status'] === 'active' && $invoice['payment_status'] === 'pending'): ?>
+    <form method="POST" action="cancel-order.php" onsubmit="return confirm('¿Seguro que quieres cancelar este pedido? Esta acción no se puede deshacer.');">
+        <input type="hidden" name="invoice_id" value="<?php echo $invoice['id']; ?>">
+        <button type="submit" class="empty-cart-link link-button"><i class="fas fa-trash-alt"></i> Cancelar pedido</button>
+    </form>
     <?php endif; ?>
 </div>

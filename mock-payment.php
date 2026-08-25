@@ -4,6 +4,9 @@
 // 2). Token-only access, same security model as ticket.php. Not meant for
 // production use -- swap for a real redirect to the bank's own hosted
 // payment page once that integration exists, and delete this file.
+require_once 'includes/maintenance.php';
+enforceMaintenanceMode();
+
 require_once 'includes/repositories/InvoiceRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
 

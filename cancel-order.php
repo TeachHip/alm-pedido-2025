@@ -12,6 +12,9 @@
 // cookie already being SameSite=Lax (blocks cookies on cross-site POSTs),
 // requiring POST here closes both the accidental-trigger and CSRF angles
 // without needing a separate token.
+require_once 'includes/maintenance.php';
+enforceMaintenanceMode();
+
 require_once 'includes/member-auth.php';
 require_once 'includes/repositories/InvoiceRepository-DB.php';
 
@@ -43,7 +46,7 @@ if ($invoice['status'] !== 'active' || $invoice['payment_status'] !== 'pending')
 }
 
 if ($invoiceRepo->cancel($invoiceId)) {
-    header('Location: my-orders.php?cancelled=1');
+    header('Location: my-orders.php');
 } else {
     header('Location: my-orders.php?error=' . urlencode('Error al cancelar el pedido'));
 }

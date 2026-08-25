@@ -11,6 +11,7 @@
  * InvoiceRepository documents.
  */
 
+require_once __DIR__ . '/config/environment.php';
 require_once __DIR__ . '/repositories/CartRepository-DB.php';
 require_once __DIR__ . '/repositories/InvoiceRepository-DB.php';
 require_once __DIR__ . '/repositories/SettingsRepository-DB.php';
@@ -18,20 +19,28 @@ require_once __DIR__ . '/repositories/MemberRepository-DB.php';
 require_once __DIR__ . '/services/PayGoldClient.php';
 
 /**
- * Absolute base URL of the app (scheme + host + path), derived from the
- * current request. $stripFromPath removes the calling script's own
+ * Absolute base URL of the app (scheme + host + path). Uses the hardcoded
+ * SITE_URL in production (see environment.php -- a forged Host header must
+ * never be able to redirect PayGold's webhook/redirect URLs to another
+ * domain); falls back to deriving from the current request when SITE_URL
+ * isn't set (local dev). $stripFromPath removes the calling script's own
  * subdirectory from dirname($_SERVER['PHP_SELF']) -- e.g. admin/actions/*.php
  * pass '/admin/actions', root-level scripts (save-cart.php) pass ''.
  */
 function buildAppBaseUrl($stripFromPath = '') {
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'almercau.org';
     // dirname() returns a bare '\' (not '/') for root-level scripts on
     // Windows -- normalize before trimming, or that backslash leaks
     // straight into the URL (found via real testing: a Windows dev box
     // produced "http://host\/mock-payment.php...", a real corrupt link).
     $dir = str_replace('\\', '/', dirname($_SERVER['PHP_SELF'] ?? ''));
     $basePath = rtrim(str_replace($stripFromPath, '', $dir), '/');
+
+    if (defined('SITE_URL') && SITE_URL) {
+        return rtrim(SITE_URL, '/') . $basePath;
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'almercau.org';
     return "$scheme://$host$basePath";
 }
 
@@ -83,6 +92,59 @@ function requestPaymentLink($invoiceId, $token, $dueDate, $totalAmount, $baseUrl
         'reference' => 'MOCK-' . strtoupper(bin2hex(random_bytes(4))),
         'is_mock' => true,
     ];
+}
+
+// Redsys caps a real PayGold P2F link's actual validity at ~24h,
+// independent of the (often days-out) Ds_Merchant_P2F_EXPIRYDATE this app
+// requests -- see refreshPaymentLinkIfStale().
+const PAYGOLD_LINK_MAX_AGE_HOURS = 24;
+
+/**
+ * If $invoice is still genuinely payable (pending, due_date not yet
+ * reached -- guaranteed true for any 'pending' invoice that's already been
+ * through InvoiceRepository::autoExpireIfOverdue()) but its stored real
+ * PayGold link has aged past Redsys's own ~24h cap, silently request a
+ * fresh one and persist it. Does nothing (returns $invoice unchanged) for
+ * a mock link -- those don't expire the same way -- or when PayGold isn't
+ * configured at all.
+ *
+ * Mutates and returns $invoice with the refreshed paygold_payment_url, so
+ * the caller sees the new link immediately without a second query.
+ */
+function refreshPaymentLinkIfStale($invoice, $baseUrl) {
+    if ($invoice['status'] !== 'active' || $invoice['payment_status'] !== 'pending') {
+        return $invoice;
+    }
+
+    $currentUrl = $invoice['paygold_payment_url'] ?? '';
+    if ($currentUrl === '' || strpos($currentUrl, 'mock-payment.php') !== false) {
+        return $invoice;
+    }
+
+    if (!PayGoldClient::fromConfig()) {
+        return $invoice;
+    }
+
+    $linkAge = $invoice['paygold_link_generated_at'] ?? $invoice['created_at'];
+    $ageHours = (time() - strtotime($linkAge)) / 3600;
+    if ($ageHours < PAYGOLD_LINK_MAX_AGE_HOURS) {
+        return $invoice;
+    }
+
+    $payment = requestPaymentLink($invoice['id'], $invoice['token'], $invoice['due_date'], $invoice['total_amount'], $baseUrl);
+    if ($payment['is_mock']) {
+        // PayGold request failed this time too -- don't overwrite a dead
+        // real link with a mock one; leave it for the next lazy check to
+        // retry, same fail-soft spirit as the rest of this file.
+        return $invoice;
+    }
+
+    $invoiceRepo = new InvoiceRepository();
+    $invoiceRepo->setPaymentUrl($invoice['id'], $payment['url'], $payment['reference']);
+
+    $invoice['paygold_payment_url'] = $payment['url'];
+    $invoice['paygold_link_generated_at'] = date('Y-m-d H:i:s');
+    return $invoice;
 }
 
 /**

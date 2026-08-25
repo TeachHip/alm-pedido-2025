@@ -1,6 +1,9 @@
 <?php
 // ticket.php - Public "ticket de compra" page. Token-only access (this is a
 // closed community, see AI/plans v10) -- no member login required to view.
+require_once 'includes/maintenance.php';
+enforceMaintenanceMode();
+
 require_once 'includes/repositories/InvoiceRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
 require_once 'includes/repositories/MemberRepository-DB.php';
@@ -55,6 +58,7 @@ include 'partials/header.php';
     <?php elseif (isset($_GET['payment_failed']) && $invoice['payment_status'] === 'pending'): ?>
     <div class="invoice-banner invoice-banner-warning">⚠️ El pago no se completó. Puedes intentarlo de nuevo con el enlace de abajo.</div>
     <?php endif; ?>
+    <?php $showCancelInCard = true; ?>
     <?php include 'partials/invoice-card.php'; ?>
 <?php endif; ?>
 </div>

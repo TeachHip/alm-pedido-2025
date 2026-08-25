@@ -6,6 +6,9 @@
 
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/includes/maintenance.php';
+enforceMaintenanceMode('json');
+
 require_once __DIR__ . '/includes/member-auth.php';
 require_once __DIR__ . '/includes/repositories/CartRepository-DB.php';
 require_once __DIR__ . '/includes/repositories/ProductRepository-DB.php';

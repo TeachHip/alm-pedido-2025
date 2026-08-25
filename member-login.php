@@ -1,14 +1,21 @@
 <?php
 // member-login.php - Member (customer) login
+require_once 'includes/maintenance.php';
+enforceMaintenanceMode();
+
 require_once 'includes/member-auth.php';
 
 $error = '';
 $returnTo = $_GET['return_to'] ?? $_POST['return_to'] ?? '';
-// Only allow relative paths within the app -- never redirect off-site
+// Only allow absolute-but-same-site paths -- never redirect off-site.
+// Must KEEP the leading slash: when the app lives under a subdirectory
+// (e.g. /pedido/), stripping it turns an absolute path into a relative
+// one, which the browser then resolves against member-login.php's own
+// directory instead of the domain root -- producing a doubled
+// /pedido/pedido/... URL (found via real testing on the live server,
+// 2026-08-25).
 if ($returnTo === '' || $returnTo[0] !== '/' || strpos($returnTo, '//') === 0) {
     $returnTo = 'index.php';
-} else {
-    $returnTo = ltrim($returnTo, '/');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

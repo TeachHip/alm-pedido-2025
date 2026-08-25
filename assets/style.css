@@ -358,6 +358,27 @@ h3 {
     color: #006a8e;
 }
 
+/* Shared by all three my-orders.php group titles (Pedidos 2 meses
+   anteriores, Pendientes de pago, Cancelados) -- each is a <th colspan="4">
+   inside its own table now, not a separate <h3> above it, specifically so
+   the title's own width always matches the table's actual (centered,
+   content-sized) width instead of the wider surrounding block. Padding,
+   not margin -- margins on table cells are ignored by browsers. Color set
+   explicitly since these no longer inherit the generic h3 rule. */
+.order-section-heading {
+    text-align: left;
+    color: #006a8e;
+    padding: 8px 0 8px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Smaller than the default -- used for my-orders.php's secondary order
+   groups (Pendientes de pago, Cancelados), kept visually subordinate to
+   the main "Pedidos 2 meses anteriores" title above them. */
+.order-group-heading {
+    font-size: 0.85rem;
+}
+
 .subtitle {
     font-size: 1rem;
     color: #ffff00;
@@ -905,6 +926,42 @@ a.menu-item {
     text-decoration: underline;
 }
 
+/* .link-button's own color/font/margin (above) would otherwise silently
+   win over .empty-cart-link's when both classes are combined on the same
+   element (later rule + equal specificity) -- font: inherit is the sneaky
+   one, since that shorthand also resets font-size. Restate what
+   .empty-cart-link needs here, at higher specificity, so the documented
+   "combine for the full block-centered look" actually holds.
+   width: 100% matters specifically for a <button> (this combo is used on a
+   real <button>, unlike .empty-cart-link's other, <a>-only uses) -- a
+   button doesn't reliably expand to fill its container's width just from
+   display: block the way an <a> does, so text-align: center alone was only
+   centering the text within a content-sized box, not the box itself within
+   the page (same reason .whatsapp-btn/.add-to-cart-btn always pair
+   display: block with width: 100% too). */
+.empty-cart-link.link-button {
+    display: block;
+    width: 100%;
+    color: #666;
+    font-size: 0.9rem;
+    margin: 15px 0;
+}
+
+.empty-cart-link.link-button:hover {
+    color: #ff4444;
+    text-decoration: none;
+}
+
+/* Extra breathing room above the cancel link inside the invoice card
+   (ticket.php) specifically -- it sits right below the pay button/Fecha
+   límite de pago, and needs to read as clearly separate from those, not a
+   step in the same payment flow. Scoped to .invoice-card so it doesn't
+   affect my-orders.php's own cancel button, which lives outside the card. */
+.invoice-card .empty-cart-link.link-button {
+    margin-top: 45px;
+    margin-bottom: 15px;
+}
+
 /* ===== UTILITY STYLES ===== */
 .empty-state {
     text-align: center;
@@ -922,6 +979,16 @@ a.menu-item {
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* my-orders.php's "Continuar comprando" button (shown when the latest
+   order isn't a fresh active one) -- same centering approach as
+   .empty-cart's own "Continuar comprando" link, just without the card
+   background/padding since this one sits below an already-styled invoice
+   card, not in its own empty-state box. */
+.continue-shopping-row {
+    text-align: center;
+    margin-top: 15px;
 }
 
 .empty-cart p {
@@ -1014,6 +1081,57 @@ a.menu-item {
     flex-shrink: 0;
 }
 
+/* my-orders.php's plain order-summary tables (date/ticket/price/icon) --
+   a real <table> instead of a hand-built grid: the browser computes each
+   column's width from ALL rows natively, so price genuinely lines up down
+   the table with no guessed ch values needed. .order-summary-scroll is
+   the mobile-safety net (horizontal scroll if content ever overflows a
+   narrow screen) -- shouldn't normally trigger, these are four narrow
+   columns (a date, a short code, a short price, one emoji), not a wide
+   data table. */
+.order-summary-scroll {
+    overflow-x: auto;
+    margin-top: 25px;
+}
+
+.order-summary-table {
+    border-collapse: collapse;
+    font-size: 0.95rem;
+    margin: 0 auto;
+}
+
+.order-summary-table td {
+    padding: 6px 8px 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+    white-space: nowrap;
+}
+
+/* More breathing room specifically between date/ticket/price (columns
+   1-3) than the default 8px -- em-based so it scales with the table's own
+   font-size instead of a fixed pixel gap. Price-to-icon (column 3 to 4)
+   deliberately stays at the tighter default. */
+.order-summary-table td:nth-child(1),
+.order-summary-table td:nth-child(2) {
+    padding-right: 1.5em;
+}
+
+.order-summary-table td:last-child {
+    padding-right: 0;
+}
+
+.order-summary-price {
+    text-align: right;
+}
+
+/* The orders-list block itself is centered as a unit on wide screens (max-
+   width matches .container/.edit-form's own established 600px) -- its
+   contents (headings, rows) stay left-aligned, only the block's own
+   position on the page is centered. */
+.orders-list-block {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
 .invoice-pay-line {
     text-align: center;
     font-size: 0.95rem;
@@ -1078,19 +1196,6 @@ a.menu-item {
 .login-required-notice a {
     color: #006a8e;
     font-weight: 600;
-}
-
-/* Same shape as .login-required-notice, neutral tone instead of amber --
-   for informational notes (e.g. pickup/deadline info shown to an already-
-   logged-in member) that aren't actually warning about anything. */
-.info-notice {
-    background: #f0f0f0;
-    color: #555;
-    text-align: center;
-    padding: 12px 15px;
-    border-radius: 10px;
-    margin: 15px 0;
-    font-size: 0.95rem;
 }
 
 /* ===== ENHANCED CART TOTAL STYLES ===== */

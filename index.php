@@ -1,4 +1,7 @@
 <?php
+require_once 'includes/maintenance.php';
+enforceMaintenanceMode();
+
 // Load database repository
 require_once 'includes/repositories/SectionRepository-DB.php';
 
