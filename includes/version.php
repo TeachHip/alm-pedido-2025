@@ -20,7 +20,7 @@
  * - APP_VERSION_ALIAS: a themed nickname shown alongside APP_VERSION_PUBLIC
  *   in the public header.
  */
-define('APP_VERSION_FULL', '2.6.2');
+define('APP_VERSION_FULL', '2.6.3');
 
 $appVersionFullParts = explode('.', APP_VERSION_FULL);
 define('APP_VERSION_PUBLIC', $appVersionFullParts[0] . '.' . $appVersionFullParts[1]);

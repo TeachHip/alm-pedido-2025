@@ -30,9 +30,9 @@ $navItems = [
 <body>
     <div class="admin-header">
         <h1><?php echo htmlspecialchars($pageH1); ?></h1>
-        <div>
+        <div class="admin-header-actions">
             <?php if ($showBackLink): ?>
-            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="logout-btn"><?php echo htmlspecialchars($backLabel); ?></a>
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="back-link-btn"><?php echo htmlspecialchars($backLabel); ?></a>
             <?php endif; ?>
             <a href="logout.php" class="logout-btn">Cerrar Sesión</a>
         </div>

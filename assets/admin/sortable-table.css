@@ -22,9 +22,15 @@ tbody tr:hover {
 
 .drag-handle {
     cursor: grab;
-    padding: 5px;
+    display: inline-block;
+    padding: 10px;
+    margin: -10px;
     color: #999;
     font-size: 18px;
+    /* Now the only draggable area (see sortable-list.js) -- without this,
+       a touch-drag here can still get intercepted as a page-scroll gesture
+       on some mobile browsers before Sortable.js takes over. */
+    touch-action: none;
 }
 
 .drag-handle:active {

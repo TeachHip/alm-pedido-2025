@@ -50,6 +50,7 @@ include dirname(__FILE__) . '/partials/head.php';
             <p class="admin-tip">
                 💡 <strong>Tip:</strong> Las altas y contraseñas se gestionan en persona, en la tienda.
             </p>
+            <div class="table-scroll">
             <table width="100%">
                 <thead>
                     <tr>
@@ -86,6 +87,7 @@ include dirname(__FILE__) . '/partials/head.php';
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         <?php endif; ?>
     </div>
 </body>

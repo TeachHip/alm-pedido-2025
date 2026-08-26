@@ -123,6 +123,7 @@ include dirname(__FILE__) . '/partials/head.php';
                         (<?php echo count($products); ?> productos)
                     </div>
                     
+                    <div class="table-scroll">
                     <table width="100%">
                         <thead>
                             <tr>
@@ -189,6 +190,7 @@ include dirname(__FILE__) . '/partials/head.php';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 <?php endif; ?>
             <?php endforeach; ?>

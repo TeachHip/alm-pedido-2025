@@ -50,6 +50,7 @@ include dirname(__FILE__) . '/partials/head.php';
                 💡 <strong>Tip:</strong> Arrastra las filas para reordenar las secciones.
             </p>
             
+            <div class="table-scroll">
             <table width="100%">
                 <thead>
                     <tr>
@@ -105,6 +106,7 @@ include dirname(__FILE__) . '/partials/head.php';
                     <?php endforeach; ?>
                 </tbody>
             </table>
+            </div>
         <?php endif; ?>
     </div>
 </body>

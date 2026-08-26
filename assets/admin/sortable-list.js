@@ -11,7 +11,13 @@ function initSortableList(tbody, options) {
 
     new Sortable(tbody, {
         animation: 150,
-        handle: 'tr',
+        // Only the ⋮⋮ handle starts a drag -- 'tr' made the WHOLE row
+        // draggable, which hijacked vertical scroll gestures on touch
+        // devices (any swipe on a row reordered products instead of
+        // scrolling the page). The .drag-handle markup already existed in
+        // both products.php/sections.php; it just wasn't wired up as the
+        // actual handle selector.
+        handle: '.drag-handle',
         ghostClass: 'sortable-ghost',
         dragClass: 'sortable-drag',
         onEnd: function() {

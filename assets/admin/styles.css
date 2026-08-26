@@ -17,13 +17,36 @@ body {
     border-radius: 10px;
     margin-bottom: 20px;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+}
+
+.admin-header h1 {
+    margin: 0;
+}
+
+.admin-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .logout-btn {
     background: #ff4444;
     color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+/* Was also .logout-btn (same red) -- confusing right next to the actual
+   Cerrar Sesión button, worse once .admin-header wraps them onto their own
+   row on a narrow screen with nothing to tell them apart at a glance. */
+.back-link-btn {
+    background: #eee;
+    color: #333;
     padding: 10px 15px;
     text-decoration: none;
     border-radius: 5px;
@@ -77,6 +100,23 @@ body {
     margin-top: 15px;
 }
 
+/* Wraps just the <table> itself (not the surrounding tip text/pagination)
+   so a table too wide for a narrow phone scrolls horizontally instead of
+   silently clipping columns -- the outer .products-table/.sections-table
+   above still uses overflow:hidden purely for its own rounded corners. */
+.table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* The tables themselves still carry width="100%" (harmless, CSS min-width
+   always wins over that regardless of specificity) -- without a floor,
+   100% just shrinks to fit a narrow phone instead of ever overflowing,
+   so .table-scroll's scrollbar would never actually appear. */
+.table-scroll table {
+    min-width: 640px;
+}
+
 .products-table th,
 .products-table td,
 .sections-table th,
@@ -111,14 +151,17 @@ body {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 3px;
+    gap: 6px;
 }
 
+/* padding/font-size bumped from 4px 8px/11px -- with up to 4 of these
+   packed in one column (products.php), the old size was well under the
+   ~44px touch-target guideline, a real mis-tap risk right next to Eliminar. */
 .btn-edit, .btn-clone, .btn-delete, .btn-deprecate {
-    padding: 4px 8px;
+    padding: 7px 10px;
     text-decoration: none;
     border-radius: 3px;
-    font-size: 11px;
+    font-size: 12px;
     text-align: center;
     color: white;
 }

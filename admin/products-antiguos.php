@@ -54,6 +54,7 @@ include dirname(__FILE__) . '/partials/head.php';
             <p>No hay productos antiguos.</p>
         </div>
         <?php else: ?>
+        <div class="table-scroll">
         <table width="100%">
             <thead>
                 <tr>
@@ -86,6 +87,7 @@ include dirname(__FILE__) . '/partials/head.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
+        </div>
         <?php endif; ?>
     </div>
 </body>

@@ -62,6 +62,7 @@ include dirname(__FILE__) . '/partials/head.php';
             💡 <strong>Tip:</strong> Haz clic en una fila para ver los detalles del pedido.
         </p>
 
+        <div class="table-scroll">
         <table width="100%">
             <thead>
                 <tr>
@@ -189,7 +190,8 @@ include dirname(__FILE__) . '/partials/head.php';
                 <?php endforeach; ?>
             </tbody>
         </table>
-        
+        </div>
+
         <?php if ($totalPages > 1): ?>
         <div style="margin-top: 20px; text-align: center;">
             <?php if ($page > 1): ?>
