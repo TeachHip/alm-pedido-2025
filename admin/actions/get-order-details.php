@@ -35,7 +35,11 @@ try {
         'success' => true,
         'cart' => $orderData['cart'],
         'items' => $orderData['items'],
-        'ticket' => $ticket
+        'ticket' => $ticket,
+        'invoice_id' => $invoice ? $invoice['id'] : null,
+        'payment_status' => $invoice ? $invoice['payment_status'] : null,
+        'fulfillment_status' => $invoice ? $invoice['fulfillment_status'] : null,
+        'fulfillment_note' => $invoice ? $invoice['fulfillment_note'] : null,
     ]);
     
 } catch (Exception $e) {

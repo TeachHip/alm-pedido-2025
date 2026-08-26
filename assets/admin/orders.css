@@ -39,3 +39,81 @@
     text-decoration: none;
     border-radius: 5px;
 }
+
+/* Member hover/click tooltip in the "Miembro" column -- see the delegated
+   click handler in orders.php for the pin-open-until-closed behavior. */
+.member-cell {
+    position: relative;
+}
+.member-tooltip-trigger {
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+.member-tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    z-index: 50;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 10px 24px 10px 14px;
+    min-width: 200px;
+    font-size: 13px;
+    font-weight: normal;
+    color: #333;
+    text-align: left;
+    white-space: normal;
+    cursor: default;
+}
+.member-tooltip-trigger:hover .member-tooltip,
+.member-tooltip-trigger:focus .member-tooltip,
+.member-tooltip.is-pinned {
+    display: block;
+}
+.member-tooltip-close {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: #888;
+    line-height: 1;
+    padding: 4px;
+}
+.member-tooltip-close:hover {
+    color: #333;
+}
+
+/* Recogida (pickup) control inside the expanded order-details panel. */
+.fulfillment-control {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+.fulfillment-control-disabled {
+    color: #888;
+    font-style: italic;
+}
+.fulfillment-note-field {
+    display: block;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 400px;
+    font-family: inherit;
+}
+.fulfillment-saved-note {
+    margin-left: 8px;
+    color: #25D366;
+    font-weight: bold;
+    display: none;
+}
+.fulfillment-saved-note.is-visible {
+    display: inline;
+}

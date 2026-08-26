@@ -1,7 +1,7 @@
 {
   "name": "AlMercáu - Carro de la compra",
   "short_name": "AlMercáu",
-  "description": "Catálogo online de alimentos para la comunidad local",
+  "description": "Catálogo del Grupo de Consumo AlMercáu en el barrio de Laviada - Gijón.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#006a8e",

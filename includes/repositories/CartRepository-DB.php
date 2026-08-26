@@ -186,9 +186,12 @@ class CartRepository {
      * Get all orders (carts) ordered by most recent
      */
     public function getAllOrders($limit = null, $offset = 0) {
-        $sql = "SELECT c.*, COUNT(ci.id) as items_count
+        $sql = "SELECT c.*, COUNT(ci.id) as items_count,
+                       m.member_number, m.alias AS member_alias,
+                       m.internal_alias AS member_internal_alias, m.phone AS member_phone
                 FROM carts c
                 LEFT JOIN cart_items ci ON c.id = ci.cart_id
+                LEFT JOIN members m ON c.member_id = m.id
                 GROUP BY c.id
                 ORDER BY c.created_at DESC";
         

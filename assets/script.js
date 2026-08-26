@@ -142,15 +142,17 @@ function addToCart(id, name, price, image, quantity = 1) {
     }
 
     saveCart();
-    showAddedToCartToast(name, quantity);
+    showAddedToCartToast(quantity);
 }
 
 /**
  * Brief fading confirmation shown above the page (product.php and
  * section.php both funnel through addToCart(), so one call here covers
  * every add-to-cart path -- no separate toast trigger needed per page).
+ * No product name -- the customer is already looking at the product they
+ * just added, so the quantity + confirmation is all the toast needs.
  */
-function showAddedToCartToast(name, quantity) {
+function showAddedToCartToast(quantity) {
     let toast = document.getElementById('add-to-cart-toast');
     if (!toast) {
         toast = document.createElement('div');
@@ -159,7 +161,7 @@ function showAddedToCartToast(name, quantity) {
         document.body.appendChild(toast);
     }
 
-    toast.textContent = `✓ ${quantity}x ${name} añadido al carrito`;
+    toast.innerHTML = `✓ <span class="add-to-cart-toast-qty">${quantity}x</span> al carrito`;
 
     // Restart the fade-in even on rapid repeated clicks (force a reflow
     // between removing and re-adding the visible class).

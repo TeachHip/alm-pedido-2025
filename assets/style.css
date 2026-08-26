@@ -1,4 +1,12 @@
 /* ===== RESET & BASE STYLES ===== */
+
+/* Scales every rem/em-based font-size in this file down ~10% at once.
+   Fixed px sizes (icons, borders, etc.) are unaffected -- deliberately,
+   since those aren't meant to shrink with text. */
+html {
+    font-size: 90%;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -83,7 +91,7 @@ a:hover {
 header {
     background: #006a8e;
     color: white;
-    padding: 0;
+    padding: 0 0 8px 8px;
     text-align: center;
     border-radius: 0 0 15px 15px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -133,6 +141,13 @@ header {
 @media (max-width: 600px) {
     header .container {
         text-align: left;
+    }
+
+    /* Only the title line needs to clear the button -- reserving the
+       space on the whole .container also narrowed the subtitle below it,
+       pushing "Gijón" onto a second line for no reason (the button sits
+       well above where the subtitle renders). */
+    header h1 {
         padding-right: 60px;
     }
 
@@ -648,7 +663,9 @@ a.menu-item {
 
 /* Base button */
 .btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 8px 15px;
     font-size: 0.9rem;
 }
@@ -656,7 +673,9 @@ a.menu-item {
 /* Special buttons */
 .whatsapp-btn,
 .add-to-cart-btn {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     text-align: center;
     padding: 15px;
@@ -824,8 +843,11 @@ a.menu-item {
    same z-index ladder already used elsewhere in this file. */
 .add-to-cart-toast {
     position: fixed;
-    top: 16px;
+    top: 70px;
     left: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     max-width: calc(100% - 32px);
     background: #25D366;
     color: white;
@@ -840,6 +862,15 @@ a.menu-item {
     pointer-events: none;
     transform: translate(-50%, -12px);
     transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Explicit margins, not the template's literal spaces -- flexbox splits
+   .add-to-cart-toast's content into separate flex items (text / span /
+   text) and collapses whitespace at each item's edge, same rule as
+   block-box whitespace collapsing. */
+.add-to-cart-toast-qty {
+    font-size: 1.5em;
+    margin: 0 0.3em;
 }
 
 .add-to-cart-toast.add-to-cart-toast-visible {
@@ -1042,6 +1073,27 @@ a.menu-item {
     border: none;
     border-top: 1px solid #eee;
     margin: 6px 0;
+}
+
+/* Address + NIF: side by side by default, wrapping to its own line each
+   (no pipe) once there's no room -- monospace .invoice-ticket text is wide
+   enough that this line wraps mid-word on most phones otherwise. */
+.invoice-header-line {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 6px;
+}
+
+@media (max-width: 480px) {
+    .invoice-header-line {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .invoice-header-sep {
+        display: none;
+    }
 }
 
 .invoice-meta p {

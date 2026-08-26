@@ -41,18 +41,21 @@ if ($invoice['status'] === 'cancelled' || $invoice['payment_status'] === 'expire
 <div class="<?php echo $cardClass; ?>">
     <div class="invoice-header">
         <h2><?php echo htmlspecialchars($businessName); ?></h2>
-        <?php
-            $nifAddressParts = [];
-            if ($businessNif) $nifAddressParts[] = 'NIF ' . htmlspecialchars($businessNif);
-            if ($businessAddress) $nifAddressParts[] = htmlspecialchars($businessAddress);
-        ?>
         <div class="invoice-ticket">
             <?php if ($associationName): ?><?php echo htmlspecialchars($associationName); ?><br><?php endif; ?>
-            <?php if ($nifAddressParts): ?><?php echo implode(' | ', $nifAddressParts); ?><?php endif; ?>
+            <?php if ($businessAddress || $businessNif): ?>
+            <span class="invoice-header-line">
+                <?php if ($businessAddress): ?><span><?php echo htmlspecialchars($businessAddress); ?></span><?php endif; ?>
+                <?php if ($businessAddress && $businessNif): ?><span class="invoice-header-sep">|</span><?php endif; ?>
+                <?php if ($businessNif): ?><span>NIF <?php echo htmlspecialchars($businessNif); ?></span><?php endif; ?>
+            </span>
+            <?php endif; ?>
             <hr class="invoice-header-divider">
-            <strong>Ticket de compra <?php echo htmlspecialchars($invoice['ticket_number']); ?></strong>
-            | AM<?php echo MemberRepository::formatMemberNumber($invoice['member_number']); ?>
-            | <?php echo date('d/m/Y', strtotime($invoice['created_at'])); ?>
+            <div class="invoice-header-line">
+                <strong><?php echo $invoice['payment_status'] === 'paid' ? 'Ticket de compra' : 'Pedido'; ?> <?php echo htmlspecialchars($invoice['ticket_number']); ?></strong>
+                <span class="invoice-header-sep">|</span>
+                <span>AM<?php echo MemberRepository::formatMemberNumber($invoice['member_number']); ?> | <?php echo date('d/m/Y', strtotime($invoice['created_at'])); ?></span>
+            </div>
         </div>
     </div>
 
@@ -113,8 +116,13 @@ if ($invoice['status'] === 'cancelled' || $invoice['payment_status'] === 'expire
             if (date('H:i:s', $dueDateTimestamp) !== '23:59:59') {
                 $dueDateDisplay .= ' ' . date('H:i', $dueDateTimestamp);
             }
+            // Under 48h left to pay -- flag it so the customer doesn't miss
+            // the deadline. Not shown once already past due (payment_status
+            // 'expired' already gets its own "Vencido" banner above).
+            $hoursUntilDue = ($dueDateTimestamp - time()) / 3600;
+            $isDueSoon = $hoursUntilDue > 0 && $hoursUntilDue < 48;
         ?>
-        <p style="text-align: center;"><strong>Fecha límite de pago:</strong> <?php echo $dueDateDisplay; ?></p>
+        <p style="text-align: center;"><?php if ($isDueSoon): ?><span title="Menos de 48h para pagar">⚠️</span> <?php endif; ?><strong>Fecha límite de pago:</strong> <?php echo $dueDateDisplay; ?></p>
     </div>
     <?php endif; ?>
 

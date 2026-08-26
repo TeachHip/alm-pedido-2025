@@ -276,6 +276,31 @@ class InvoiceRepository {
         return $stmt->execute(['id' => $invoiceId]);
     }
 
+    /**
+     * Warehouse/pickup state -- independent of status and payment_status
+     * (see 018_add_invoice_fulfillment.sql). $note only makes sense for
+     * 'partial' (which products are missing/substituted) so it's dropped
+     * for the other two states rather than left stale. fulfilled_at tracks
+     * only the 'picked' transition, cleared if it's ever reverted.
+     */
+    public function setFulfillmentStatus($invoiceId, $status, $note = null) {
+        if (!in_array($status, ['pending', 'partial', 'picked'], true)) {
+            return false;
+        }
+
+        $sql = "UPDATE invoices SET
+                    fulfillment_status = :status,
+                    fulfillment_note = :note,
+                    fulfilled_at = " . ($status === 'picked' ? 'NOW()' : 'NULL') . "
+                WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            'status' => $status,
+            'note' => $status === 'partial' ? $note : null,
+            'id' => $invoiceId,
+        ]);
+    }
+
     public function cancel($invoiceId) {
         $sql = "UPDATE invoices SET status = 'cancelled' WHERE id = :id";
         $stmt = $this->db->prepare($sql);
