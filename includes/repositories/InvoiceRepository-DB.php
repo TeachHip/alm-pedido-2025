@@ -308,6 +308,36 @@ class InvoiceRepository {
     }
 
     /**
+     * Total quantity ordered per product (+ variant) within a section and
+     * date range -- powers admin/product-summary.php, the "how much do I
+     * need from each producer" report. Only paid invoices count
+     * (deliberately conservative -- see the 2026-08-26 plan) and only
+     * $sectionKey matches invoice_items.section_key, a per-line snapshot
+     * (see 020_add_invoice_item_section_key.sql) since a single order can
+     * mix items from several sections at once.
+     */
+    public function getProductTotals($sectionKey, $fromDate, $toDate) {
+        $sql = "SELECT ii.product_name, ii.option_label,
+                       SUM(ii.quantity) AS total_quantity,
+                       COUNT(DISTINCT ii.invoice_id) AS order_count
+                FROM invoice_items ii
+                JOIN invoices i ON ii.invoice_id = i.id
+                WHERE i.status = 'active'
+                  AND i.payment_status = 'paid'
+                  AND ii.section_key = :section_key
+                  AND i.created_at BETWEEN :from_date AND :to_date
+                GROUP BY ii.product_name, ii.option_label
+                ORDER BY total_quantity DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'section_key' => $sectionKey,
+            'from_date' => $fromDate . ' 00:00:00',
+            'to_date' => $toDate . ' 23:59:59',
+        ]);
+        return $stmt->fetchAll();
+    }
+
+    /**
      * Lazy auto-expire: no cron on this host, so this runs at view time --
      * called wherever an invoice is fetched for display (ticket.php,
      * my-orders.php, admin/orders.php, admin/invoice-created.php). Sets

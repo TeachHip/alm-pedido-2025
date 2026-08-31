@@ -1,0 +1,18 @@
+/* assets/admin/product-summary.css - Styling specific to
+   admin/product-summary.php's filter bar. */
+
+.product-summary-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 15px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.product-summary-filters .form-group {
+    margin-bottom: 0;
+    flex: 1 1 150px;
+}
