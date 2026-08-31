@@ -19,9 +19,10 @@ class ProductRepository {
      * Previously this JOIN was retyped verbatim in 7 different methods.
      */
     private function selectWithSection() {
-        return "SELECT p.*, s.name as section_name, s.key as section_key
+        return "SELECT p.*, s.name as section_name, s.key as section_key, pr.name as producer_name
                 FROM products p
-                LEFT JOIN sections s ON p.section_id = s.id";
+                LEFT JOIN sections s ON p.section_id = s.id
+                LEFT JOIN producers pr ON p.producer_id = pr.id";
     }
 
     /**
@@ -164,15 +165,16 @@ class ProductRepository {
      */
     public function create($data) {
         $sql = "INSERT INTO products
-                (section_id, name, ticket_name, price_member, price_public, iva_rate, image, description,
+                (section_id, producer_id, name, ticket_name, price_member, price_public, iva_rate, image, description,
                  display_order, active, visible, almost_out_of_stock)
                 VALUES
-                (:section_id, :name, :ticket_name, :price_member, :price_public, :iva_rate, :image, :description,
+                (:section_id, :producer_id, :name, :ticket_name, :price_member, :price_public, :iva_rate, :image, :description,
                  :display_order, :active, :visible, :almost_out_of_stock)";
 
         $stmt = $this->db->prepare($sql);
         $result = $stmt->execute([
             'section_id' => $data['section_id'],
+            'producer_id' => $data['producer_id'] ?? 1, // 1 = 'Sin asignar' placeholder (migration 021)
             'name' => $data['name'],
             'ticket_name' => $data['ticket_name'] ?? $data['name'],
             'price_member' => $data['price_member'],
@@ -195,6 +197,7 @@ class ProductRepository {
     public function update($id, $data) {
         $sql = "UPDATE products
                 SET section_id = :section_id,
+                    producer_id = :producer_id,
                     name = :name,
                     ticket_name = :ticket_name,
                     price_member = :price_member,
@@ -212,6 +215,7 @@ class ProductRepository {
         return $stmt->execute([
             'id' => $id,
             'section_id' => $data['section_id'],
+            'producer_id' => $data['producer_id'] ?? 1, // 1 = 'Sin asignar' placeholder (migration 021)
             'name' => $data['name'],
             'ticket_name' => $data['ticket_name'] ?? $data['name'],
             'price_member' => $data['price_member'],

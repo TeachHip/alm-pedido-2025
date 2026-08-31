@@ -7,12 +7,23 @@ requireAdminAuth();
 require_once dirname(__FILE__) . '/../includes/repositories/ProductRepository-DB.php';
 require_once dirname(__FILE__) . '/../includes/repositories/SectionRepository-DB.php';
 require_once dirname(__FILE__) . '/../includes/repositories/ProductOptionRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/ProducerRepository-DB.php';
 
 try {
     $productRepo = new ProductRepository();
     $sectionRepo = new SectionRepository();
     $optionRepo = new ProductOptionRepository();
-    
+    $producerRepo = new ProducerRepository();
+    // Active producers only, in order, for the dropdown -- except the
+    // product's *currently assigned* producer is always included even if
+    // it's since been deactivated, so editing a product never silently
+    // reassigns it away from a producer just because that producer was
+    // hidden elsewhere.
+    $producerOptions = [];
+    foreach ($producerRepo->getAllActive() as $p) {
+        $producerOptions[$p['id']] = $p['name'];
+    }
+
     // Get sections as associative array
     $sectionsArray = $sectionRepo->getAll();
     $sections = [];
@@ -45,9 +56,20 @@ try {
                 'image' => $productData['image'],
                 'description' => $productData['description'],
                 'visible' => $productData['visible'],
-                'almost_out_of_stock' => $productData['almost_out_of_stock']
+                'almost_out_of_stock' => $productData['almost_out_of_stock'],
+                'producer_id' => $productData['producer_id']
             ];
-            
+
+            // Currently-assigned producer got deactivated since -- keep it
+            // selectable/visible here so saving the form (unrelated fields)
+            // doesn't quietly bump it back to 'Sin asignar'.
+            if (!isset($producerOptions[$product['producer_id']])) {
+                $currentProducer = $producerRepo->getById($product['producer_id']);
+                if ($currentProducer) {
+                    $producerOptions[$currentProducer['id']] = $currentProducer['name'] . ' (inactivo)';
+                }
+            }
+
             if ($isClone) {
                 // Clone mode - create copy with modified name
                 $product['name'] .= ' (Copia)';
@@ -82,7 +104,8 @@ try {
             'image' => '',
             'description' => '',
             'visible' => true,
-            'almost_out_of_stock' => false
+            'almost_out_of_stock' => false,
+            'producer_id' => 1 // 'Sin asignar' placeholder (migration 021)
         ];
     }
     
@@ -138,6 +161,16 @@ include dirname(__FILE__) . '/partials/head.php';
                     </select>
                     <span class="field-error" data-error-for="iva_rate"></span>
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label>Productor:</label>
+                <select name="producer_id">
+                    <?php foreach ($producerOptions as $id => $label): ?>
+                    <option value="<?php echo $id; ?>" <?php echo ($id == $product['producer_id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="admin-tip" style="margin:4px 0 0;">¿Falta un productor? Añádelo en <a href="producers.php">Productores</a>.</small>
             </div>
 
             <div class="form-group">

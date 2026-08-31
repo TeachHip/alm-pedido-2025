@@ -6,6 +6,7 @@ requireAdminAuth();
 require_once dirname(__FILE__) . '/../../includes/repositories/ProductRepository-DB.php';
 require_once dirname(__FILE__) . '/../../includes/repositories/SectionRepository-DB.php';
 require_once dirname(__FILE__) . '/../../includes/repositories/ProductOptionRepository-DB.php';
+require_once dirname(__FILE__) . '/../../includes/repositories/ProducerRepository-DB.php';
 require_once dirname(__FILE__) . '/../../includes/ImageUploadHelper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -29,6 +30,7 @@ $priceMember = floatval($_POST['price_member'] ?? 0);
 $pricePublic = floatval($_POST['price_public'] ?? 0);
 $ivaRate = $_POST['iva_rate'] ?? '';
 $description = trim($_POST['description'] ?? '');
+$producerId = (int) ($_POST['producer_id'] ?? 0);
 $visible = isset($_POST['visible']) ? 1 : 0;
 $almostOutOfStock = isset($_POST['almost_out_of_stock']) ? 1 : 0;
 
@@ -65,12 +67,21 @@ try {
     $productRepo = new ProductRepository();
     $sectionRepo = new SectionRepository();
     $optionRepo = new ProductOptionRepository();
+    $producerRepo = new ProducerRepository();
 
     // Get section ID from key
     $section = $sectionRepo->getByKey($section_key);
     if (!$section) {
         header('Location: ../products.php?error=Invalid section');
         exit;
+    }
+
+    // Now a closed dropdown (see edit-product.php) -- validate the posted
+    // id is a real producer rather than trusting it blindly, falling back
+    // to the 'Sin asignar' placeholder for anything bogus/missing.
+    if (!$producerRepo->getById($producerId)) {
+        $placeholder = $producerRepo->getPlaceholder();
+        $producerId = $placeholder['id'];
     }
 
 // Determine display_order, and (for updates) fetch the previously-stored
@@ -99,6 +110,7 @@ if (!empty($original_product_id)) {
 
     $productData = [
         'section_id' => $section['id'],
+        'producer_id' => $producerId,
         'name' => $name,
         'ticket_name' => $ticketName,
         'price_member' => $priceMember,

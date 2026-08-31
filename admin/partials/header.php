@@ -5,7 +5,7 @@
 //
 // Caller may set before including:
 //   $pageH1         (string)  page heading, defaults to ''
-//   $activeNav      (string)  one of 'products'|'antiguos'|'sections'|'members'|'orders'|'product-summary'|'settings' to highlight
+//   $activeNav      (string)  one of 'products'|'antiguos'|'sections'|'producers'|'members'|'orders'|'product-summary'|'settings' to highlight
 //   $backUrl        (string)  defaults to 'index.php'
 //   $backLabel      (string)  defaults to '← Volver'
 //   $showBackLink   (bool)    defaults to true
@@ -30,6 +30,7 @@ $navGroups = [
             'products' => ['label' => 'Productos', 'href' => 'products.php'],
             'antiguos' => ['label' => '🗄️ Antiguos', 'href' => 'products-antiguos.php'],
             'sections' => ['label' => 'Secciones', 'href' => 'sections.php'],
+            'producers' => ['label' => 'Productores', 'href' => 'producers.php'],
         ],
     ],
     'members' => ['label' => '👥 Miembros', 'href' => 'members.php'],
