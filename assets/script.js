@@ -496,5 +496,24 @@ async function sendWhatsAppMessage() {
 }
 
 
+// ===== UI UTILITIES =====
+
+/**
+ * Show/hide password toggle (the "eye" button) -- toggles the input's own
+ * type between password/text and swaps the icon + aria-label to match.
+ * Generic by design (takes the input's id) so any password field on any
+ * page can reuse it, not just the member login form.
+ */
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const icon = btn.querySelector('i');
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    icon.classList.toggle('fa-eye', !isHidden);
+    icon.classList.toggle('fa-eye-slash', isHidden);
+    btn.setAttribute('aria-label', isHidden ? 'Ocultar contraseña' : 'Mostrar contraseña');
+}
+
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeApp);

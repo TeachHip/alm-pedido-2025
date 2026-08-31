@@ -53,7 +53,10 @@ include 'partials/header.php';
         <form method="POST" action="member-login.php">
             <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($returnTo); ?>">
             <input type="tel" name="phone" placeholder="Teléfono" required autocomplete="tel">
-            <input type="password" name="password" placeholder="Contraseña" required autocomplete="current-password">
+            <div class="password-field">
+                <input type="password" id="login-password" name="password" placeholder="Contraseña" required autocomplete="current-password">
+                <button type="button" class="password-toggle" aria-label="Mostrar contraseña" onclick="togglePasswordVisibility('login-password', this)"><i class="fas fa-eye"></i></button>
+            </div>
             <button type="submit" class="btn">Entrar</button>
         </form>
         <p class="login-hint">¿No tienes cuenta? Pásate por AlMercáu y te damos de alta en persona.</p>

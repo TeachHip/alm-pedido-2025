@@ -154,7 +154,7 @@ include dirname(__FILE__) . '/partials/head.php';
                     <td class="member-cell" onclick="event.stopPropagation();">
                         <?php if ($order['member_alias']): ?>
                         <span class="member-tooltip-trigger" tabindex="0">
-                            <?php echo htmlspecialchars($order['member_alias']); ?> (#<?php echo htmlspecialchars($order['member_number']); ?>)
+                            <?php echo htmlspecialchars($order['member_alias']); ?><?php if ($order['member_number']): ?> (#<?php echo htmlspecialchars($order['member_number']); ?>)<?php endif; ?>
                             <div class="member-tooltip">
                                 <button type="button" class="member-tooltip-close" aria-label="Cerrar">✕</button>
                                 <div><strong>Alias:</strong> <?php echo htmlspecialchars($order['member_alias']); ?></div>

@@ -72,8 +72,8 @@ include dirname(__FILE__) . '/partials/head.php';
             <div class="form-group">
                 <label>Tipo de socia:</label>
                 <select name="membership_type" required>
-                    <option value="paying" <?php echo (!$member || $member['membership_type'] === 'paying') ? 'selected' : ''; ?>>Socia de pago</option>
-                    <option value="non_paying" <?php echo ($member && $member['membership_type'] === 'non_paying') ? 'selected' : ''; ?>>No socia</option>
+                    <option value="paying" <?php echo ($member && $member['membership_type'] === 'paying') ? 'selected' : ''; ?>>Mercante colaborador</option>
+                    <option value="non_paying" <?php echo (!$member || $member['membership_type'] === 'non_paying') ? 'selected' : ''; ?>>Mercante</option>
                 </select>
                 <span class="field-error" data-error-for="membership_type"></span>
             </div>

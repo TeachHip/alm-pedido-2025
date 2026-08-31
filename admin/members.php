@@ -68,7 +68,7 @@ include dirname(__FILE__) . '/partials/head.php';
                         <td><?php echo $member['member_number'] ? MemberRepository::formatMemberNumber($member['member_number']) : '—'; ?></td>
                         <td><?php echo htmlspecialchars($memberRepo->formatPhoneForDisplay($member['phone'])); ?></td>
                         <td><?php echo htmlspecialchars($member['alias']); ?></td>
-                        <td><?php echo $member['membership_type'] === 'paying' ? 'Socia de pago' : 'No socia'; ?></td>
+                        <td><?php echo $member['membership_type'] === 'paying' ? 'Mercante colaborador' : 'Mercante'; ?></td>
                         <td class="visibility-cell">
                             <a href="#" onclick="return adminToggle('actions/toggle-member-active.php?member_id=<?php echo $member['id']; ?>', this, {valueKey: 'active', trueLabel: 'Activo', falseLabel: 'Inactivo', errorMessage: 'Error al cambiar el estado', dataAttr: 'data-active'});">
                             <?php if ($member['active']): ?>

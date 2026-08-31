@@ -1,6 +1,12 @@
 <?php
 // includes/auth.php - Database session-based authentication
-//
+
+// 45 minutes -- was a pure session-cookie (lifetime 0, gone whenever the
+// browser closes) relying entirely on the host's php.ini
+// session.gc_maxlifetime default for any real idle timeout (often ~24min).
+// Named constant, same pattern as member-auth.php's MEMBER_SESSION_LIFETIME.
+const ADMIN_SESSION_LIFETIME = 45 * 60;
+
 // Explicit cookie params matter here: this app's production host defaults
 // to httponly=Off/secure=Off for session cookies (confirmed via phpinfo,
 // 2026-08-18), which member-auth.php already correctly overrides -- this
@@ -8,8 +14,12 @@
 // insecure host default for the admin session cookie specifically.
 if (session_status() === PHP_SESSION_NONE) {
     $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    // Set gc_maxlifetime too, not just the cookie -- so the actual idle
+    // timeout is this app's own deliberate choice, not whatever the host
+    // happens to default to server-side.
+    ini_set('session.gc_maxlifetime', ADMIN_SESSION_LIFETIME);
     session_set_cookie_params([
-        'lifetime' => 0,
+        'lifetime' => ADMIN_SESSION_LIFETIME,
         'path' => '/',
         'httponly' => true,
         'secure' => $isHttps,

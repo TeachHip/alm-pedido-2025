@@ -572,6 +572,38 @@ a.menu-item {
     margin-top: 5px;
 }
 
+.password-field {
+    position: relative;
+}
+
+/* Matches .login-form input[type="password"]'s own specificity (class +
+   attribute + type) so padding-right actually wins instead of being
+   silently overridden by that rule's shorthand `padding: 10px`. */
+.login-form .password-field input[type="password"],
+.login-form .password-field input[type="text"] {
+    padding-right: 40px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1rem;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: #333;
+}
+
 .login-form .error {
     background: #ffe6e6;
     color: #c0392b;

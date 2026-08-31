@@ -17,15 +17,46 @@ $backUrl = $backUrl ?? 'index.php';
 $backLabel = $backLabel ?? '← Volver';
 $showBackLink = $showBackLink ?? true;
 
-$navItems = [
-    'products' => ['label' => 'Productos', 'href' => 'products.php'],
-    'sections' => ['label' => 'Secciones', 'href' => 'sections.php'],
+// Top-level nav items, some grouped: a group's own button links straight
+// to its primary page (unchanged behavior/URL for every existing page),
+// and its 'children' render as a smaller second row of pills -- but only
+// once one of the group's pages is actually active, so the common case
+// (most pages aren't part of a group) stays a single clean row.
+$navGroups = [
+    'carrito' => [
+        'label' => 'Carrito',
+        'href' => 'products.php',
+        'children' => [
+            'products' => ['label' => 'Productos', 'href' => 'products.php'],
+            'antiguos' => ['label' => '🗄️ Antiguos', 'href' => 'products-antiguos.php'],
+            'sections' => ['label' => 'Secciones', 'href' => 'sections.php'],
+        ],
+    ],
     'members' => ['label' => '👥 Miembros', 'href' => 'members.php'],
-    'orders' => ['label' => '📋 Pedidos', 'href' => 'orders.php'],
-    'product-summary' => ['label' => '📦 Resumen productores', 'href' => 'product-summary.php'],
-    'antiguos' => ['label' => '🗄️ Antiguos', 'href' => 'products-antiguos.php'],
+    'orders' => [
+        'label' => '📋 Pedidos',
+        'href' => 'orders.php',
+        'children' => [
+            'orders' => ['label' => 'Pedido mercantes', 'href' => 'orders.php'],
+            'product-summary' => ['label' => 'Pedido productores', 'href' => 'product-summary.php'],
+        ],
+    ],
     'settings' => ['label' => '⚙️ Configuración', 'href' => 'settings.php'],
 ];
+
+// Which top-level group (if any) owns the current page -- either directly,
+// or via one of its children -- and that group's children, if any, to show
+// as the second-row sub-nav.
+$activeGroupKey = null;
+$activeChildren = null;
+foreach ($navGroups as $groupKey => $group) {
+    $children = $group['children'] ?? null;
+    if ($groupKey === $activeNav || ($children && isset($children[$activeNav]))) {
+        $activeGroupKey = $groupKey;
+        $activeChildren = $children;
+        break;
+    }
+}
 ?>
 </head>
 <body>
@@ -40,10 +71,18 @@ $navItems = [
     </div>
 
     <nav class="admin-nav">
-        <?php foreach ($navItems as $key => $item): ?>
-        <a href="<?php echo $item['href']; ?>" class="nav-btn<?php echo $activeNav === $key ? ' active' : ''; ?>"><?php echo $item['label']; ?></a>
+        <?php foreach ($navGroups as $key => $item): ?>
+        <a href="<?php echo $item['href']; ?>" class="nav-btn<?php echo $key === $activeGroupKey ? ' active' : ''; ?>"><?php echo $item['label']; ?></a>
         <?php endforeach; ?>
     </nav>
+
+    <?php if ($activeChildren): ?>
+    <nav class="admin-subnav">
+        <?php foreach ($activeChildren as $childKey => $child): ?>
+        <a href="<?php echo $child['href']; ?>" class="subnav-btn<?php echo $childKey === $activeNav ? ' active' : ''; ?>"><?php echo $child['label']; ?></a>
+        <?php endforeach; ?>
+    </nav>
+    <?php endif; ?>
 
     <?php if (isset($_GET['success'])): ?>
     <div class="success-message">✅ <?php echo htmlspecialchars($successMessage ?? 'Guardado correctamente'); ?></div>
