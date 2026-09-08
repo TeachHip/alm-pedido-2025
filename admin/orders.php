@@ -7,21 +7,39 @@ requireAdminAuth();
 require_once dirname(__FILE__) . '/../includes/repositories/CartRepository-DB.php';
 require_once dirname(__FILE__) . '/../includes/repositories/InvoiceRepository-DB.php';
 
+// Filter state: trust $_GET fully when the filter form actually submitted
+// (payment_filter is always present then, even a checkbox left unchecked
+// just omits hide_picked -- that's how we tell "explicitly unchecked" apart
+// from "no filter params at all, fall back to the remembered cookie").
+$validPaymentFilters = ['all', 'paid_pending', 'paid', 'pending'];
+if (isset($_GET['payment_filter'])) {
+    $paymentFilter = in_array($_GET['payment_filter'], $validPaymentFilters, true) ? $_GET['payment_filter'] : 'paid_pending';
+    $hidePicked = isset($_GET['hide_picked']) && $_GET['hide_picked'] === '1';
+} else {
+    $paymentFilter = $_COOKIE['admin_orders_payment_filter'] ?? 'paid_pending';
+    if (!in_array($paymentFilter, $validPaymentFilters, true)) $paymentFilter = 'paid_pending';
+    $hidePicked = ($_COOKIE['admin_orders_hide_picked'] ?? '1') === '1';
+}
+setcookie('admin_orders_payment_filter', $paymentFilter, time() + 31536000, '/');
+setcookie('admin_orders_hide_picked', $hidePicked ? '1' : '0', time() + 31536000, '/');
+
 try {
     $cartRepo = new CartRepository();
     $invoiceRepo = new InvoiceRepository();
-    
-    // Pagination
+
+    // Pagination -- now over the FILTERED set, so a page reliably holds up
+    // to $perPage matching orders instead of $perPage total orders that then
+    // get thinned out client-side (was the actual bug being fixed here).
     $perPage = 25;
     $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
     $offset = ($page - 1) * $perPage;
-    
+
     // Get total count for pagination
-    $totalOrders = $cartRepo->getOrdersCount();
+    $totalOrders = $cartRepo->getOrdersCount($paymentFilter, $hidePicked);
     $totalPages = ceil($totalOrders / $perPage);
-    
+
     // Get orders for current page
-    $orders = $cartRepo->getAllOrders($perPage, $offset);
+    $orders = $cartRepo->getAllOrders($perPage, $offset, $paymentFilter, $hidePicked);
 
     // Batch-fetch invoices for this page's carts in one query instead of
     // one findByCartId() call per row (was up to 25 extra queries per page load).
@@ -39,23 +57,26 @@ include dirname(__FILE__) . '/partials/head.php';
     <link rel="stylesheet" href="../assets/admin/orders.css?v=<?php echo APP_VERSION_SAFE; ?>">
 <?php include dirname(__FILE__) . '/partials/header.php'; ?>
 
-    <label for="order-payment-filter" style="margin-bottom: 15px; display: inline-block; font-size: 15px;">
-        Mostrar:
-        <select id="order-payment-filter" style="padding: 6px 10px; font-size: 15px; border-radius: 5px; border: 1px solid #bbb;">
-            <option value="all">Todos</option>
-            <option value="paid_pending">Pagados y pendientes</option>
-            <option value="paid">Pagados</option>
-            <option value="pending">Pendientes</option>
-        </select>
-    </label>
-    <button id="toggle-picked-orders-btn" type="button" style="margin-bottom: 15px; margin-left: 8px; padding: 7px 16px; font-size: 15px; border-radius: 5px; border: 1px solid #bbb; background: #f8f8f8; cursor: pointer;">
-        Ocultar recogidos
-    </button>
+    <form method="GET" style="margin-bottom: 15px;">
+        <label for="order-payment-filter" style="display: inline-block; font-size: 15px;">
+            Mostrar:
+            <select id="order-payment-filter" name="payment_filter" onchange="this.form.submit()" style="padding: 6px 10px; font-size: 15px; border-radius: 5px; border: 1px solid #bbb;">
+                <option value="all" <?php echo $paymentFilter === 'all' ? 'selected' : ''; ?>>Todos</option>
+                <option value="paid_pending" <?php echo $paymentFilter === 'paid_pending' ? 'selected' : ''; ?>>Pagados y pendientes</option>
+                <option value="paid" <?php echo $paymentFilter === 'paid' ? 'selected' : ''; ?>>Pagados</option>
+                <option value="pending" <?php echo $paymentFilter === 'pending' ? 'selected' : ''; ?>>Pendientes</option>
+            </select>
+        </label>
+        <label style="margin-left: 8px; font-size: 15px;">
+            <input type="checkbox" name="hide_picked" value="1" <?php echo $hidePicked ? 'checked' : ''; ?> onchange="this.form.submit()">
+            Ocultar recogidos
+        </label>
+    </form>
 
     <div class="products-table">
         <?php if (empty($orders)): ?>
         <div class="empty-state">
-            <p>No hay pedidos registrados en el sistema.</p>
+            <p>No hay pedidos que coincidan con estos filtros.</p>
         </div>
         <?php else: ?>
         <p class="admin-tip">
@@ -115,22 +136,6 @@ include dirname(__FILE__) . '/partials/head.php';
                     } else {
                         $orderStatusDisplay = $statusLabel[$order['status']] ?? $order['status'];
                     }
-                    // Cancelado/Vencido are hidden by default (see the
-                    // toggle-visible-btn-style filter button below) --
-                    // everything else ("live": pending/paid/no-invoice-yet)
-                    // stays visible.
-                    $isDeadOrder = $invoice && ($invoice['status'] === 'cancelled' || $invoice['payment_status'] === 'expired');
-                    // Drives the "Mostrar:" payment filter (all / paid & pending /
-                    // pending) -- a cart with no invoice yet counts as "pending"
-                    // too (nothing's been paid), same as it already did under the
-                    // old boolean live/dead filter.
-                    if ($isDeadOrder) {
-                        $paymentTier = 'dead';
-                    } elseif ($invoice && $invoice['payment_status'] === 'paid') {
-                        $paymentTier = 'paid';
-                    } else {
-                        $paymentTier = 'pending';
-                    }
                     // Recogida can't actually be set until paid (see
                     // update-fulfillment.php's own guard) -- show '—' rather
                     // than a "Pendiente" that looks the same for every unpaid
@@ -140,12 +145,11 @@ include dirname(__FILE__) . '/partials/head.php';
                         ? ($fulfillmentLabels[$invoice['fulfillment_status']] ?? $fulfillmentLabels['pending'])
                         : '—';
                     // '1' = still needs picking (pending/partial), '0' = already
-                    // picked -- named/valued so the shared initFilterToggle widget's
-                    // "onlyTrue hides rows where attr !== '1'" semantics do the
-                    // right thing (hide picked orders by default).
-                    $needsPicking = !$invoice || $invoice['fulfillment_status'] !== 'picked';
+                    // picked -- filtering itself now happens server-side (see
+                    // CartRepository::getAllOrders()); the tr no longer needs
+                    // to carry filter state, just its id for the click handler.
                 ?>
-                <tr class="order-row" data-payment-tier="<?php echo $paymentTier; ?>" data-pending-pickup="<?php echo $needsPicking ? '1' : '0'; ?>" onclick="toggleOrderDetails(<?php echo $order['id']; ?>)">
+                <tr class="order-row" onclick="toggleOrderDetails(<?php echo $order['id']; ?>)">
                     <td>
                         <span class="expand-icon" id="icon-<?php echo $order['id']; ?>">▶</span>
                     </td>
@@ -192,16 +196,21 @@ include dirname(__FILE__) . '/partials/head.php';
         </table>
         </div>
 
-        <?php if ($totalPages > 1): ?>
+        <?php if ($totalPages > 1):
+            // Pagination links must carry the active filter forward, or
+            // paging would silently reset to "all, show picked" -- built
+            // once here rather than repeated inline.
+            $filterQuery = 'payment_filter=' . urlencode($paymentFilter) . ($hidePicked ? '&hide_picked=1' : '');
+        ?>
         <div style="margin-top: 20px; text-align: center;">
             <?php if ($page > 1): ?>
-                <a href="?page=<?php echo $page - 1; ?>" class="pagination-link">← Anterior</a>
+                <a href="?page=<?php echo $page - 1; ?>&<?php echo $filterQuery; ?>" class="pagination-link">← Anterior</a>
             <?php endif; ?>
 
             <span style="margin: 0 10px;">Página <?php echo $page; ?> de <?php echo $totalPages; ?></span>
 
             <?php if ($page < $totalPages): ?>
-                <a href="?page=<?php echo $page + 1; ?>" class="pagination-link">Siguiente →</a>
+                <a href="?page=<?php echo $page + 1; ?>&<?php echo $filterQuery; ?>" class="pagination-link">Siguiente →</a>
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -225,60 +234,12 @@ include dirname(__FILE__) . '/partials/head.php';
             }
         });
 
-        // Two independent filters (payment tier + hide-picked) applied
-        // together against the same rows -- combined in one function rather
-        // than two separate widgets each setting row.style.display on their
-        // own, which would silently let the last one to run undo the other's
-        // decision instead of properly ANDing both.
-        function getCookie(name) {
-            const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-            return match ? match.pop() : null;
-        }
-
-        function setCookie(name, value) {
-            const expires = new Date();
-            expires.setFullYear(expires.getFullYear() + 1);
-            document.cookie = name + '=' + value + '; expires=' + expires.toUTCString() + '; path=/; samesite=lax';
-        }
-
-        function applyOrderFilters() {
-            const paymentFilter = document.getElementById('order-payment-filter').value;
-            const hidePicked = document.getElementById('toggle-picked-orders-btn').dataset.active === '1';
-
-            document.querySelectorAll('tr.order-row').forEach(function(row) {
-                const tier = row.getAttribute('data-payment-tier');
-                let visible = true;
-                if (paymentFilter === 'paid_pending' && tier === 'dead') visible = false;
-                if (paymentFilter === 'paid' && tier !== 'paid') visible = false;
-                if (paymentFilter === 'pending' && tier !== 'pending') visible = false;
-                if (visible && hidePicked && row.getAttribute('data-pending-pickup') !== '1') visible = false;
-                row.style.display = visible ? '' : 'none';
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentSelect = document.getElementById('order-payment-filter');
-            paymentSelect.value = getCookie('admin_orders_payment_filter') || 'paid_pending';
-            paymentSelect.addEventListener('change', function() {
-                setCookie('admin_orders_payment_filter', paymentSelect.value);
-                applyOrderFilters();
-            });
-
-            const pickedBtn = document.getElementById('toggle-picked-orders-btn');
-            const savedHidePicked = getCookie('admin_orders_hide_picked');
-            const hidePicked = savedHidePicked !== null ? savedHidePicked === '1' : true;
-            pickedBtn.dataset.active = hidePicked ? '1' : '0';
-            pickedBtn.textContent = hidePicked ? 'Mostrar recogidos' : 'Ocultar recogidos';
-            pickedBtn.addEventListener('click', function() {
-                const nowHide = pickedBtn.dataset.active !== '1';
-                pickedBtn.dataset.active = nowHide ? '1' : '0';
-                pickedBtn.textContent = nowHide ? 'Mostrar recogidos' : 'Ocultar recogidos';
-                setCookie('admin_orders_hide_picked', nowHide ? '1' : '0');
-                applyOrderFilters();
-            });
-
-            applyOrderFilters();
-        });
+        // Filtering (payment tier + hide-picked) is now applied server-side
+        // (see CartRepository::getAllOrders()) -- the "Mostrar:"/"Ocultar
+        // recogidos" controls are a plain GET form that reloads the page.
+        // currentHidePicked mirrors PHP's $hidePicked, purely so a fulfillment
+        // save below can hide a just-picked row immediately without a reload.
+        const currentHidePicked = <?php echo $hidePicked ? 'true' : 'false'; ?>;
 
         const loadedOrders = {};
 
@@ -393,13 +354,13 @@ include dirname(__FILE__) . '/partials/head.php';
                     if (data.success) {
                         document.getElementById('fulfillment-badge-' + orderId).textContent = fulfillmentLabel(status);
 
-                        // Keep the "Ocultar recogidos" filter in sync without a
-                        // reload -- update the row's flag and re-run the
-                        // combined filter (see applyOrderFilters() above).
-                        const row = document.querySelector('tr.order-row[onclick*="toggleOrderDetails(' + orderId + ')"]');
-                        if (row) {
-                            row.setAttribute('data-pending-pickup', status === 'picked' ? '0' : '1');
-                            applyOrderFilters();
+                        // "Ocultar recogidos" is a server-side filter (reflected
+                        // next reload/page), but hide it immediately too so
+                        // marking something picked doesn't leave a stale row
+                        // sitting in a list meant to exclude it.
+                        if (currentHidePicked && status === 'picked') {
+                            const row = document.querySelector('tr.order-row[onclick*="toggleOrderDetails(' + orderId + ')"]');
+                            if (row) row.style.display = 'none';
                         }
 
                         const saved = document.getElementById('fulfillment-saved-' + orderId);

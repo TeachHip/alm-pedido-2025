@@ -183,31 +183,67 @@ class CartRepository {
     }
     
     /**
-     * Get all orders (carts) ordered by most recent
+     * WHERE clause shared by getAllOrders()/getOrdersCount() -- filters on
+     * each cart's latest invoice (see the ROW_NUMBER() derived join both
+     * callers use, aliased "i"), mirroring the tier logic admin/orders.php
+     * used to apply client-side after the fact (see git history). Doing it
+     * here means pagination reflects the filtered set, not the unfiltered one.
      */
-    public function getAllOrders($limit = null, $offset = 0) {
+    private function ordersFilterWhere($paymentFilter, $hidePicked) {
+        $where = [];
+        if ($paymentFilter === 'paid_pending') {
+            $where[] = "(i.id IS NULL OR (i.status != 'cancelled' AND i.payment_status != 'expired'))";
+        } elseif ($paymentFilter === 'paid') {
+            $where[] = "(i.id IS NOT NULL AND i.payment_status = 'paid' AND i.status != 'cancelled')";
+        } elseif ($paymentFilter === 'pending') {
+            $where[] = "(i.id IS NULL OR (i.status != 'cancelled' AND i.payment_status NOT IN ('paid', 'expired')))";
+        }
+        if ($hidePicked) {
+            $where[] = "(i.id IS NULL OR i.fulfillment_status != 'picked')";
+        }
+        return $where ? ('WHERE ' . implode(' AND ', $where)) : '';
+    }
+
+    private function latestInvoiceJoin() {
+        return "LEFT JOIN (
+                    SELECT *, ROW_NUMBER() OVER (PARTITION BY cart_id ORDER BY created_at DESC, id DESC) AS rn
+                    FROM invoices
+                ) i ON i.cart_id = c.id AND i.rn = 1";
+    }
+
+    /**
+     * Get all orders (carts) ordered by most recent, optionally filtered by
+     * the same payment/pickup criteria as admin/orders.php's "Mostrar:"
+     * filter and "Ocultar recogidos" toggle.
+     */
+    public function getAllOrders($limit = null, $offset = 0, $paymentFilter = 'all', $hidePicked = false) {
         $sql = "SELECT c.*, COUNT(ci.id) as items_count,
                        m.member_number, m.alias AS member_alias,
                        m.internal_alias AS member_internal_alias, m.phone AS member_phone
                 FROM carts c
                 LEFT JOIN cart_items ci ON c.id = ci.cart_id
                 LEFT JOIN members m ON c.member_id = m.id
+                " . $this->latestInvoiceJoin() . "
+                " . $this->ordersFilterWhere($paymentFilter, $hidePicked) . "
                 GROUP BY c.id
                 ORDER BY c.created_at DESC";
-        
+
         if ($limit) {
             $sql .= " LIMIT " . (int)$limit . " OFFSET " . (int)$offset;
         }
-        
+
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
-    
+
     /**
-     * Get total count of orders
+     * Get total count of orders, same optional filter as getAllOrders().
      */
-    public function getOrdersCount() {
-        $sql = "SELECT COUNT(*) as total FROM carts";
+    public function getOrdersCount($paymentFilter = 'all', $hidePicked = false) {
+        $sql = "SELECT COUNT(DISTINCT c.id) as total
+                FROM carts c
+                " . $this->latestInvoiceJoin() . "
+                " . $this->ordersFilterWhere($paymentFilter, $hidePicked);
         $stmt = $this->db->query($sql);
         $result = $stmt->fetch();
         return $result['total'] ?? 0;
