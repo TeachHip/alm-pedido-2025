@@ -36,6 +36,20 @@ try {
 $totalUnits = array_sum(array_column($totals, 'total_quantity'));
 $totalOrders = array_sum(array_column($totals, 'order_count'));
 
+// Plain-text list for the "copy for WhatsApp" button -- built server-side
+// (not scraped from the table) so it stays correct regardless of how the
+// table itself is formatted/reordered. Deliberately omits order counts,
+// just "- {qty}x {product}" per the requested format.
+$copyLines = [];
+foreach ($totals as $row) {
+    $label = $row['product_name'];
+    if ($row['option_label']) {
+        $label .= ' (' . $row['option_label'] . ')';
+    }
+    $copyLines[] = '- ' . (int) $row['total_quantity'] . 'x ' . $label;
+}
+$copyText = implode("\n", $copyLines);
+
 $pageTitle = 'Resumen productores - AlMercáu';
 $pageH1 = '📦 Resumen para productores';
 $activeNav = 'product-summary';
@@ -79,24 +93,28 @@ include dirname(__FILE__) . '/partials/head.php';
         <strong><?php echo $totalOrders; ?></strong> pedidos.
     </p>
 
-    <div class="products-table">
+    <button type="button" id="copy-summary-btn" style="margin-bottom: 15px; padding: 7px 16px; font-size: 15px; border-radius: 5px; border: 1px solid #bbb; background: #f8f8f8; cursor: pointer;">
+        📋 Copiar para WhatsApp
+    </button>
+
+    <div class="products-table product-summary-results">
         <div class="table-scroll">
         <table width="100%">
             <thead>
                 <tr>
+                    <th width="20%">Cant</th>
                     <th width="60%">Producto</th>
-                    <th width="20%">Cantidad</th>
-                    <th width="20%">Nº pedidos</th>
+                    <th width="20%">Ped</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($totals as $row): ?>
                 <tr>
+                    <td><?php echo (int) $row['total_quantity']; ?></td>
                     <td>
                         <?php echo htmlspecialchars($row['product_name']); ?>
                         <?php if ($row['option_label']): ?> <small>(<?php echo htmlspecialchars($row['option_label']); ?>)</small><?php endif; ?>
                     </td>
-                    <td><?php echo (int) $row['total_quantity']; ?></td>
                     <td><?php echo (int) $row['order_count']; ?></td>
                 </tr>
                 <?php endforeach; ?>
@@ -104,6 +122,22 @@ include dirname(__FILE__) . '/partials/head.php';
         </table>
         </div>
     </div>
+
+    <script>
+    (function() {
+        var copyText = <?php echo json_encode($copyText); ?>;
+        var btn = document.getElementById('copy-summary-btn');
+        var originalLabel = btn.textContent;
+        btn.addEventListener('click', function() {
+            navigator.clipboard.writeText(copyText).then(function() {
+                btn.textContent = '✅ ¡Copiado!';
+                setTimeout(function() { btn.textContent = originalLabel; }, 1500);
+            }).catch(function() {
+                alert('No se pudo copiar automáticamente. Cópialo manualmente:\n\n' + copyText);
+            });
+        });
+    })();
+    </script>
     <?php endif; ?>
 </body>
 </html>

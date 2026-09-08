@@ -16,3 +16,12 @@
     margin-bottom: 0;
     flex: 1 1 150px;
 }
+
+/* This report is only 3 columns (Cant/Producto/Ped) -- the shared
+   .table-scroll table { min-width: 640px } (styles.css) exists for wider
+   admin tables and would force Cant/Ped far wider than their short
+   content needs on a phone. Let this table size itself to its actual
+   container instead. */
+.product-summary-results .table-scroll table {
+    min-width: 0;
+}

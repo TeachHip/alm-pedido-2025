@@ -211,6 +211,7 @@ function createInvoiceFromCart($cartId, $baseUrl) {
                 'quantity' => $item['quantity'],
                 'unit_price' => $item['price_snapshot'],
                 'iva_rate' => $item['product_iva_rate'] ?? null,
+                'section_key' => $item['section_key'] ?? null,
                 'line_total' => $item['subtotal'],
             ];
             $subtotal += (float) $item['subtotal'];

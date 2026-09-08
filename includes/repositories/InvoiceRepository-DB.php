@@ -73,8 +73,8 @@ class InvoiceRepository {
             $invoiceId = $this->db->lastInsertId();
 
             $itemSql = "INSERT INTO invoice_items
-                        (invoice_id, product_name, option_label, quantity, unit_price, iva_rate, line_total, display_order)
-                        VALUES (:invoice_id, :product_name, :option_label, :quantity, :unit_price, :iva_rate, :line_total, :display_order)";
+                        (invoice_id, product_name, option_label, quantity, unit_price, iva_rate, section_key, line_total, display_order)
+                        VALUES (:invoice_id, :product_name, :option_label, :quantity, :unit_price, :iva_rate, :section_key, :line_total, :display_order)";
             $itemStmt = $this->db->prepare($itemSql);
 
             foreach ($data['items'] as $index => $item) {
@@ -85,6 +85,7 @@ class InvoiceRepository {
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
                     'iva_rate' => $item['iva_rate'] ?? null,
+                    'section_key' => $item['section_key'] ?? null,
                     'line_total' => $item['line_total'],
                     'display_order' => $index,
                 ]);

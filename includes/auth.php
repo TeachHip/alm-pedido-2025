@@ -1,11 +1,14 @@
 <?php
 // includes/auth.php - Database session-based authentication
 
-// 45 minutes -- was a pure session-cookie (lifetime 0, gone whenever the
-// browser closes) relying entirely on the host's php.ini
-// session.gc_maxlifetime default for any real idle timeout (often ~24min).
-// Named constant, same pattern as member-auth.php's MEMBER_SESSION_LIFETIME.
-const ADMIN_SESSION_LIFETIME = 45 * 60;
+// 1 hour, rolling from last activity -- requireAdminAuth() re-issues the
+// cookie on every authenticated request (see below), so an admin actively
+// working never gets logged out mid-task; only genuine inactivity for the
+// full hour does. Simpler than member-auth.php's rolling mechanism
+// (cookie-only, no DB last-seen column/touch) since admin sessions don't
+// need that file's revocation-on-password-change guarantee. Named
+// constant, same pattern as member-auth.php's MEMBER_SESSION_LIFETIME.
+const ADMIN_SESSION_LIFETIME = 60 * 60;
 
 // Explicit cookie params matter here: this app's production host defaults
 // to httponly=Off/secure=Off for session cookies (confirmed via phpinfo,
@@ -91,6 +94,21 @@ function requireAdminAuth() {
         header('Location: login.php');
         exit;
     }
+
+    // Rolling expiry: re-issue the session cookie with a fresh
+    // ADMIN_SESSION_LIFETIME on every authenticated page load, same
+    // mechanism member-auth.php's getValidatedMember() uses for its own
+    // cookie. session_regenerate_id(true) at login already sets an initial
+    // cookie with this lifetime (via session_set_cookie_params() above) --
+    // this is what keeps rolling it forward afterward.
+    $isHttps = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    setcookie(session_name(), session_id(), [
+        'expires' => time() + ADMIN_SESSION_LIFETIME,
+        'path' => '/',
+        'httponly' => true,
+        'secure' => $isHttps,
+        'samesite' => 'Lax',
+    ]);
 }
 
 function isAdmin() {

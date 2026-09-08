@@ -25,6 +25,13 @@ body {
 
 .admin-header h1 {
     margin: 0;
+    /* Explicit, rather than the browser default -- a few page titles start
+       with an emoji (orders.php, product-summary.php) and color emoji
+       glyphs commonly have a taller intrinsic line-box than plain text at
+       the same font-size, making just those pages' header bar a few px
+       taller. Pinning line-height makes every page's header the same
+       height regardless of whether its title has an emoji. */
+    line-height: 1.2;
 }
 
 .admin-header-actions {
