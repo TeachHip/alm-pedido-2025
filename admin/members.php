@@ -18,9 +18,13 @@ $activeNav = 'members';
 $successMessage = 'Miembro guardado correctamente';
 include dirname(__FILE__) . '/partials/head.php';
 ?>
-    <link rel="stylesheet" href="../assets/admin/sortable-table.css?v=<?php echo APP_VERSION_SAFE; ?>">
     <script src="../assets/admin/toggle-indicator.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
     <script src="../assets/admin/filter-toggle.js?v=<?php echo APP_VERSION_SAFE; ?>"></script>
+    <style>
+        /* Members don't reorder (unlike products/sections), so no drag
+           cursor -- just a pointer on the two sortable headers. */
+        th.member-sortable { cursor: pointer; user-select: none; }
+    </style>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         initFilterToggle({
@@ -30,6 +34,45 @@ include dirname(__FILE__) . '/partials/head.php';
             dataAttr: 'data-active',
             filterLabel: 'Mostrar solo activos',
             showAllLabel: 'Mostrar todos'
+        });
+
+        // Click-to-sort on the ID (numeric) and Alias (text) columns.
+        var table = document.querySelector('.products-table table');
+        if (!table) return;
+        var tbody = table.tBodies[0];
+        var cols = { 0: 'num', 2: 'text' };
+        var current = { col: null, dir: 1 };
+
+        function valueOf(tr, col) {
+            return col === 0
+                ? parseInt(tr.dataset.sortId || '0', 10)
+                : tr.cells[2].textContent.trim();
+        }
+
+        Object.keys(cols).forEach(function(key) {
+            var col = parseInt(key, 10);
+            var th = table.tHead.rows[0].cells[col];
+            th.classList.add('member-sortable');
+            var arrow = document.createElement('span');
+            arrow.className = 'sort-arrow';
+            th.appendChild(arrow);
+            th.addEventListener('click', function() {
+                current.dir = current.col === col ? -current.dir : 1;
+                current.col = col;
+                Array.prototype.slice.call(tbody.rows)
+                    .sort(function(a, b) {
+                        var va = valueOf(a, col), vb = valueOf(b, col);
+                        var cmp = cols[col] === 'num'
+                            ? va - vb
+                            : String(va).localeCompare(String(vb), 'es');
+                        return cmp * current.dir;
+                    })
+                    .forEach(function(r) { tbody.appendChild(r); });
+                Object.keys(cols).forEach(function(k) {
+                    table.tHead.rows[0].cells[parseInt(k, 10)].querySelector('.sort-arrow').textContent = '';
+                });
+                arrow.textContent = current.dir === 1 ? ' ▲' : ' ▼';
+            });
         });
     });
     </script>
@@ -64,7 +107,7 @@ include dirname(__FILE__) . '/partials/head.php';
                 </thead>
                 <tbody>
                     <?php foreach ($members as $member): ?>
-                    <tr data-member-id="<?php echo $member['id']; ?>" data-active="<?php echo $member['active'] ? '1' : '0'; ?>">
+                    <tr data-member-id="<?php echo $member['id']; ?>" data-active="<?php echo $member['active'] ? '1' : '0'; ?>" data-sort-id="<?php echo (int) $member['member_number']; ?>">
                         <td><?php echo $member['member_number'] ? MemberRepository::formatMemberNumber($member['member_number']) : '—'; ?></td>
                         <td><?php echo htmlspecialchars($memberRepo->formatPhoneForDisplay($member['phone'])); ?></td>
                         <td><?php echo htmlspecialchars($member['alias']); ?></td>

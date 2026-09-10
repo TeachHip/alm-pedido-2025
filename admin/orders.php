@@ -131,7 +131,7 @@ include dirname(__FILE__) . '/partials/head.php';
                         } elseif ($invoice['payment_status'] === 'expired') {
                             $orderStatusDisplay = '⚠️ Vencido';
                         } else {
-                            $orderStatusDisplay = '⏳ Pendiente de pago';
+                            $orderStatusDisplay = '⏳ Pendiente';
                         }
                     } else {
                         $orderStatusDisplay = $statusLabel[$order['status']] ?? $order['status'];
@@ -357,10 +357,17 @@ include dirname(__FILE__) . '/partials/head.php';
                         // "Ocultar recogidos" is a server-side filter (reflected
                         // next reload/page), but hide it immediately too so
                         // marking something picked doesn't leave a stale row
-                        // sitting in a list meant to exclude it.
+                        // sitting in a list meant to exclude it. Hide BOTH the
+                        // main row and its (currently expanded) detail panel --
+                        // hiding only the main row leaves the panel orphaned,
+                        // looking like a second unfolded order.
                         if (currentHidePicked && status === 'picked') {
                             const row = document.querySelector('tr.order-row[onclick*="toggleOrderDetails(' + orderId + ')"]');
+                            const detailsRow = document.getElementById('details-' + orderId);
+                            const icon = document.getElementById('icon-' + orderId);
                             if (row) row.style.display = 'none';
+                            if (detailsRow) detailsRow.style.display = 'none';
+                            if (icon) icon.classList.remove('rotated');
                         }
 
                         const saved = document.getElementById('fulfillment-saved-' + orderId);
