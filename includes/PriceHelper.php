@@ -19,6 +19,14 @@
  *   discount, so this is the admin's call, not automatic); a visitor who
  *   isn't logged in always sees just the one price they'll actually pay.
  *
+ * Exception (2026-09-11, Part 2): Pedido Exprés products ($isFlash true --
+ * caller passes this in, since a product OR one of its options carries no
+ * reliable section info of its own, only the parent product's section_key
+ * does) always charge/show price_public only, for every viewer -- no
+ * member discount on individual Exprés product prices at all. Paying
+ * members instead get the section's flat "Gestión de pedido" cart fee
+ * waived (see save-cart.php) rather than a per-item discount there.
+ *
  * $member throughout is whatever includes/member-auth.php's
  * getLoggedInMember() returns (session-only, not re-validated against the
  * DB) -- fine for display; save-cart.php uses the fully-validated member
@@ -33,7 +41,10 @@ function isPayingMember($member) {
 /**
  * The price actually charged/added to the cart for this product.
  */
-function getCartPrice($product, $member) {
+function getCartPrice($product, $member, $isFlash = false) {
+    if ($isFlash) {
+        return $product['price_public'];
+    }
     return isPayingMember($member) ? $product['price_member'] : $product['price_public'];
 }
 
@@ -41,7 +52,10 @@ function getCartPrice($product, $member) {
  * Whether to show both prices (struck-through public + the charged price)
  * rather than just the one price the viewer will actually pay.
  */
-function shouldShowDualPricing($member, $showDualPricingSetting) {
+function shouldShowDualPricing($member, $showDualPricingSetting, $isFlash = false) {
+    if ($isFlash) {
+        return false; // Pedido Exprés: always a single price, for everyone
+    }
     if (isPayingMember($member)) {
         return true; // always shows their real discount
     }
@@ -63,9 +77,9 @@ function shouldShowDualPricing($member, $showDualPricingSetting) {
  *   price -- an upgrade nudge ("paying members get this, you pay this"),
  *   never the charge itself struck through.
  */
-function renderPriceHtml($product, $member, $showDualPricingSetting) {
-    $charge = getCartPrice($product, $member);
-    if (!shouldShowDualPricing($member, $showDualPricingSetting) || $product['price_public'] == $product['price_member']) {
+function renderPriceHtml($product, $member, $showDualPricingSetting, $isFlash = false) {
+    $charge = getCartPrice($product, $member, $isFlash);
+    if (!shouldShowDualPricing($member, $showDualPricingSetting, $isFlash) || $product['price_public'] == $product['price_member']) {
         return number_format($charge, 2) . '€';
     }
     $struckPrice = isPayingMember($member) ? $product['price_public'] : $product['price_member'];
@@ -81,9 +95,10 @@ function renderPriceHtml($product, $member, $showDualPricingSetting) {
  * only looks entries up here rather than recomputing price/name itself.
  * Assumes $options is non-empty (callers only invoke this when a product
  * has options; products without options keep using getCartPrice/renderPriceHtml
- * directly, unchanged).
+ * directly, unchanged). $isFlash comes from the parent $product -- options
+ * carry no section info of their own.
  */
-function resolveCartLines($product, $options, $member, $showDualPricingSetting) {
+function resolveCartLines($product, $options, $member, $showDualPricingSetting, $isFlash = false) {
     $image = !empty($product['image']) ? 'primgs/' . $product['image'] : '';
     $lines = [];
     foreach ($options as $option) {
@@ -91,8 +106,8 @@ function resolveCartLines($product, $options, $member, $showDualPricingSetting) 
             'id' => 'product-' . $product['id'] . '-option-' . $option['id'],
             'label' => $option['label'],
             'name' => $product['name'] . ' (' . $option['label'] . ')',
-            'price' => (float) getCartPrice($option, $member),
-            'priceHtml' => renderPriceHtml($option, $member, $showDualPricingSetting),
+            'price' => (float) getCartPrice($option, $member, $isFlash),
+            'priceHtml' => renderPriceHtml($option, $member, $showDualPricingSetting, $isFlash),
             'image' => $image,
         ];
     }

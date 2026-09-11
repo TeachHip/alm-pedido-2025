@@ -33,15 +33,17 @@ try {
     $section = $sectionRepo->getById($product['section_id']);
 
     // Price depends on the actual viewer, not just the admin toggle -- see
-    // includes/PriceHelper.php.
+    // includes/PriceHelper.php. Pedido Exprés products are always a single
+    // price for everyone (no per-item member discount there).
     $member = getLoggedInMember();
     $showDualPricing = (new SettingsRepository())->getBool('show_dual_pricing', false);
-    $cartPrice = getCartPrice($product, $member);
+    $isFlash = ($product['section_key'] ?? null) === 'flash';
+    $cartPrice = getCartPrice($product, $member, $isFlash);
 
     // Product options (variants) -- see includes/PriceHelper.php
     $options = (new ProductOptionRepository())->getByProductId($productId);
     $hasOptions = !empty($options);
-    $cartLines = $hasOptions ? resolveCartLines($product, $options, $member, $showDualPricing) : [];
+    $cartLines = $hasOptions ? resolveCartLines($product, $options, $member, $showDualPricing, $isFlash) : [];
 
     $pageTitle = "{$product['name']} - AlMercáu";
     
@@ -71,7 +73,7 @@ include 'partials/header.php';
             <h2 class="detail-name"><?php echo htmlspecialchars($product['name']); ?></h2>
             <!-- Dual/single price controlled by show_dual_pricing setting, see includes/PriceHelper.php -->
             <div class="detail-price" id="price-display-<?php echo $product['id']; ?>">
-                <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $member, $showDualPricing); ?>
+                <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $member, $showDualPricing, $isFlash); ?>
             </div>
             <p class="detail-description"><?php echo nl2br(htmlspecialchars($product['description'] ?? '')); ?></p>
 

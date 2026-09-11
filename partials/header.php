@@ -2,6 +2,11 @@
     require_once __DIR__ . '/../includes/version.php';
     require_once __DIR__ . '/../includes/member-auth.php';
     $loggedInMember = isMemberLoggedIn() ? getLoggedInMember() : null;
+    // Paying members ("Mercante colaborador/a") get a brand-yellow accent
+    // on the menu icon + a membership badge in the popup -- see
+    // assets/style.css .is-paying rules (#ffff00, same yellow .subtitle
+    // already uses -- only one yellow across the app).
+    $isPayingMember = $loggedInMember && ($loggedInMember['membership_type'] ?? null) === 'paying';
     ?>
     <header>
 	<a href="./" style="text-decoration: none; color: #fff; display:block">
@@ -10,7 +15,7 @@
             <p class="subtitle">Del productor al barrio. Laviada, Gijón</p>
         </div>
 		</a>
-        <button type="button" id="member-menu-toggle" class="member-menu-toggle" aria-label="Menú" aria-expanded="false" aria-controls="member-menu-panel">
+        <button type="button" id="member-menu-toggle" class="member-menu-toggle<?php echo $isPayingMember ? ' is-paying' : ''; ?>" aria-label="Menú" aria-expanded="false" aria-controls="member-menu-panel">
             <?php if ($loggedInMember): ?>
             <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
             <?php else: ?>
@@ -20,7 +25,15 @@
         <div id="member-menu-backdrop" class="member-menu-backdrop"></div>
         <div id="member-menu-panel" class="member-menu-panel">
             <div class="member-menu-panel-header">
-                <span class="member-menu-greeting"><?php echo $loggedInMember ? 'Hola, ' . htmlspecialchars($loggedInMember['alias']) : 'Menú'; ?></span>
+                <div>
+                    <span class="member-menu-greeting"><?php echo $loggedInMember ? 'Hola, ' . htmlspecialchars($loggedInMember['alias']) : 'Menú'; ?></span>
+                    <?php if ($loggedInMember): ?>
+                    <div class="member-menu-membership<?php echo $isPayingMember ? ' is-paying' : ''; ?>">
+                        <span class="member-menu-membership-dot"></span>
+                        <?php echo $isPayingMember ? 'Mercante colaborador/a' : 'Mercante invitada/o'; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
                 <button type="button" id="member-menu-close" class="member-menu-close" aria-label="Cerrar menú">✕</button>
             </div>
             <nav class="member-menu-nav">

@@ -133,6 +133,13 @@ header {
     font-size: 34px;
 }
 
+/* Paying member ("Mercante colaborador/a") -- #ffff00, this app's one
+   existing brand yellow (already used by .subtitle) -- instead of the
+   default white icon. */
+.member-menu-toggle.is-paying .fa-circle-user {
+    color: #ffff00;
+}
+
 /* Small screens: centered header text has no reserved space for the
    right-side icon button and can crowd it -- left-align instead, with
    padding-right clearing the icon's footprint (40px button + 12px offset
@@ -226,12 +233,46 @@ header {
     padding: 12px 14px;
     background: #f7f9fa;
     border-bottom: 1px solid #eee;
+    /* header {text-align:center} (assets/style.css) inherits all the way
+       down here otherwise -- the greeting/membership lines were each being
+       centered independently within their own width, landing at different
+       x positions instead of sharing a left edge. */
+    text-align: left;
 }
 
 .member-menu-greeting {
     font-weight: 600;
     color: #006a8e;
     font-size: 0.95rem;
+}
+
+/* Membership badge, right under the greeting -- see partials/header.php.
+   #ffff00 is this app's one existing brand yellow (already used by
+   .subtitle above) -- reused here rather than introducing a second, close
+   but different yellow. The dot is just the line's first inline character
+   (no absolute positioning) -- both lines start at the same left edge, so
+   the dot lands right under the "H" of "Hola" above it. The default dot
+   needs its own border since plain white would be invisible against this
+   panel's light background (#f7f9fa). */
+.member-menu-membership {
+    margin-top: 3px;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.member-menu-membership-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+    background: white;
+    border: 1px solid #bbb;
+    vertical-align: middle;
+}
+
+.member-menu-membership.is-paying .member-menu-membership-dot {
+    background: #ffff00;
+    border-color: #ffff00;
 }
 
 .member-menu-close {

@@ -70,14 +70,19 @@ try {
         $productId = extractProductId($item['id'] ?? $item['product_id'] ?? null);
         $optionId = extractOptionId($item['id'] ?? null);
 
+        // Always fetch the base product (even for an option line) -- it's
+        // the only place section_key lives (options carry none of their
+        // own), needed for the Pedido Exprés single-price exception.
+        $product = $productRepo->getById($productId);
+        if (!$product) {
+            throw new Exception('Producto no encontrado');
+        }
+        $isFlash = ($product['section_key'] ?? null) === 'flash';
+
         if ($optionId && isset($optionsById[$optionId])) {
-            $price = getCartPrice($optionsById[$optionId], $member);
+            $price = getCartPrice($optionsById[$optionId], $member, $isFlash);
         } else {
-            $product = $productRepo->getById($productId);
-            if (!$product) {
-                throw new Exception('Producto no encontrado');
-            }
-            $price = getCartPrice($product, $member);
+            $price = getCartPrice($product, $member, $isFlash);
         }
 
         $cartItems[] = [
@@ -89,12 +94,14 @@ try {
         ];
     }
     
-    // Pedido Expres cart fee
+    // Pedido Expres cart fee ("Gestión de pedido") -- waived for paying
+    // members (their membership already covers this handling work); still
+    // applies to non-paying members whose cart touches the section.
     $feeAmount = (float) $settingsRepo->get('pedido_expres_fee_amount', '0');
     $feeLabel = $settingsRepo->get('pedido_expres_fee_label', '');
     if ($feeAmount > 0) {
         $cartProductIds = array_column($cartItems, 'product_id');
-        if (!$productRepo->anyInSectionKey($cartProductIds, 'flash')) {
+        if (isPayingMember($member) || !$productRepo->anyInSectionKey($cartProductIds, 'flash')) {
             $feeAmount = 0;
         }
     }

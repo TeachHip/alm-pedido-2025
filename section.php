@@ -88,7 +88,11 @@ include 'partials/header.php';
         <?php foreach ($products as $product):
             $options = $optionsByProduct[$product['id']] ?? [];
             $hasOptions = !empty($options);
-            $cartLines = $hasOptions ? resolveCartLines($product, $options, $member, $showDualPricing) : [];
+            // Per-product, not per-section -- the 'fin_stock' virtual
+            // section mixes products from several real sections, so
+            // $section['key'] alone isn't reliable here.
+            $isFlash = ($product['section_key'] ?? null) === 'flash';
+            $cartLines = $hasOptions ? resolveCartLines($product, $options, $member, $showDualPricing, $isFlash) : [];
         ?>
             <div class="product-card">
                 <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link" style="position: relative; display: block;">
@@ -104,7 +108,7 @@ include 'partials/header.php';
                     </a>
                     <!-- Dual/single price controlled by show_dual_pricing setting, see includes/PriceHelper.php -->
                     <div class="product-price" id="price-display-<?php echo $product['id']; ?>">
-                        <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $member, $showDualPricing); ?>
+                        <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $member, $showDualPricing, $isFlash); ?>
                     </div>
 
                     <?php if ($hasOptions): ?>
@@ -121,7 +125,7 @@ include 'partials/header.php';
                         Al carro!
                     </button>
                     <?php else: ?>
-                    <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo getCartPrice($product, $member); ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
+                    <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo getCartPrice($product, $member, $isFlash); ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                         Al carro!
                     </button>
                     <?php endif; ?>
@@ -140,8 +144,8 @@ include 'partials/header.php';
 
     <?php endif; ?>
 
-    <!-- Pedido Expres cart fee footline -->
-    <?php if ($section['key'] === 'flash' && $pedidoExpresFeeAmount > 0): ?>
+    <!-- Pedido Expres cart fee footline -- waived for paying members, see save-cart.php -->
+    <?php if ($section['key'] === 'flash' && $pedidoExpresFeeAmount > 0 && !isPayingMember($member)): ?>
 
             <p>⚠️ <strong><?php echo htmlspecialchars($pedidoExpresFeeLabel); ?></strong>: <?php echo number_format($pedidoExpresFeeAmount, 2); ?>€ (cuota por pedido, no por producto).</p>
     <?php endif; ?>
