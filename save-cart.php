@@ -44,14 +44,15 @@ try {
     $productRepo = new ProductRepository();
     $optionRepo = new ProductOptionRepository();
     $settingsRepo = new SettingsRepository();
-    $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
 
     // Prepare cart items with proper structure. Price is NEVER taken from
     // the client -- it's fully attacker-controlled (cart lives in a browser
     // cookie/localStorage) and flows untouched into the invoice and the
     // amount actually charged via PayGold if trusted. Re-derive it
-    // server-side from the product/option row instead, the same way
-    // product.php/section.php compute it for display (PriceHelper::getCartPrice()).
+    // server-side from the product/option row and the now-validated $member
+    // instead, the same way product.php/section.php compute it for display
+    // (PriceHelper::getCartPrice() -- charge depends on actual membership
+    // status, not the show_dual_pricing display toggle).
     $productIds = array_values(array_unique(array_filter(array_map(
         function ($item) { return extractProductId($item['id'] ?? $item['product_id'] ?? null); },
         $data['items']
@@ -70,13 +71,13 @@ try {
         $optionId = extractOptionId($item['id'] ?? null);
 
         if ($optionId && isset($optionsById[$optionId])) {
-            $price = getCartPrice($optionsById[$optionId], $showDualPricing);
+            $price = getCartPrice($optionsById[$optionId], $member);
         } else {
             $product = $productRepo->getById($productId);
             if (!$product) {
                 throw new Exception('Producto no encontrado');
             }
-            $price = getCartPrice($product, $showDualPricing);
+            $price = getCartPrice($product, $member);
         }
 
         $cartItems[] = [

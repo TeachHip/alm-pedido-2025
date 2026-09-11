@@ -8,6 +8,9 @@ require_once 'includes/repositories/SectionRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
 require_once 'includes/repositories/ProductOptionRepository-DB.php';
 require_once 'includes/PriceHelper.php';
+// Browsing never requires login -- getLoggedInMember() (session-only, no DB
+// re-check) is enough to know who's viewing for price display purposes.
+require_once 'includes/member-auth.php';
 
 // Include 00.php for cart functionality - cookie
 include 'partials/00.php';
@@ -29,14 +32,16 @@ try {
     // Get section info
     $section = $sectionRepo->getById($product['section_id']);
 
-    // show_dual_pricing toggle (admin/settings.php)
+    // Price depends on the actual viewer, not just the admin toggle -- see
+    // includes/PriceHelper.php.
+    $member = getLoggedInMember();
     $showDualPricing = (new SettingsRepository())->getBool('show_dual_pricing', false);
-    $cartPrice = getCartPrice($product, $showDualPricing);
+    $cartPrice = getCartPrice($product, $member);
 
     // Product options (variants) -- see includes/PriceHelper.php
     $options = (new ProductOptionRepository())->getByProductId($productId);
     $hasOptions = !empty($options);
-    $cartLines = $hasOptions ? resolveCartLines($product, $options, $showDualPricing) : [];
+    $cartLines = $hasOptions ? resolveCartLines($product, $options, $member, $showDualPricing) : [];
 
     $pageTitle = "{$product['name']} - AlMercáu";
     
@@ -66,7 +71,7 @@ include 'partials/header.php';
             <h2 class="detail-name"><?php echo htmlspecialchars($product['name']); ?></h2>
             <!-- Dual/single price controlled by show_dual_pricing setting, see includes/PriceHelper.php -->
             <div class="detail-price" id="price-display-<?php echo $product['id']; ?>">
-                <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $showDualPricing); ?>
+                <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $member, $showDualPricing); ?>
             </div>
             <p class="detail-description"><?php echo nl2br(htmlspecialchars($product['description'] ?? '')); ?></p>
 
@@ -84,7 +89,7 @@ include 'partials/header.php';
                 Al carro!
             </button>
             <?php else: ?>
-            <button class="add-to-cart-btn" onclick="addToCartFromProduct('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $cartPrice; /* price_member or price_public depending on show_dual_pricing */ ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
+            <button class="add-to-cart-btn" onclick="addToCartFromProduct('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo $cartPrice; /* price_member or price_public depending on the viewer's membership, see PriceHelper::getCartPrice() */ ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                 Al carro!
             </button>
             <?php endif; ?>

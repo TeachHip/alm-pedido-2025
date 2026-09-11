@@ -8,6 +8,9 @@ require_once 'includes/repositories/ProductRepository-DB.php';
 require_once 'includes/repositories/SettingsRepository-DB.php';
 require_once 'includes/repositories/ProductOptionRepository-DB.php';
 require_once 'includes/PriceHelper.php';
+// Browsing never requires login -- getLoggedInMember() (session-only, no DB
+// re-check) is enough to know who's viewing for price display purposes.
+require_once 'includes/member-auth.php';
 
 // Include 00.php for cart functionality - cookie
 include 'partials/00.php';
@@ -37,7 +40,9 @@ try {
     $sectionDescription = $section['description'] ?? '';
     $pageTitle = "$sectionName - AlMercáu";
 
-    // show_dual_pricing toggle (admin/settings.php)
+    // Price depends on the actual viewer, not just the admin toggle -- see
+    // includes/PriceHelper.php.
+    $member = getLoggedInMember();
     $settingsRepo = new SettingsRepository();
     $showDualPricing = $settingsRepo->getBool('show_dual_pricing', false);
 
@@ -83,7 +88,7 @@ include 'partials/header.php';
         <?php foreach ($products as $product):
             $options = $optionsByProduct[$product['id']] ?? [];
             $hasOptions = !empty($options);
-            $cartLines = $hasOptions ? resolveCartLines($product, $options, $showDualPricing) : [];
+            $cartLines = $hasOptions ? resolveCartLines($product, $options, $member, $showDualPricing) : [];
         ?>
             <div class="product-card">
                 <a href="product.php?id=<?php echo $product['id']; ?>" class="product-link" style="position: relative; display: block;">
@@ -99,7 +104,7 @@ include 'partials/header.php';
                     </a>
                     <!-- Dual/single price controlled by show_dual_pricing setting, see includes/PriceHelper.php -->
                     <div class="product-price" id="price-display-<?php echo $product['id']; ?>">
-                        <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $showDualPricing); ?>
+                        <?php echo $hasOptions ? $cartLines[0]['priceHtml'] : renderPriceHtml($product, $member, $showDualPricing); ?>
                     </div>
 
                     <?php if ($hasOptions): ?>
@@ -116,7 +121,7 @@ include 'partials/header.php';
                         Al carro!
                     </button>
                     <?php else: ?>
-                    <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo getCartPrice($product, $showDualPricing); ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
+                    <button class="btn" onclick="addToCartFromSection('product-<?php echo $product['id']; ?>', '<?php echo addslashes($product['name']); ?>', <?php echo getCartPrice($product, $member); ?>, '<?php echo !empty($product['image']) ? 'primgs/' . addslashes($product['image']) : ''; ?>')">
                         Al carro!
                     </button>
                     <?php endif; ?>
