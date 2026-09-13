@@ -2,6 +2,21 @@
 // admin/login.php - Database authentication
 include dirname(__FILE__) . '/../includes/auth.php';
 
+// Reset switch: uploading an empty file named 'fluffy.flag' to the app root
+// via FTP clears every admin/worker failed-attempt counter, then deletes
+// itself -- deliberately obscure name (not "unlock.flag"), since its mere
+// presence is the trigger. No longer a rescue for a "locked out" admin
+// (authenticate() below uses an escalating delay instead of a hard lock,
+// precisely because that has no recovery path when the account being
+// locked is the only admin there is) -- kept as a way to clear the delay
+// clock back to zero if ever wanted.
+$unlockFlagPath = dirname(__FILE__) . '/../fluffy.flag';
+if (file_exists($unlockFlagPath)) {
+    require_once dirname(__FILE__) . '/../includes/repositories/UserRepository-DB.php';
+    (new UserRepository())->unlockAll();
+    @unlink($unlockFlagPath);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
@@ -10,9 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($result === true) {
         header('Location: index.php');
         exit;
-    } elseif ($result === 'locked') {
-        $error = 'Demasiados intentos fallidos. Cuenta bloqueada temporalmente, inténtalo de nuevo en unos minutos.';
     } else {
+        // A wrong password may have just taken several seconds to answer
+        // (see UserRepository::registerFailedLoginWithDelay()) -- never a
+        // hard lockout for admin, so there's no separate 'locked' case here.
         $error = 'Usuario o contraseña incorrectos';
     }
 }

@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . $returnTo);
         exit;
     } elseif ($result === 'locked') {
-        $error = 'Demasiados intentos fallidos. Cuenta bloqueada temporalmente, inténtalo de nuevo en unos minutos.';
+        $error = '¿Eres tú? Cuenta bloqueada por si eres un intruso o el perro está jugando con tu móvil. Prueba en media hora o contacta con AlMercáu para acceder.';
     } else {
         $error = 'Teléfono o contraseña incorrectos';
     }

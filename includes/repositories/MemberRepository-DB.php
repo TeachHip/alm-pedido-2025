@@ -235,11 +235,24 @@ class MemberRepository {
      * they were never actual members and shouldn't show up here.
      */
     public function getAll() {
-        $sql = "SELECT id, member_number, phone, alias, email, membership_type, activated_at, active, last_login, created_at
+        $sql = "SELECT id, member_number, phone, alias, email, membership_type, activated_at, active, last_login, created_at, locked_until
                 FROM members
                 WHERE is_placeholder = 0
                 ORDER BY alias ASC";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
+    }
+
+    /**
+     * Admin override for the brute-force lockout (see LoginLockoutTrait) --
+     * clears the counter/lock immediately rather than making a real
+     * customer wait out LOCKOUT_MINUTES with no way for Hop to see or
+     * shorten it. Same effect as a successful login's resetLoginAttempts(),
+     * just admin-triggered instead of self-triggered.
+     */
+    public function unlockMember($id) {
+        $sql = "UPDATE members SET failed_login_attempts = 0, locked_until = NULL WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute(['id' => $id]);
     }
 }

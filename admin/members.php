@@ -24,6 +24,18 @@ include dirname(__FILE__) . '/partials/head.php';
         /* Members don't reorder (unlike products/sections), so no drag
            cursor -- just a pointer on the two sortable headers. */
         th.member-sortable { cursor: pointer; user-select: none; }
+        /* Brute-force lockout indicator (see LoginLockoutTrait) -- a real
+           customer can be locked out of their own account right now with
+           no other way for Hop to notice. */
+        .locked-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #dc3545;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
     </style>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -106,11 +118,13 @@ include dirname(__FILE__) . '/partials/head.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($members as $member): ?>
+                    <?php foreach ($members as $member):
+                        $isLocked = $member['locked_until'] && strtotime($member['locked_until']) > time();
+                    ?>
                     <tr data-member-id="<?php echo $member['id']; ?>" data-active="<?php echo $member['active'] ? '1' : '0'; ?>" data-sort-id="<?php echo (int) $member['member_number']; ?>">
                         <td><?php echo $member['member_number'] ? MemberRepository::formatMemberNumber($member['member_number']) : '—'; ?></td>
                         <td><?php echo htmlspecialchars($memberRepo->formatPhoneForDisplay($member['phone'])); ?></td>
-                        <td><?php echo htmlspecialchars($member['alias']); ?></td>
+                        <td><?php if ($isLocked): ?><span class="locked-dot" title="Bloqueado por intentos fallidos"></span><?php endif; ?><?php echo htmlspecialchars($member['alias']); ?></td>
                         <td><?php echo $member['membership_type'] === 'paying' ? 'Mercante colaborador' : 'Mercante'; ?></td>
                         <td class="visibility-cell">
                             <a href="#" onclick="return adminToggle('actions/toggle-member-active.php?member_id=<?php echo $member['id']; ?>', this, {valueKey: 'active', trueLabel: 'Activo', falseLabel: 'Inactivo', errorMessage: 'Error al cambiar el estado', dataAttr: 'data-active'});">
@@ -125,6 +139,9 @@ include dirname(__FILE__) . '/partials/head.php';
                         </td>
                         <td class="action-buttons">
                             <a href="edit-member.php?member_id=<?php echo $member['id']; ?>" class="btn-edit">Editar</a>
+                            <?php if ($isLocked): ?>
+                            <a href="actions/unlock-member.php?member_id=<?php echo $member['id']; ?>" class="btn-edit" onclick="return confirm('¿Desbloquear a este miembro? Podrá volver a intentar iniciar sesión inmediatamente.');">🔓 Desbloquear</a>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
