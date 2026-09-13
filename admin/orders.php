@@ -6,6 +6,7 @@ requireAdminAuth();
 // Load database repository
 require_once dirname(__FILE__) . '/../includes/repositories/CartRepository-DB.php';
 require_once dirname(__FILE__) . '/../includes/repositories/InvoiceRepository-DB.php';
+require_once dirname(__FILE__) . '/../includes/repositories/MemberRepository-DB.php';
 
 // Filter state: trust $_GET fully when the filter form actually submitted
 // (payment_filter is always present then, even a checkbox left unchecked
@@ -158,7 +159,7 @@ include dirname(__FILE__) . '/partials/head.php';
                     <td class="member-cell" onclick="event.stopPropagation();">
                         <?php if ($order['member_alias']): ?>
                         <span class="member-tooltip-trigger" tabindex="0">
-                            <?php echo htmlspecialchars($order['member_alias']); ?><?php if ($order['member_number']): ?> (#<?php echo htmlspecialchars($order['member_number']); ?>)<?php endif; ?>
+                            <?php echo htmlspecialchars($order['member_alias']); ?><?php if ($order['member_number']): ?> (<?php echo MemberRepository::formatMemberNumber($order['member_number']); ?>)<?php endif; ?>
                             <div class="member-tooltip">
                                 <button type="button" class="member-tooltip-close" aria-label="Cerrar">✕</button>
                                 <div><strong>Alias:</strong> <?php echo htmlspecialchars($order['member_alias']); ?></div>
