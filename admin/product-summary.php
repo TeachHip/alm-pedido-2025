@@ -18,11 +18,11 @@ $sectionOptions = [
     'pedido_g' => 'Pedido de Grupo',
 ];
 
-$section = $_GET['section'] ?? 'flash';
+$section = $_GET['section'] ?? 'pedido_g';
 if (!isset($sectionOptions[$section])) {
-    $section = 'flash';
+    $section = 'pedido_g';
 }
-$fromDate = $_GET['from'] ?? date('Y-m-d', strtotime('-30 days'));
+$fromDate = $_GET['from'] ?? date('Y-m-d', strtotime('-7 days'));
 $toDate = $_GET['to'] ?? date('Y-m-d');
 
 try {

@@ -88,7 +88,20 @@ function logoutAdmin() {
 
 function requireAdminAuth() {
     if (!isAdminLoggedIn()) {
-        header('Location: login.php');
+        // Only bring them back to where they were for a genuine session
+        // EXPIRY, not a deliberate logout -- logoutAdmin() explicitly sets
+        // admin_logged_in to false (a known value), while an expired or
+        // never-started session simply never sets that key at all, so
+        // isset() alone tells the two apart. A deliberate logout should
+        // land back on the normal dashboard, not wherever they happened to
+        // click "Cerrar Sesión" from.
+        $wasExplicitLogout = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === false;
+        if ($wasExplicitLogout) {
+            header('Location: login.php');
+        } else {
+            $returnTo = $_SERVER['REQUEST_URI'] ?? '';
+            header('Location: login.php?return_to=' . urlencode($returnTo));
+        }
         exit;
     }
 

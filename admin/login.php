@@ -2,6 +2,15 @@
 // admin/login.php - Database authentication
 include dirname(__FILE__) . '/../includes/auth.php';
 
+// Set by requireAdminAuth() on a genuine session expiry (not a deliberate
+// logout) -- same validated same-site-only pattern member-login.php
+// already uses. Carried through the form as a hidden field so it survives
+// the POST too.
+$returnTo = $_GET['return_to'] ?? $_POST['return_to'] ?? '';
+if ($returnTo === '' || $returnTo[0] !== '/' || strpos($returnTo, '//') === 0) {
+    $returnTo = 'index.php';
+}
+
 // Reset switch: uploading an empty file named 'fluffy.flag' to the app root
 // via FTP clears every admin/worker failed-attempt counter, then deletes
 // itself -- deliberately obscure name (not "unlock.flag"), since its mere
@@ -23,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $result = loginAdmin($username, $password);
     if ($result === true) {
-        header('Location: index.php');
+        header('Location: ' . $returnTo);
         exit;
     } else {
         // A wrong password may have just taken several seconds to answer
@@ -50,6 +59,7 @@ include dirname(__FILE__) . '/partials/head.php';
             <div class="error-message"><?php echo $error; ?></div>
         <?php endif; ?>
         <form method="POST" action="login.php">
+            <input type="hidden" name="return_to" value="<?php echo htmlspecialchars($returnTo); ?>">
             <input type="text" name="username" placeholder="Usuario" required autocomplete="username">
             <input type="password" name="password" placeholder="Contraseña" required autocomplete="current-password">
             <button type="submit" class="btn-save">Entrar</button>
